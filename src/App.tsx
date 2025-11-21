@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import History from "./pages/History";
 import Comparison from "./pages/Comparison";
 import Monitor from "./pages/Monitor";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -24,6 +25,7 @@ const App = () => {
             <Route path="/history" element={<History />} />
             <Route path="/comparison" element={<Comparison />} />
             <Route path="/monitor" element={<Monitor />} />
+            <Route path="/admin" element={<Admin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
