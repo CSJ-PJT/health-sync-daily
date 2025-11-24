@@ -12,6 +12,7 @@ import Monitor from "./pages/Monitor";
 import RecordDetail from "./pages/RecordDetail";
 import Admin from "./pages/Admin";
 import AccountSettings from "./pages/AccountSettings";
+import TransferLogDetail from "./pages/TransferLogDetail";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -36,6 +37,7 @@ const App = () => {
             <Route path="/record/:id" element={<RecordDetail />} />
             <Route path="/comparison" element={<Comparison />} />
             <Route path="/monitor" element={<Monitor />} />
+            <Route path="/monitor/log/:id" element={<TransferLogDetail />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/account-settings" element={<AccountSettings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
