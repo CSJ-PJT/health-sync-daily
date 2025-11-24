@@ -5,12 +5,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
+import Setup from "./pages/Setup";
 import History from "./pages/History";
 import Comparison from "./pages/Comparison";
 import Monitor from "./pages/Monitor";
-import Admin from "./pages/Admin";
-import Setup from "./pages/Setup";
 import RecordDetail from "./pages/RecordDetail";
+import Admin from "./pages/Admin";
+import AccountSettings from "./pages/AccountSettings";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -36,6 +37,7 @@ const App = () => {
             <Route path="/comparison" element={<Comparison />} />
             <Route path="/monitor" element={<Monitor />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/account-settings" element={<AccountSettings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
