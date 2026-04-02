@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { SwipeTabNavigator } from "@/components/SwipeTabNavigator";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
@@ -38,6 +39,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <SwipeTabNavigator />
             <Routes>
               <Route path="/setup" element={<Setup />} />
               <Route path="/" element={isSetupComplete ? <Index /> : <Navigate to="/setup" replace />} />
