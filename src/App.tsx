@@ -16,6 +16,7 @@ import AccountSettings from "./pages/AccountSettings";
 import TransferLogDetail from "./pages/TransferLogDetail";
 import Friends from "./pages/Friends";
 import Chat from "./pages/Chat";
+import AiCoach from "./pages/AiCoach";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -42,6 +43,7 @@ const App = () => {
               <Route path="/comparison" element={<Comparison />} />
               <Route path="/friends" element={<Friends />} />
               <Route path="/chat" element={<Chat />} />
+              <Route path="/ai-coach" element={<AiCoach />} />
               <Route path="/monitor" element={<Monitor />} />
               <Route path="/monitor/log/:id" element={<TransferLogDetail />} />
               <Route path="/admin" element={<Admin />} />
