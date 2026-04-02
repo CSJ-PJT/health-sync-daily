@@ -15,7 +15,6 @@ import RecordDetail from "./pages/RecordDetail";
 import Admin from "./pages/Admin";
 import AccountSettings from "./pages/AccountSettings";
 import TransferLogDetail from "./pages/TransferLogDetail";
-import Friends from "./pages/Friends";
 import Chat from "./pages/Chat";
 import Feed from "./pages/Feed";
 import Game from "./pages/Game";
@@ -46,7 +45,7 @@ const App = () => {
               <Route path="/history" element={<History />} />
               <Route path="/record/:id" element={<RecordDetail />} />
               <Route path="/comparison" element={<Comparison />} />
-              <Route path="/friends" element={<Friends />} />
+              <Route path="/friends" element={<Navigate to="/chat" replace />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/feed" element={<Feed />} />
               <Route path="/game" element={<Game />} />
