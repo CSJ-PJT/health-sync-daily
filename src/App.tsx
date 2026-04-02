@@ -17,7 +17,9 @@ import TransferLogDetail from "./pages/TransferLogDetail";
 import Friends from "./pages/Friends";
 import Chat from "./pages/Chat";
 import Feed from "./pages/Feed";
+import Game from "./pages/Game";
 import AiCoach from "./pages/AiCoach";
+import SocialAuthCallback from "./pages/SocialAuthCallback";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -45,7 +47,10 @@ const App = () => {
               <Route path="/friends" element={<Friends />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/feed" element={<Feed />} />
+              <Route path="/game" element={<Game />} />
               <Route path="/ai-coach" element={<AiCoach />} />
+              <Route path="/auth/kakao/callback" element={<SocialAuthCallback />} />
+              <Route path="/auth/line/callback" element={<SocialAuthCallback />} />
               <Route path="/monitor" element={<Monitor />} />
               <Route path="/monitor/log/:id" element={<TransferLogDetail />} />
               <Route path="/admin" element={<Admin />} />
