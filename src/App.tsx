@@ -19,6 +19,7 @@ import Chat from "./pages/Chat";
 import Feed from "./pages/Feed";
 import Game from "./pages/Game";
 import AiCoach from "./pages/AiCoach";
+import Profile from "./pages/Profile";
 import SocialAuthCallback from "./pages/SocialAuthCallback";
 import NotFound from "./pages/NotFound";
 
@@ -50,6 +51,8 @@ const App = () => {
               <Route path="/feed" element={<Feed />} />
               <Route path="/game" element={<Game />} />
               <Route path="/ai-coach" element={<AiCoach />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:profileName" element={<Profile />} />
               <Route path="/auth/kakao/callback" element={<SocialAuthCallback />} />
               <Route path="/auth/line/callback" element={<SocialAuthCallback />} />
               <Route path="/monitor" element={<Monitor />} />
