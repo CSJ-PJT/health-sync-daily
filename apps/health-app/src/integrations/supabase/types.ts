@@ -1,10 +1,4 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = any
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -524,6 +518,657 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      entertainment_challenges: {
+        Row: {
+          id: string
+          profile_id: string
+          title: string
+          description: string
+          details: string
+          reward: string
+          icon: string
+          progress: number
+          joined_user_ids: Json
+          completed_user_ids: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          profile_id: string
+          title: string
+          description?: string
+          details?: string
+          reward?: string
+          icon?: string
+          progress?: number
+          joined_user_ids?: Json
+          completed_user_ids?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          title?: string
+          description?: string
+          details?: string
+          reward?: string
+          icon?: string
+          progress?: number
+          joined_user_ids?: Json
+          completed_user_ids?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_scores: {
+        Row: {
+          id: string
+          profile_id: string
+          game_id: string
+          best_score: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          profile_id: string
+          game_id: string
+          best_score?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          game_id?: string
+          best_score?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_score_events: {
+        Row: {
+          id: string
+          profile_id: string
+          user_id: string
+          player_name: string
+          game_id: string
+          score: number
+          played_at: string
+        }
+        Insert: {
+          id: string
+          profile_id: string
+          user_id: string
+          player_name: string
+          game_id: string
+          score?: number
+          played_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          user_id?: string
+          player_name?: string
+          game_id?: string
+          score?: number
+          played_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_rooms: {
+        Row: {
+          id: string
+          profile_id: string
+          title: string
+          host_id: string
+          host_name: string
+          game_id: string
+          room_mode: string
+          room_status: string
+          visibility: string
+          editable_by: string
+          duration_seconds: number | null
+          team_mode: boolean
+          participants: Json
+          chat: Json
+          system_events: Json
+          max_players: number
+          room_rules: Json | null
+          game_state: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          profile_id: string
+          title: string
+          host_id: string
+          host_name: string
+          game_id: string
+          room_mode: string
+          room_status?: string
+          visibility?: string
+          editable_by?: string
+          duration_seconds?: number | null
+          team_mode?: boolean
+          participants?: Json
+          chat?: Json
+          system_events?: Json
+          max_players?: number
+          room_rules?: Json | null
+          game_state?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          title?: string
+          host_id?: string
+          host_name?: string
+          game_id?: string
+          room_mode?: string
+          room_status?: string
+          visibility?: string
+          editable_by?: string
+          duration_seconds?: number | null
+          team_mode?: boolean
+          participants?: Json
+          chat?: Json
+          system_events?: Json
+          max_players?: number
+          room_rules?: Json | null
+          game_state?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_strategy_matches: {
+        Row: {
+          id: string
+          room_id: string
+          profile_id: string | null
+          game_id: string
+          mode: string
+          status: string
+          current_turn: number
+          current_user_turn: string
+          winner_user_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          room_id: string
+          profile_id?: string | null
+          game_id: string
+          mode: string
+          status: string
+          current_turn?: number
+          current_user_turn?: string
+          winner_user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          room_id?: string
+          profile_id?: string | null
+          game_id?: string
+          mode?: string
+          status?: string
+          current_turn?: number
+          current_user_turn?: string
+          winner_user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_strategy_events: {
+        Row: {
+          id: string
+          match_id: string
+          room_id: string
+          user_id: string
+          action_type: string
+          payload: Json
+          created_at: string
+        }
+        Insert: {
+          id: string
+          match_id: string
+          room_id: string
+          user_id: string
+          action_type: string
+          payload?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          match_id?: string
+          room_id?: string
+          user_id?: string
+          action_type?: string
+          payload?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_strategy_snapshots: {
+        Row: {
+          id: string
+          match_id: string
+          version: number
+          state: Json
+          created_at: string
+        }
+        Insert: {
+          id: string
+          match_id: string
+          version: number
+          state?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          match_id?: string
+          version?: number
+          state?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_strategy_season_scores: {
+        Row: {
+          id: string
+          user_id: string
+          wins: number
+          losses: number
+          rating: number
+          capture_points: number
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          user_id: string
+          wins?: number
+          losses?: number
+          rating?: number
+          capture_points?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          wins?: number
+          losses?: number
+          rating?: number
+          capture_points?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_worlds: {
+        Row: {
+          id: string
+          owner_user_id: string
+          title: string
+          theme: string
+          visibility: string
+          public_editable: boolean
+          likes_count: number
+          visits_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          owner_user_id: string
+          title: string
+          theme?: string
+          visibility?: string
+          public_editable?: boolean
+          likes_count?: number
+          visits_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_user_id?: string
+          title?: string
+          theme?: string
+          visibility?: string
+          public_editable?: boolean
+          likes_count?: number
+          visits_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_world_snapshots: {
+        Row: {
+          id: string
+          world_id: string
+          version: number
+          state: Json
+          created_at: string
+        }
+        Insert: {
+          id: string
+          world_id: string
+          version: number
+          state?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          world_id?: string
+          version?: number
+          state?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_world_events: {
+        Row: {
+          id: string
+          world_id: string
+          user_id: string
+          action_type: string
+          payload: Json
+          created_at: string
+        }
+        Insert: {
+          id: string
+          world_id: string
+          user_id: string
+          action_type: string
+          payload?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          world_id?: string
+          user_id?: string
+          action_type?: string
+          payload?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_world_reactions: {
+        Row: {
+          id: string
+          world_id: string
+          user_id: string
+          reaction_type: string
+          created_at: string
+        }
+        Insert: {
+          id: string
+          world_id: string
+          user_id: string
+          reaction_type: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          world_id?: string
+          user_id?: string
+          reaction_type?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_world_permissions: {
+        Row: {
+          id: string
+          world_id: string
+          user_id: string
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id: string
+          world_id: string
+          user_id: string
+          role: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          world_id?: string
+          user_id?: string
+          role?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      entertainment_life_sim_saves: {
+        Row: {
+          id: string
+          profile_id: string
+          user_id: string
+          slot: string
+          state: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          profile_id: string
+          user_id: string
+          slot?: string
+          state?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          user_id?: string
+          slot?: string
+          state?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      game_account_links: {
+        Row: {
+          id: string
+          profile_id: string
+          user_id: string
+          game_account_id: string
+          link_token: string
+          link_status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          user_id: string
+          game_account_id: string
+          link_token: string
+          link_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          user_id?: string
+          game_account_id?: string
+          link_token?: string
+          link_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      game_link_profiles: {
+        Row: {
+          id: string
+          profile_id: string
+          user_id: string
+          link_token: string
+          activity_tier: string
+          sleep_tier: string
+          recovery_tier: string
+          hydration_tier: string
+          consistency_score: number
+          weekly_movement_score: number
+          focus_score: number
+          resonance_points: number
+          daily_mission_flags: Json
+          weekly_mission_flags: Json
+          created_at: string
+          updated_at: string
+          last_refresh_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          user_id: string
+          link_token: string
+          activity_tier?: string
+          sleep_tier?: string
+          recovery_tier?: string
+          hydration_tier?: string
+          consistency_score?: number
+          weekly_movement_score?: number
+          focus_score?: number
+          resonance_points?: number
+          daily_mission_flags?: Json
+          weekly_mission_flags?: Json
+          created_at?: string
+          updated_at?: string
+          last_refresh_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          user_id?: string
+          link_token?: string
+          activity_tier?: string
+          sleep_tier?: string
+          recovery_tier?: string
+          hydration_tier?: string
+          consistency_score?: number
+          weekly_movement_score?: number
+          focus_score?: number
+          resonance_points?: number
+          daily_mission_flags?: Json
+          weekly_mission_flags?: Json
+          created_at?: string
+          updated_at?: string
+          last_refresh_at?: string
+        }
+        Relationships: []
+      }
+      game_link_missions: {
+        Row: {
+          id: string
+          profile_id: string
+          scope: string
+          title: string
+          description: string
+          completed: boolean
+          reward_label: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          scope: string
+          title: string
+          description?: string
+          completed?: boolean
+          reward_label?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          scope?: string
+          title?: string
+          description?: string
+          completed?: boolean
+          reward_label?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      game_link_rewards: {
+        Row: {
+          id: string
+          profile_id: string
+          reward_type: string
+          title: string
+          payload: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          reward_type: string
+          title: string
+          payload?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          reward_type?: string
+          title?: string
+          payload?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      life_sim_player_states: {
+        Row: {
+          id: string
+          profile_id: string
+          user_id: string
+          slot: string
+          state: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          user_id: string
+          slot?: string
+          state?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          user_id?: string
+          slot?: string
+          state?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       transfer_logs: {
         Row: {

@@ -48,7 +48,7 @@ export async function loadLifeSimHealthBonuses(): Promise<LifeSimHealthBonuses> 
   const fallback = normalizeBonuses();
 
   const { data, error } = await supabase
-    .from("health_data" as never)
+    .from("health_data")
     .select("steps_data, sleep_data, running_data, synced_at")
     .eq("user_id", userId)
     .order("synced_at", { ascending: false })
@@ -86,7 +86,7 @@ async function loadServerSave(slot: string) {
   if (!profileId) return null;
 
   const { data, error } = await supabase
-    .from("entertainment_life_sim_saves" as never)
+    .from("entertainment_life_sim_saves")
     .select("*")
     .eq("profile_id", profileId)
     .eq("slot", slot)
@@ -102,7 +102,7 @@ async function saveServerSave(state: LifeSimState, slot: string) {
   const profileId = getProfileId();
   if (!profileId) return false;
 
-  const { error } = await supabase.from("entertainment_life_sim_saves" as never).upsert({
+  const { error } = await supabase.from("entertainment_life_sim_saves").upsert({
     id: `${profileId}:${slot}`,
     profile_id: profileId,
     user_id: getUserId(),
