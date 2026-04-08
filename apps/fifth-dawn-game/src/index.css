@@ -11,13 +11,14 @@ All colors MUST be HSL.
   body,
   #root {
     min-height: 100%;
-    background-color: hsl(var(--background));
+    background-color: #07111f;
   }
 
   html,
   body {
     overflow-x: hidden;
     overflow-y: auto;
+    color-scheme: dark;
   }
 
   :root {
@@ -325,6 +326,9 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background:
+      radial-gradient(circle at top, rgba(120, 184, 255, 0.18), transparent 40%),
+      linear-gradient(180deg, #07111f 0%, #111827 45%, #050b14 100%);
   }
 }

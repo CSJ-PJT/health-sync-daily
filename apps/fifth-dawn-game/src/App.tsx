@@ -31,6 +31,9 @@ export default function App() {
   };
 
   useEffect(() => {
+    const background = fifthDawnMobileShell.statusBarColor;
+    document.documentElement.style.backgroundColor = background;
+    document.body.style.backgroundColor = background;
     void refreshBundle();
   }, []);
 
@@ -51,8 +54,9 @@ export default function App() {
             <div className="text-xs uppercase tracking-[0.25em] text-amber-200/70">Lore</div>
             <h2 className="mt-2 text-lg font-semibold">Longest Dawn Slice</h2>
             <p className="mt-2 text-slate-300">
-              오래된 공명층이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 땅을 복구하고 지하의 깊은 기록과 그림자 행정의
-              흔적을 정화하며, 가장 긴 새벽을 지나 다음 아침으로 나아갑니다.
+              오래된 공명층이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 농장을 복구하고 지표의 깊은
+              기록과 그림자 행정을 추적해 정화 회로를 되살리며, 가장 긴 새벽 너머의 다음 거점으로
+              향합니다.
             </p>
           </div>
 
@@ -62,7 +66,8 @@ export default function App() {
               Fifth Dawn Link
             </div>
             <p className="text-slate-300">
-              건강 앱에서 만든 파생 지표만 연동합니다. 원본 건강 데이터는 이 게임 앱으로 직접 들어오지 않습니다.
+              건강 앱에서 만든 파생 지표만 연동합니다. 원본 건강 데이터는 이 게임 앱으로 직접 들어오지
+              않습니다.
             </p>
             <input
               value={gameAccountIdInput}
@@ -107,7 +112,7 @@ export default function App() {
                 ? "파생 지표를 불러오는 중입니다."
                 : bundle?.accountLink
                   ? `연결 상태: ${bundle.accountLink.linkStatus} · 게임 계정 ${bundle.accountLink.gameAccountId}`
-                  : "현재는 로컬 전용 플레이 상태입니다."}
+                  : "현재는 로컬 플레이 전용 상태입니다."}
             </div>
           </div>
 
@@ -128,7 +133,7 @@ export default function App() {
               <div className="text-slate-400">링크하지 않아도 게임은 그대로 플레이할 수 있습니다.</div>
             )}
             <div className="mt-3 text-xs text-slate-500">
-              모바일 셸 설정: {fifthDawnMobileShell.preferredOrientation} / {fifthDawnMobileShell.productKey}
+              모바일 설정: {fifthDawnMobileShell.preferredOrientation} / {fifthDawnMobileShell.productKey}
             </div>
           </div>
         </div>
