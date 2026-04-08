@@ -65,9 +65,14 @@ export async function getHealthSideGameLinkBundle(supabase: SupabaseLikeClient, 
   };
 }
 
-export async function getGameSideLinkBundle(supabase: SupabaseLikeClient, linkToken: string) {
+export async function getGameSideLinkBundle(
+  supabase: SupabaseLikeClient,
+  linkToken: string,
+  gameAccountId: string,
+) {
   const { data, error } = await supabase.rpc("fetch_game_link_bundle", {
     supplied_link_token: linkToken,
+    supplied_game_account_id: gameAccountId,
   });
 
   if (error) {

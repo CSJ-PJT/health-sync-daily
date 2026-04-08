@@ -4,21 +4,25 @@ import { FullscreenGameHost } from "@/components/FullscreenGameHost";
 import { LifeSimArena } from "@/components/LifeSimArena";
 import type { GameLinkBundle } from "@health-sync/shared-types";
 import {
+  clearStoredGameAccountId,
   clearStoredGameLinkToken,
+  getStoredGameAccountId,
   getStoredGameLinkToken,
   loadDerivedGameLinkBundle,
+  setStoredGameAccountId,
   setStoredGameLinkToken,
 } from "@/services/repositories/gameLinkRepository";
 
 export default function App() {
   const [tokenInput, setTokenInput] = useState(getStoredGameLinkToken());
+  const [gameAccountIdInput, setGameAccountIdInput] = useState(getStoredGameAccountId());
   const [bundle, setBundle] = useState<GameLinkBundle | null>(null);
   const [loadingLink, setLoadingLink] = useState(false);
 
-  const refreshBundle = async (token?: string) => {
+  const refreshBundle = async (token?: string, gameAccountId?: string) => {
     setLoadingLink(true);
     try {
-      const next = await loadDerivedGameLinkBundle(token);
+      const next = await loadDerivedGameLinkBundle(token, gameAccountId);
       setBundle(next);
     } finally {
       setLoadingLink(false);
@@ -60,6 +64,12 @@ export default function App() {
               링크 토큰을 입력하면 원본 건강 데이터가 아니라 파생 게임 전용 지표만 받아옵니다.
             </p>
             <input
+              value={gameAccountIdInput}
+              onChange={(event) => setGameAccountIdInput(event.target.value)}
+              placeholder="game account id"
+              className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm outline-none placeholder:text-slate-500"
+            />
+            <input
               value={tokenInput}
               onChange={(event) => setTokenInput(event.target.value)}
               placeholder="link token"
@@ -69,8 +79,9 @@ export default function App() {
               <button
                 type="button"
                 onClick={async () => {
+                  setStoredGameAccountId(gameAccountIdInput.trim());
                   setStoredGameLinkToken(tokenInput.trim());
-                  await refreshBundle(tokenInput.trim());
+                  await refreshBundle(tokenInput.trim(), gameAccountIdInput.trim());
                 }}
                 className="rounded-2xl border border-emerald-300/20 bg-emerald-500/15 px-4 py-2"
               >
@@ -79,9 +90,11 @@ export default function App() {
               <button
                 type="button"
                 onClick={async () => {
+                  clearStoredGameAccountId();
                   clearStoredGameLinkToken();
+                  setGameAccountIdInput("");
                   setTokenInput("");
-                  await refreshBundle("");
+                  await refreshBundle("", "");
                 }}
                 className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2"
               >

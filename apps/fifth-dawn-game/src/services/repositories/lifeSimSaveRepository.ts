@@ -2,7 +2,7 @@ import type { GameLinkProfile } from "@health-sync/shared-types";
 import { createInitialLifeSimState } from "@/game/life-sim/state/lifeSimState";
 import type { LifeSimHealthBonuses, LifeSimState } from "@/game/life-sim/types";
 import { supabase } from "@/integrations/supabase/client";
-import { getStoredGameLinkToken, loadDerivedGameLinkBundle } from "@/services/repositories/gameLinkRepository";
+import { getStoredGameAccountId, getStoredGameLinkToken, loadDerivedGameLinkBundle } from "@/services/repositories/gameLinkRepository";
 
 const SAVE_KEY = "fifth_dawn_life_sim_save_v1";
 
@@ -42,10 +42,12 @@ type SaveEnvelope = {
 
 async function loadServerState(slot: string) {
   const token = getStoredGameLinkToken();
-  if (!token) return null;
+  const gameAccountId = getStoredGameAccountId();
+  if (!token || !gameAccountId) return null;
 
   const { data, error } = await supabase.rpc("fetch_life_sim_state", {
     supplied_link_token: token,
+    supplied_game_account_id: gameAccountId,
     requested_slot: slot,
   });
 
@@ -55,10 +57,12 @@ async function loadServerState(slot: string) {
 
 async function saveServerState(state: LifeSimState, slot: string) {
   const token = getStoredGameLinkToken();
-  if (!token) return false;
+  const gameAccountId = getStoredGameAccountId();
+  if (!token || !gameAccountId) return false;
 
   const { error } = await supabase.rpc("upsert_life_sim_state", {
     supplied_link_token: token,
+    supplied_game_account_id: gameAccountId,
     requested_slot: slot,
     requested_state: state,
   });

@@ -118,6 +118,18 @@ export default function GameLink() {
                   ? `현재 상태: ${bundle.accountLink.linkStatus} · 게임 계정 ${bundle.accountLink.gameAccountId}`
                   : "아직 연결된 게임 계정이 없습니다."}
             </div>
+            {bundle?.accountLink ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl border p-4 text-sm">
+                  <div className="mb-1 text-xs text-muted-foreground">게임 앱 입력용 계정 ID</div>
+                  <div className="break-all font-mono">{bundle.accountLink.gameAccountId}</div>
+                </div>
+                <div className="rounded-2xl border p-4 text-sm">
+                  <div className="mb-1 text-xs text-muted-foreground">게임 앱 입력용 link token</div>
+                  <div className="break-all font-mono">{bundle.accountLink.linkToken || "-"}</div>
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
