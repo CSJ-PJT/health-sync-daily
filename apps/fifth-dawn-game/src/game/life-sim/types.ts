@@ -7,6 +7,10 @@ export type LocalizedText = {
 
 export type LifeSimMapId = "farm" | "village" | "mine";
 export type LifeSimFacing = "up" | "down" | "left" | "right";
+export type LifeSimDayPeriod = "morning" | "afternoon" | "evening";
+export type LifeSimSaveMode = "auto" | "local" | "cloud";
+export type LifeSimInputMode = "keyboard-mouse" | "controller-ready";
+
 export type LifeSimTerrain =
   | "grass"
   | "path"
@@ -98,16 +102,19 @@ export type LifeSimHazard = {
 
 export type LifeSimNpcId = "archivist" | "mechanic";
 
-export type LifeSimNpcDefinition = {
-  id: LifeSimNpcId;
-  name: LocalizedText;
+export type LifeSimNpcScheduleStop = {
+  period: LifeSimDayPeriod;
   mapId: LifeSimMapId;
   x: number;
   y: number;
-  scheduleHint: {
-    morning: LocalizedText;
-    evening: LocalizedText;
-  };
+  hint: LocalizedText;
+};
+
+export type LifeSimNpcDefinition = {
+  id: LifeSimNpcId;
+  name: LocalizedText;
+  defaultMapId: LifeSimMapId;
+  schedule: LifeSimNpcScheduleStop[];
 };
 
 export type LifeSimDialogueLine = {
@@ -186,13 +193,6 @@ export type LifeSimHealthBonuses = {
   cropEfficiencyBonus: number;
 };
 
-export type LifeSimSettings = {
-  resolutionScale: number;
-  fullscreenPreferred: boolean;
-  audioVolume: number;
-  keyBindings: Record<LifeSimInputAction, string[]>;
-};
-
 export type LifeSimInputAction =
   | "move-up"
   | "move-down"
@@ -206,6 +206,16 @@ export type LifeSimInputAction =
   | "hotbar-3"
   | "hotbar-4"
   | "hotbar-5";
+
+export type LifeSimSettings = {
+  resolutionScale: number;
+  fullscreenPreferred: boolean;
+  audioVolume: number;
+  inputMode: LifeSimInputMode;
+  saveMode: LifeSimSaveMode;
+  showPerformanceOverlay: boolean;
+  keyBindings: Record<LifeSimInputAction, string[]>;
+};
 
 export type LifeSimEventName =
   | "crop_harvested"

@@ -41,15 +41,15 @@ function buildFarmTiles(): LifeSimTile[] {
       return {
         ...entry,
         bed: true,
-        signText: { ko: "여기서 잠을 자면 다음 날로 넘어갑니다.", en: "You can sleep here." },
+        signText: { ko: "여기서 잠을 자면 다음 날 새벽으로 넘어갑니다.", en: "You can sleep here." },
       };
     }
     if (entry.x === 11 && entry.y === 6) {
       return {
         ...entry,
         signText: {
-          ko: "농장 외곽의 부서진 통로는 복구 교량 키트가 있으면 다시 열 수 있을 것 같습니다.",
-          en: "The broken outer passage may open again with a restoration bridge kit.",
+          ko: "농장 북쪽의 무너진 통로는 복구 키트가 있으면 다시 열릴 것 같습니다.",
+          en: "The broken northern passage may reopen with a repair kit.",
         },
       };
     }
@@ -84,7 +84,7 @@ function buildVillageTiles(): LifeSimTile[] {
       return {
         ...entry,
         signText: {
-          ko: "광장 아래에는 깊은 기록 보관소와 오래된 정화 관로가 봉인되어 있다고 전해집니다.",
+          ko: "광장 아래에는 깊은 기록 보관소와 봉인된 정화 관로가 잠들어 있다고 전해집니다.",
           en: "Rumor says a deep archive and sealed purifier lines sleep beneath the square.",
         },
       };
@@ -134,8 +134,8 @@ export const lifeSimMaps: Record<string, LifeSimMapDefinition> = {
     height: 14,
     tiles: buildFarmTiles(),
     ambientHint: {
-      ko: "상처 입은 정착지 가장자리에 놓인 농장입니다. 새벽 바람이 아직도 이 흙이 회복될 수 있다고 속삭입니다.",
-      en: "A farm at the edge of a damaged settlement. The dawn wind still whispers that this soil can recover.",
+      ko: "오래된 정착지 가장자리의 농장입니다. 새벽 바람은 이 흙이 다시 살아날 수 있다고 속삭입니다.",
+      en: "A farm at the edge of an old settlement. The dawn wind says this soil can recover.",
     },
   },
   village: {
@@ -145,7 +145,7 @@ export const lifeSimMaps: Record<string, LifeSimMapDefinition> = {
     height: 14,
     tiles: buildVillageTiles(),
     ambientHint: {
-      ko: "평화로운 광장 아래에는 깊은 기록과 오래된 기반 시설이 봉인되어 있습니다.",
+      ko: "평화로운 광장 아래에는 깊은 기록과 잊힌 기반 시설이 봉인된 채 남아 있습니다.",
       en: "Beneath the peaceful square lie sealed records and forgotten infrastructure.",
     },
   },
@@ -156,8 +156,8 @@ export const lifeSimMaps: Record<string, LifeSimMapDefinition> = {
     height: 14,
     tiles: buildMineTiles(),
     ambientHint: {
-      ko: "무너진 통로와 정화 관로가 뒤섞인 장소입니다. 지하의 그림자 흔적은 아직 완전히 사라지지 않았습니다.",
-      en: "Collapsed passages and purifier conduits twist together here, and the old shadows have not fully faded.",
+      ko: "무너진 통로와 정화 관로가 뒤엉킨 곳입니다. 지하의 오래된 그림자는 아직 완전히 사라지지 않았습니다.",
+      en: "Collapsed passages and purifier conduits twist together here. The old underground shadows have not fully faded.",
     },
   },
 };

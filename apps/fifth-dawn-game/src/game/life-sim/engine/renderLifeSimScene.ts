@@ -1,6 +1,6 @@
 import { lifeSimMaps } from "@/game/life-sim/data/maps";
-import { lifeSimNpcs } from "@/game/life-sim/data/npcs";
 import { t } from "@/game/life-sim/data/localization";
+import { getScheduledNpcsForMap } from "@/game/life-sim/state/npcSchedule";
 import type { LifeSimMapId, LifeSimState, LifeSimTerrain, LifeSimTile } from "@/game/life-sim/types";
 
 const TILE_SIZE = 36;
@@ -63,8 +63,11 @@ export function renderLifeSimScene(canvas: HTMLCanvasElement, state: LifeSimStat
   if (!ctx) return;
 
   const map = lifeSimMaps[state.player.mapId];
+  const scale = state.settings.resolutionScale || 1;
   canvas.width = map.width * TILE_SIZE;
   canvas.height = map.height * TILE_SIZE;
+  canvas.style.width = `${Math.round(canvas.width * scale)}px`;
+  canvas.style.height = `${Math.round(canvas.height * scale)}px`;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -86,15 +89,13 @@ export function renderLifeSimScene(canvas: HTMLCanvasElement, state: LifeSimStat
       ctx.fill();
     });
 
-  lifeSimNpcs
-    .filter((npc) => npc.mapId === map.id)
-    .forEach((npc) => {
-      ctx.fillStyle = npc.id === "archivist" ? "#a78bfa" : "#38bdf8";
-      ctx.fillRect(npc.x * TILE_SIZE + 10, npc.y * TILE_SIZE + 6, TILE_SIZE - 20, TILE_SIZE - 12);
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "11px sans-serif";
-      ctx.fillText(t(npc.name), npc.x * TILE_SIZE + 2, npc.y * TILE_SIZE + TILE_SIZE - 4);
-    });
+  getScheduledNpcsForMap(state, map.id).forEach(({ npc, stop }) => {
+    ctx.fillStyle = npc.id === "archivist" ? "#a78bfa" : "#38bdf8";
+    ctx.fillRect(stop.x * TILE_SIZE + 10, stop.y * TILE_SIZE + 6, TILE_SIZE - 20, TILE_SIZE - 12);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "11px sans-serif";
+    ctx.fillText(t(npc.name), stop.x * TILE_SIZE + 2, stop.y * TILE_SIZE + TILE_SIZE - 4);
+  });
 
   ctx.fillStyle = "#f8fafc";
   ctx.fillRect(state.player.x * TILE_SIZE + 9, state.player.y * TILE_SIZE + 6, TILE_SIZE - 18, TILE_SIZE - 12);
@@ -105,11 +106,20 @@ export function renderLifeSimScene(canvas: HTMLCanvasElement, state: LifeSimStat
   if (state.player.facing === "right") ctx.fillRect(state.player.x * TILE_SIZE + TILE_SIZE - 10, state.player.y * TILE_SIZE + 14, 6, 6);
 
   ctx.fillStyle = "rgba(15,23,42,0.72)";
-  ctx.fillRect(10, 10, 260, 52);
+  ctx.fillRect(10, 10, 300, 60);
   ctx.fillStyle = "#f8fafc";
   ctx.font = "13px sans-serif";
   ctx.fillText(`${t(map.name)} · ${state.time.day}일차`, 20, 30);
   const hour = Math.floor(state.time.minutes / 60);
   const minute = state.time.minutes % 60;
   ctx.fillText(`시간 ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} · 기력 ${state.player.energy}/${state.player.maxEnergy}`, 20, 50);
+
+  if (state.settings.showPerformanceOverlay) {
+    ctx.fillStyle = "rgba(15,23,42,0.72)";
+    ctx.fillRect(canvas.width - 170, 10, 160, 64);
+    ctx.fillStyle = "#cbd5e1";
+    ctx.fillText(`맵 타일 ${map.width}x${map.height}`, canvas.width - 160, 30);
+    ctx.fillText(`자원 노드 ${state.resourceNodes.length}`, canvas.width - 160, 48);
+    ctx.fillText(`로그 ${state.eventLog.length}`, canvas.width - 160, 66);
+  }
 }

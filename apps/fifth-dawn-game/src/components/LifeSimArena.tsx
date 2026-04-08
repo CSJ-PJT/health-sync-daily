@@ -11,12 +11,15 @@ import {
   Wheat,
   Wrench,
 } from "lucide-react";
+import { LifeSimSettingsPanel } from "@/components/life-sim/LifeSimSettingsPanel";
 import { renderLifeSimScene } from "@/game/life-sim/engine/renderLifeSimScene";
 import { resolveInputAction } from "@/game/life-sim/engine/inputBindings";
 import { lifeSimItems } from "@/game/life-sim/data/items";
 import { getLifeSimLocale, t } from "@/game/life-sim/data/localization";
 import { lifeSimNpcs } from "@/game/life-sim/data/npcs";
 import { lifeSimRecipes } from "@/game/life-sim/data/recipes";
+import { getScheduledNpcsForMap, getNpcScheduleStop } from "@/game/life-sim/state/npcSchedule";
+import { getActiveQuestSummary } from "@/game/life-sim/state/questRouting";
 import {
   advanceClock,
   craftRecipe,
@@ -29,8 +32,13 @@ import {
   useSelectedHotbarItem,
   useToolAction,
 } from "@/game/life-sim/state/lifeSimState";
-import type { LifeSimFacing, LifeSimRecipeId, LifeSimState } from "@/game/life-sim/types";
+import type {
+  LifeSimFacing,
+  LifeSimRecipeId,
+  LifeSimState,
+} from "@/game/life-sim/types";
 import { loadLifeSimState, saveLifeSimState } from "@/services/repositories/lifeSimSaveRepository";
+import { loadLifeSimSettings, saveLifeSimSettings } from "@/services/repositories/lifeSimSettingsRepository";
 
 function formatClock(minutes: number) {
   const hour = Math.floor(minutes / 60);
@@ -45,14 +53,25 @@ function getItemLabel(itemId: keyof typeof lifeSimItems) {
 function getRelationshipLabel(level: number, locale = getLifeSimLocale()) {
   if (locale === "ko") {
     if (level >= 3) return "깊은 신뢰";
-    if (level >= 2) return "친밀";
-    if (level >= 1) return "안면 있음";
-    return "낯선 사이";
+    if (level >= 2) return "가까운 사이";
+    if (level >= 1) return "안면이 있음";
+    return "첫 만남";
   }
   if (level >= 3) return "Deep Trust";
   if (level >= 2) return "Close";
   if (level >= 1) return "Acquainted";
-  return "Strangers";
+  return "First Meeting";
+}
+
+function getMapLabel(mapId: LifeSimState["player"]["mapId"]) {
+  switch (mapId) {
+    case "farm":
+      return "복구 농장";
+    case "village":
+      return "새벽 광장";
+    case "mine":
+      return "정화 광산";
+  }
 }
 
 function getItemIcon(itemId: keyof typeof lifeSimItems) {
@@ -81,17 +100,22 @@ type Props = {
 export function LifeSimArena({ onExit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [state, setState] = useState<LifeSimState | null>(null);
-  const [status, setStatus] = useState("세이브 데이터를 불러오는 중입니다.");
+  const [status, setStatus] = useState("게임 데이터를 불러오는 중입니다.");
   const [saving, setSaving] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<LifeSimRecipeId>("dawn-broth");
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       const next = await loadLifeSimState("main");
       if (cancelled) return;
-      setState(next);
-      setStatus("복구 농장에 도착했습니다. 밭을 일구고 마을과 광산을 탐험해 보세요.");
+      const settings = loadLifeSimSettings();
+      setState({
+        ...next,
+        settings,
+      });
+      setStatus("복구 농장에 도착했습니다. 밭을 갈고, 마을의 기록을 모으며, 광산의 오래된 설비를 정화해 보세요.");
     }
     void load();
     return () => {
@@ -158,6 +182,7 @@ export function LifeSimArena({ onExit }: Props) {
 
   useEffect(() => {
     if (!state) return;
+    saveLifeSimSettings(state.settings);
     const timer = window.setTimeout(() => {
       void saveLifeSimState(state, state.slot);
     }, 700);
@@ -165,6 +190,8 @@ export function LifeSimArena({ onExit }: Props) {
   }, [state]);
 
   const selectedItem = useMemo(() => (state ? useSelectedHotbarItem(state) : "hoe"), [state]);
+  const activeQuest = useMemo(() => (state ? getActiveQuestSummary(state) : null), [state]);
+  const currentMapNpcs = useMemo(() => (state ? getScheduledNpcsForMap(state, state.player.mapId) : []), [state]);
 
   const saveNow = async () => {
     if (!state) return;
@@ -223,10 +250,12 @@ export function LifeSimArena({ onExit }: Props) {
         </div>
 
         <div className="space-y-2 text-sm text-slate-200">
-          <div>맵: {state.player.mapId === "farm" ? "복구 농장" : state.player.mapId === "village" ? "새벽 광장" : "정화 광산"}</div>
+          <div>맵: {getMapLabel(state.player.mapId)}</div>
           <div>시간: {state.time.day}일차 · {formatClock(state.time.minutes)}</div>
           <div>기력: {state.player.energy} / {state.player.maxEnergy}</div>
-          <div>연결 보너스: 시작 {state.healthBonuses.startEnergyBonus} · 회복 {state.healthBonuses.recoveryBonus} · 작물 {state.healthBonuses.cropEfficiencyBonus}</div>
+          <div>
+            건강 보너스 · 시작 {state.healthBonuses.startEnergyBonus} / 회복 {state.healthBonuses.recoveryBonus} / 작물 {state.healthBonuses.cropEfficiencyBonus}
+          </div>
         </div>
 
         <div>
@@ -287,6 +316,13 @@ export function LifeSimArena({ onExit }: Props) {
             </button>
           </div>
         </div>
+
+        <LifeSimSettingsPanel
+          open={showSettings}
+          settings={state.settings}
+          onToggle={() => setShowSettings((current) => !current)}
+          onChange={(settings) => setState((current) => (current ? { ...current, settings } : current))}
+        />
       </section>
 
       <section className="flex min-h-0 flex-col gap-4 rounded-[1.6rem] border border-white/10 bg-black/30 p-4">
@@ -320,9 +356,9 @@ export function LifeSimArena({ onExit }: Props) {
       <section className="min-h-0 space-y-4 overflow-y-auto rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
         <div>
           <div className="text-xs uppercase tracking-[0.25em] text-sky-200/70">Field Guide</div>
-          <h2 className="mt-2 text-xl font-semibold">정착 가이드</h2>
+          <h2 className="mt-2 text-xl font-semibold">현장 가이드</h2>
           <p className="mt-2 text-sm text-slate-300">
-            밭을 갈고, 씨앗을 심고, 광산 자원을 모아 제작을 확장하세요. 마을 사람들과 대화하면 숨은 기록과 정화 계획이 조금씩 드러납니다.
+            밭을 갈고, 씨앗을 심고, 광산 자원을 모아 제작과 복구를 진행하세요. 마을 사람들과 대화하면 깊은 기록과 정화 계획이 조금씩 열립니다.
           </p>
         </div>
 
@@ -331,6 +367,14 @@ export function LifeSimArena({ onExit }: Props) {
           <div className="mt-2 text-slate-300">{status}</div>
         </div>
 
+        {activeQuest ? (
+          <div className="rounded-2xl border border-amber-300/20 bg-amber-500/10 p-4 text-sm">
+            <div className="font-medium">활성 퀘스트</div>
+            <div className="mt-2 font-semibold text-amber-100">{activeQuest.title}</div>
+            <div className="mt-1 text-slate-300">{activeQuest.objective}</div>
+          </div>
+        ) : null}
+
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
           <div className="font-medium">현재 선택한 도구</div>
           <div className="mt-2">{getItemLabel(selectedItem)}</div>
@@ -338,7 +382,7 @@ export function LifeSimArena({ onExit }: Props) {
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
-          <div className="font-medium">퀘스트</div>
+          <div className="font-medium">퀘스트 목록</div>
           <div className="mt-3 space-y-3">
             {state.quests.map((quest) => {
               const definition = getQuestLabel(quest.id);
@@ -356,17 +400,34 @@ export function LifeSimArena({ onExit }: Props) {
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
-          <div className="font-medium">관계도</div>
+          <div className="font-medium">현재 맵 주민</div>
           <div className="mt-3 space-y-3">
-            {lifeSimNpcs.map((npc) => {
+            {currentMapNpcs.map(({ npc, stop }) => {
               const relation = state.relationships[npc.id];
-              const schedule = state.time.minutes < 14 * 60 ? npc.scheduleHint.morning : npc.scheduleHint.evening;
               return (
                 <div key={npc.id} className="rounded-xl border border-white/10 px-3 py-3">
                   <div className="font-medium">{t(npc.name)}</div>
                   <div className="mt-1 text-xs text-white/70">{getRelationshipLabel(relation.level)}</div>
-                  <div className="mt-1 text-xs text-white/60">우정 {relation.friendship}</div>
-                  <div className="mt-2 text-xs text-sky-200">{t(schedule)}</div>
+                  <div className="mt-1 text-xs text-white/60">친밀도 {relation.friendship}</div>
+                  <div className="mt-2 text-xs text-sky-200">{t(stop.hint)}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+          <div className="font-medium">전체 일정</div>
+          <div className="mt-3 space-y-3">
+            {lifeSimNpcs.map((npc) => {
+              const stop = getNpcScheduleStop(state, npc.id);
+              const relation = state.relationships[npc.id];
+              return (
+                <div key={npc.id} className="rounded-xl border border-white/10 px-3 py-3">
+                  <div className="font-medium">{t(npc.name)}</div>
+                  <div className="mt-1 text-xs text-white/70">{getRelationshipLabel(relation.level)}</div>
+                  <div className="mt-2 text-xs text-sky-200">{t(stop.hint)}</div>
+                  <div className="mt-1 text-[11px] text-slate-400">{getMapLabel(stop.mapId)} · ({stop.x}, {stop.y})</div>
                 </div>
               );
             })}
@@ -379,15 +440,15 @@ export function LifeSimArena({ onExit }: Props) {
             <li>이동: WASD 또는 방향 버튼</li>
             <li>행동: Space</li>
             <li>대화/확인: E</li>
-            <li>수면: N</li>
+            <li>수면: Q</li>
             <li>핫바: 1~5</li>
           </ul>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
-          <div className="font-medium">연결 보너스</div>
+          <div className="font-medium">링크 보너스</div>
           <p className="mt-2 text-slate-300">
-            Health App과 연결하면 원본 건강 데이터가 아니라 파생된 게임 보너스만 받아 시작 기력, 회복력, 작물 효율이 조금 높아집니다.
+            Health App과 연결하면 원본 건강 데이터가 아니라 파생된 게임 보너스만 받아와 시작 기력, 회복, 작물 효율이 조금 올라갑니다.
             연결하지 않아도 전체 플레이는 그대로 가능합니다.
           </p>
           {onExit ? (

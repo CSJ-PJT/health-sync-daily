@@ -35,9 +35,9 @@ export default function App() {
 
   const subtitle = useMemo(() => {
     if (!bundle?.profile) {
-      return "복구 농장, 새벽 광장, 정화 광산이 이어진 독립 생활 RPG 수직 슬라이스";
+      return "복구 농장과 마을 광장, 정화 광산을 오가는 탑다운 생활 RPG 수직 슬라이스";
     }
-    return `링크 활성화 · 활동 ${bundle.profile.activityTier} / 수면 ${bundle.profile.sleepTier} / 공명 ${bundle.profile.resonancePoints}`;
+    return `활동 ${bundle.profile.activityTier} · 수면 ${bundle.profile.sleepTier} · 공명 ${bundle.profile.resonancePoints}`;
   }, [bundle]);
 
   return (
@@ -50,8 +50,8 @@ export default function App() {
             <div className="text-xs uppercase tracking-[0.25em] text-amber-200/70">Lore</div>
             <h2 className="mt-2 text-lg font-semibold">Longest Dawn Slice</h2>
             <p className="mt-2 text-slate-300">
-              낮은 공명의 시대를 지나던 세계는 가장 긴 새벽을 통과하고 있습니다. 지상은 회복을 시작했고, 지하의 오래된 그림자
-              행정 구조와 깊은 기록 보관소는 아직 완전히 사라지지 않았습니다.
+              오래된 공명선이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 지상은 서서히 회복되고 있고, 지하의 깊은 기록과 그림자 행정의 흔적은
+              아직 완전히 밝혀지지 않았습니다.
             </p>
           </div>
 
@@ -61,7 +61,7 @@ export default function App() {
               Game Link
             </div>
             <p className="text-slate-300">
-              링크 토큰을 입력하면 원본 건강 데이터가 아니라 파생 게임 전용 지표만 받아옵니다.
+              링크 토큰과 게임 계정을 연결하면 원본 건강 데이터가 아니라 파생된 게임 안전 지표만 받아옵니다.
             </p>
             <input
               value={gameAccountIdInput}
@@ -85,7 +85,7 @@ export default function App() {
                 }}
                 className="rounded-2xl border border-emerald-300/20 bg-emerald-500/15 px-4 py-2"
               >
-                연결 적용
+                링크 적용
               </button>
               <button
                 type="button"
@@ -124,7 +124,7 @@ export default function App() {
                 <div>공명 포인트: {bundle.profile.resonancePoints}</div>
               </div>
             ) : (
-              <div className="text-slate-400">링크하지 않아도 게임은 끝까지 플레이할 수 있습니다.</div>
+              <div className="text-slate-400">링크하지 않아도 게임은 그대로 플레이할 수 있습니다.</div>
             )}
           </div>
         </div>

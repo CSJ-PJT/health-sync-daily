@@ -1,10 +1,12 @@
 import type { GameLinkProfile } from "@health-sync/shared-types";
 import { createInitialLifeSimState } from "@/game/life-sim/state/lifeSimState";
 import type { LifeSimHealthBonuses, LifeSimState } from "@/game/life-sim/types";
-import { supabase } from "@/integrations/supabase/client";
-import { getStoredGameAccountId, getStoredGameLinkToken, loadDerivedGameLinkBundle } from "@/services/repositories/gameLinkRepository";
-
-const SAVE_KEY = "fifth_dawn_life_sim_save_v1";
+import { loadDerivedGameLinkBundle } from "@/services/repositories/gameLinkRepository";
+import {
+  createLocalLifeSimSaveAdapter,
+  resolveLifeSimLoadAdapters,
+  resolveLifeSimSaveAdapters,
+} from "@/services/repositories/lifeSimPersistence";
 
 function normalizeBonuses(input?: Partial<LifeSimHealthBonuses>): LifeSimHealthBonuses {
   return {
@@ -30,45 +32,6 @@ function toHealthBonuses(profile?: GameLinkProfile | null): LifeSimHealthBonuses
   });
 }
 
-function buildStorageKey(slot: string) {
-  return `${SAVE_KEY}:${slot}`;
-}
-
-type SaveEnvelope = {
-  slot: string;
-  savedAt: string;
-  state: LifeSimState;
-};
-
-async function loadServerState(slot: string) {
-  const token = getStoredGameLinkToken();
-  const gameAccountId = getStoredGameAccountId();
-  if (!token || !gameAccountId) return null;
-
-  const { data, error } = await supabase.rpc("fetch_life_sim_state", {
-    supplied_link_token: token,
-    supplied_game_account_id: gameAccountId,
-    requested_slot: slot,
-  });
-
-  if (error || !data) return null;
-  return data as LifeSimState;
-}
-
-async function saveServerState(state: LifeSimState, slot: string) {
-  const token = getStoredGameLinkToken();
-  const gameAccountId = getStoredGameAccountId();
-  if (!token || !gameAccountId) return false;
-
-  const { error } = await supabase.rpc("upsert_life_sim_state", {
-    supplied_link_token: token,
-    supplied_game_account_id: gameAccountId,
-    requested_slot: slot,
-    requested_state: state,
-  });
-
-  return !error;
-}
 
 export async function loadLifeSimBonuses() {
   const bundle = await loadDerivedGameLinkBundle();
@@ -77,35 +40,20 @@ export async function loadLifeSimBonuses() {
 
 export async function loadLifeSimState(slot = "main"): Promise<LifeSimState> {
   const bonuses = await loadLifeSimBonuses();
-  const localRaw = localStorage.getItem(buildStorageKey(slot));
-  if (localRaw) {
-    try {
-      const parsed = JSON.parse(localRaw) as SaveEnvelope;
-      return {
-        ...parsed.state,
-        slot,
-        healthBonuses: bonuses,
-      };
-    } catch {
-      localStorage.removeItem(buildStorageKey(slot));
-    }
-  }
+  for (const adapter of resolveLifeSimLoadAdapters()) {
+    const loaded = await adapter.load(slot);
+    if (!loaded) continue;
 
-  const serverState = await loadServerState(slot);
-  if (serverState) {
     const hydrated = {
-      ...serverState,
+      ...loaded,
       slot,
       healthBonuses: bonuses,
     };
-    localStorage.setItem(
-      buildStorageKey(slot),
-      JSON.stringify({
-        slot,
-        savedAt: new Date().toISOString(),
-        state: hydrated,
-      } satisfies SaveEnvelope),
-    );
+
+    if (adapter.id === "cloud") {
+      await createLocalLifeSimSaveAdapter().save(hydrated, slot);
+    }
+
     return hydrated;
   }
 
@@ -117,13 +65,7 @@ export async function saveLifeSimState(state: LifeSimState, slot = "main") {
     ...state,
     slot,
   };
-  localStorage.setItem(
-    buildStorageKey(slot),
-    JSON.stringify({
-      slot,
-      savedAt: new Date().toISOString(),
-      state: next,
-    } satisfies SaveEnvelope),
-  );
-  await saveServerState(next, slot);
+  for (const adapter of resolveLifeSimSaveAdapters(next)) {
+    await adapter.save(next, slot);
+  }
 }
