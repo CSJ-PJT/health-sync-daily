@@ -128,6 +128,7 @@ export type LifeSimRelationshipState = {
   friendship: number;
   lastTalkDay?: number;
   level: 0 | 1 | 2 | 3;
+  rewardedLevels: number[];
 };
 
 export type LifeSimStoryFlags = {
@@ -222,6 +223,22 @@ export type LifeSimProgressionState = {
   unlockedRecipes: LifeSimRecipeId[];
   discoveredMaps: LifeSimMapId[];
   completedQuestIds: LifeSimQuestId[];
+};
+
+export type LifeSimWorldState = {
+  plots: LifeSimCropPlot[];
+  resourceNodes: LifeSimResourceNode[];
+  hazards: LifeSimHazard[];
+  storyFlags: LifeSimStoryFlags;
+};
+
+export type LifeSimRelationshipJournalState = {
+  relationships: Record<LifeSimNpcId, LifeSimRelationshipState>;
+};
+
+export type LifeSimQuestJournalState = {
+  quests: LifeSimQuestState[];
+  progression: LifeSimProgressionState;
 };
 
 export type LifeSimEventName =
