@@ -160,4 +160,47 @@ export const lifeSimMaps: Record<string, LifeSimMapDefinition> = {
       en: "Collapsed passages and purifier conduits twist together here. The old underground shadows have not fully faded.",
     },
   },
+  "north-pass": {
+    id: "north-pass",
+    name: { ko: "북부 개척지", en: "Northern Reach" },
+    width: 18,
+    height: 14,
+    tiles: (() => {
+      const tiles: LifeSimTile[] = [];
+      for (let y = 0; y < 14; y += 1) {
+        for (let x = 0; x < 18; x += 1) {
+          const isBorder = x === 0 || y === 0 || x === 17 || y === 13;
+          const isPlaza = x >= 7 && x <= 10 && y >= 5 && y <= 8;
+          if (isBorder) {
+            tiles.push(tile(x, y, { terrain: "stone", walkable: false }));
+          } else if (isPlaza) {
+            tiles.push(tile(x, y, { terrain: "floor" }));
+          } else if (x >= 3 && x <= 5 && y >= 7 && y <= 10) {
+            tiles.push(tile(x, y, { terrain: "soil", tillable: true }));
+          } else {
+            tiles.push(tile(x, y, { terrain: "grass" }));
+          }
+        }
+      }
+      return tiles.map((entry) => {
+        if (entry.x === 9 && entry.y === 12) {
+          return { ...entry, warpTo: { mapId: "farm", x: 11, y: 5 } };
+        }
+        if (entry.x === 9 && entry.y === 4) {
+          return {
+            ...entry,
+            signText: {
+              ko: "이곳은 이후 별 거점과 외곽 거주지로 확장될 예정인 북부 개척지입니다.",
+              en: "This northern reach will later expand into outer settlements and starward hubs.",
+            },
+          };
+        }
+        return entry;
+      });
+    })(),
+    ambientHint: {
+      ko: "북쪽 통로 너머의 넓은 평지입니다. 향후 거주지와 작업 구역을 늘릴 수 있는 개척 후보지입니다.",
+      en: "A broad plain beyond the northern passage, suitable for future homes and work districts.",
+    },
+  },
 };

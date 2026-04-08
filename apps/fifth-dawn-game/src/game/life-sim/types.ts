@@ -7,7 +7,7 @@ export type LocalizedText = {
   en: string;
 };
 
-export type LifeSimMapId = "farm" | "village" | "mine";
+export type LifeSimMapId = "farm" | "village" | "mine" | "north-pass";
 export type LifeSimFacing = "up" | "down" | "left" | "right";
 export type LifeSimDayPeriod = "morning" | "afternoon" | "evening";
 export type LifeSimSaveMode = "auto" | "local" | "cloud";

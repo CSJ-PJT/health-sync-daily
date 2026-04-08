@@ -546,6 +546,30 @@ export function movePlayer(state: LifeSimState, facing: LifeSimFacing): LifeSimS
     );
   }
 
+  if (
+    nextState.player.mapId === "farm" &&
+    nextState.storyFlags.restoredBridge &&
+    nextState.player.x === 11 &&
+    nextState.player.y === 5
+  ) {
+    nextState = appendMessage(
+      {
+        ...nextState,
+        player: {
+          ...nextState.player,
+          mapId: "north-pass",
+          x: 9,
+          y: 12,
+        },
+        progression: {
+          ...nextState.progression,
+          discoveredMaps: Array.from(new Set([...nextState.progression.discoveredMaps, "north-pass"])),
+        },
+      },
+      createMessage("북부 개척지", "복구된 북쪽 통로를 지나 새 거주지 후보지에 도착했습니다."),
+    );
+  }
+
   return refreshQuestState(nextState);
 }
 

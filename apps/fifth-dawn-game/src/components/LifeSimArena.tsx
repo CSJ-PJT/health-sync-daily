@@ -23,8 +23,15 @@ import { lifeSimNpcs } from "@/game/life-sim/data/npcs";
 import { lifeSimRecipes } from "@/game/life-sim/data/recipes";
 import { getScheduledNpcsForMap, getNpcScheduleStop } from "@/game/life-sim/state/npcSchedule";
 import { getActiveQuestSummary } from "@/game/life-sim/state/questRouting";
+import {
+  getLifeSimPlayerSlice,
+  getLifeSimQuestSlice,
+  getLifeSimRelationshipSlice,
+  getLifeSimSettlementSlice,
+  getLifeSimWorldSlice,
+} from "@/game/life-sim/state/lifeSimSlices";
 import { applyInputPreset, rebindInputAction } from "@/game/life-sim/state/settings";
-import { getSettlementTierLabel, getSettlementUnlockedHighlights, getSettlementUpgradeCost } from "@/game/life-sim/state/settlementProgress";
+import { getSettlementFacilities, getSettlementTierLabel, getSettlementUnlockedHighlights, getSettlementUpgradeCost } from "@/game/life-sim/state/settlementProgress";
 import {
   advanceClock,
   craftRecipe,
@@ -81,6 +88,8 @@ function getMapLabel(mapId: LifeSimState["player"]["mapId"]) {
       return "여명 광장";
     case "mine":
       return "정화 광산";
+    case "north-pass":
+      return "북부 개척지";
   }
 }
 
@@ -220,6 +229,11 @@ export function LifeSimArena({ onExit }: Props) {
   const selectedItem = useMemo(() => (state ? useSelectedHotbarItem(state) : "hoe"), [state]);
   const activeQuest = useMemo(() => (state ? getActiveQuestSummary(state) : null), [state]);
   const currentMapNpcs = useMemo(() => (state ? getScheduledNpcsForMap(state, state.player.mapId) : []), [state]);
+  const playerSlice = useMemo(() => (state ? getLifeSimPlayerSlice(state) : null), [state]);
+  const worldSlice = useMemo(() => (state ? getLifeSimWorldSlice(state) : null), [state]);
+  const questSlice = useMemo(() => (state ? getLifeSimQuestSlice(state) : null), [state]);
+  const relationshipSlice = useMemo(() => (state ? getLifeSimRelationshipSlice(state) : null), [state]);
+  const settlementSlice = useMemo(() => (state ? getLifeSimSettlementSlice(state) : null), [state]);
 
   const saveNow = async () => {
     if (!state) return;
@@ -316,9 +330,9 @@ export function LifeSimArena({ onExit }: Props) {
         </div>
 
         <div className="space-y-2 text-sm text-slate-200">
-          <div>맵: {getMapLabel(state.player.mapId)}</div>
+          <div>맵: {getMapLabel(playerSlice?.mapId || state.player.mapId)}</div>
           <div>시간: {state.time.day}일차 {formatClock(state.time.minutes)}</div>
-          <div>기력: {state.player.energy} / {state.player.maxEnergy}</div>
+          <div>기력: {playerSlice?.energy || state.player.energy} / {playerSlice?.maxEnergy || state.player.maxEnergy}</div>
           <div>
             건강 보너스: 시작 {state.healthBonuses.startEnergyBonus} / 회복 {state.healthBonuses.recoveryBonus} / 작물 효율{" "}
             {state.healthBonuses.cropEfficiencyBonus}
@@ -549,23 +563,26 @@ export function LifeSimArena({ onExit }: Props) {
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
           <div className="font-medium">진행도</div>
           <div className="mt-3 space-y-2 text-slate-300">
-            <div>해금 레시피: {state.progression.unlockedRecipes.length}개</div>
-            <div>발견한 지역: {state.progression.discoveredMaps.length}곳</div>
-            <div>완료한 퀘스트: {state.progression.completedQuestIds.length}개</div>
-            <div>북쪽 다리: {state.storyFlags.restoredBridge ? "복구 완료" : "복구 필요"}</div>
+            <div>해금 레시피: {questSlice?.progression.unlockedRecipes.length || state.progression.unlockedRecipes.length}개</div>
+            <div>발견한 지역: {questSlice?.progression.discoveredMaps.length || state.progression.discoveredMaps.length}곳</div>
+            <div>완료한 퀘스트: {questSlice?.progression.completedQuestIds.length || state.progression.completedQuestIds.length}개</div>
+            <div>북쪽 다리: {worldSlice?.storyFlags.restoredBridge ? "복구 완료" : "복구 필요"}</div>
           </div>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
           <div className="font-medium">정착지 진행</div>
           <div className="mt-2 text-slate-300">
-            {getSettlementTierLabel(state.settlement.level)} · Lv.{state.settlement.level}
+            {getSettlementTierLabel(settlementSlice?.level || state.settlement.level)} · Lv.{settlementSlice?.level || state.settlement.level}
           </div>
           <div className="mt-2 text-xs text-white/70">
-            해금 하이라이트: {getSettlementUnlockedHighlights(state.settlement).join(", ")}
+            해금 하이라이트: {getSettlementUnlockedHighlights(settlementSlice || state.settlement).join(", ")}
           </div>
           <div className="mt-2 text-xs text-amber-200">
-            다음 업그레이드 비용: {state.settlement.level >= 3 ? "최종 단계" : `공명 ${getSettlementUpgradeCost(state.settlement.level)}`}
+            다음 업그레이드 비용: {(settlementSlice?.level || state.settlement.level) >= 3 ? "최종 단계" : `공명 ${getSettlementUpgradeCost(settlementSlice?.level || state.settlement.level)}`}
+          </div>
+          <div className="mt-3 text-xs text-white/70">
+            시설: {getSettlementFacilities(settlementSlice || state.settlement).join(", ")}
           </div>
         </div>
 

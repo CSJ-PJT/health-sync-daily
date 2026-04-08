@@ -18,7 +18,7 @@ function objectiveTextByQuest(state: LifeSimState, questId: LifeSimQuestId): Loc
         : { ko: "광산 자원을 모아 정화 등불을 만들고 정비공에게 가져가세요.", en: "Craft a purity lantern and bring it to the mechanic." };
     case "restore-bridge":
       return state.storyFlags.restoredBridge
-        ? { ko: "북쪽 다리 복구를 마쳤습니다.", en: "The northern bridge is restored." }
+        ? { ko: "북쪽 다리 복구를 마쳤습니다. 북부 개척지로 진입해 보세요.", en: "The northern bridge is restored. Enter the Northern Reach." }
         : { ko: "복구 키트를 제작해 농장 북쪽 다리 표식에서 사용하세요.", en: "Craft a repair kit and use it at the northern bridge marker." };
   }
 }
