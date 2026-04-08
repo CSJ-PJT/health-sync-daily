@@ -18,6 +18,7 @@ import TransferLogDetail from "./pages/TransferLogDetail";
 import Chat from "./pages/Chat";
 import Feed from "./pages/Feed";
 import Game from "./pages/Game";
+import LifeSimPage from "./pages/LifeSimPage";
 import AiCoach from "./pages/AiCoach";
 import Profile from "./pages/Profile";
 import SocialAuthCallback from "./pages/SocialAuthCallback";
@@ -50,6 +51,7 @@ const App = () => {
               <Route path="/chat" element={<Chat />} />
               <Route path="/feed" element={<Feed />} />
               <Route path="/game" element={<Game />} />
+              <Route path="/game/life-sim" element={<LifeSimPage />} />
               <Route path="/ai-coach" element={<AiCoach />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/:profileName" element={<Profile />} />

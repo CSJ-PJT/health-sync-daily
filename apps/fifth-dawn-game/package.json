@@ -1,0 +1,19 @@
+{
+  "name": "@health-sync/fifth-dawn-game",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "@health-sync/game-link-sdk": "workspace:*",
+    "@health-sync/shared-types": "workspace:*",
+    "@supabase/supabase-js": "^2.84.0",
+    "lucide-react": "^0.462.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "scripts": {
+    "dev": "vite --port 8081",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
