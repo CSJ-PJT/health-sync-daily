@@ -131,14 +131,8 @@ function completeQuest(quests: LifeSimQuestState[], questId: LifeSimQuestId, day
   );
 }
 
-function updateProgression(
-  progression: LifeSimProgressionState,
-  patch: Partial<LifeSimProgressionState>,
-): LifeSimProgressionState {
-  return {
-    ...progression,
-    ...patch,
-  };
+function updateProgression(progression: LifeSimProgressionState, patch: Partial<LifeSimProgressionState>): LifeSimProgressionState {
+  return { ...progression, ...patch };
 }
 
 function grantQuestReward(state: LifeSimState, questId: LifeSimQuestId) {
@@ -242,6 +236,12 @@ function refreshResourceNodes(state: LifeSimState) {
 function chooseDialogue(state: LifeSimState, npcId: LifeSimNpcId): LifeSimDialogueLine {
   const npcLines = lifeSimDialogue.filter((line) => line.speaker === npcId);
   const hasTurnip = (state.player.inventory.turnip || 0) > 0;
+  const relationLevel = state.relationships[npcId].level;
+
+  if (relationLevel >= 2) {
+    const friendLine = npcLines.find((line) => line.id === `${npcId}-friend`);
+    if (friendLine) return friendLine;
+  }
 
   const priority = npcLines.find((line) => {
     switch (line.condition) {
@@ -316,7 +316,6 @@ export function consumeSelectedItem(state: LifeSimState): LifeSimActionResult {
   if (selectedItem !== "dawn-broth") {
     return { state, message: createMessage("사용 불가", "지금 선택한 아이템은 직접 사용할 수 없습니다.") };
   }
-
   if ((state.player.inventory["dawn-broth"] || 0) <= 0) {
     return { state, message: createMessage("수프 부족", "새벽 수프가 인벤토리에 없습니다.") };
   }
@@ -493,10 +492,7 @@ export function cycleHazards(state: LifeSimState) {
 export function advanceClock(state: LifeSimState, minutes = 10) {
   const nextMinutes = state.time.minutes + minutes;
   if (nextMinutes < 24 * 60) {
-    return {
-      ...state,
-      time: { ...state.time, minutes: nextMinutes },
-    };
+    return { ...state, time: { ...state.time, minutes: nextMinutes } };
   }
   return sleepUntilNextDay(state);
 }
@@ -667,11 +663,9 @@ export function interactInWorld(state: LifeSimState): LifeSimActionResult {
 
     if (canRepairLantern) {
       sink.emit("story_flag_changed", { flag: "repairedLantern", value: true });
-      nextState = appendMessage(
-        nextState,
-        createMessage("정화 등불", "정비공 도윤이 정화 등불을 안정화했습니다. 광산 깊은 곳으로 갈 준비가 됐습니다."),
-      );
+      nextState = appendMessage(nextState, createMessage("정화 등불", "정비공 도윤이 정화 등불을 안정화했습니다. 광산 깊은 곳으로 갈 준비가 됐습니다."));
     }
+
     return { state: refreshQuestState(nextState) };
   }
 

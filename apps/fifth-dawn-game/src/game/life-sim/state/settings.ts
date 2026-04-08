@@ -51,3 +51,26 @@ export function applyInputPreset(settings: LifeSimSettings, preset: LifeSimInput
     keyBindings: lifeSimInputPresets[preset],
   };
 }
+
+export function rebindInputAction(
+  settings: LifeSimSettings,
+  action: LifeSimInputAction,
+  key: string,
+): LifeSimSettings {
+  const normalized = key.toLowerCase();
+  const nextBindings = Object.fromEntries(
+    Object.entries(settings.keyBindings).map(([bindingAction, keys]) => [
+      bindingAction,
+      bindingAction === action ? [normalized, ...keys.filter((entry) => entry !== normalized)].slice(0, 2) : keys.filter((entry) => entry !== normalized),
+    ]),
+  ) as LifeSimSettings["keyBindings"];
+
+  if (nextBindings[action].length === 0) {
+    nextBindings[action] = [normalized];
+  }
+
+  return {
+    ...settings,
+    keyBindings: nextBindings,
+  };
+}

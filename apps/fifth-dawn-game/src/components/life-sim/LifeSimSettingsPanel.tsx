@@ -1,12 +1,14 @@
 import { Settings2 } from "lucide-react";
-import { applyInputPreset, type LifeSimInputPreset } from "@/game/life-sim/state/settings";
+import { applyInputPreset, rebindInputAction, type LifeSimInputPreset } from "@/game/life-sim/state/settings";
 import type { LifeSimInputAction, LifeSimSaveMode, LifeSimSettings } from "@/game/life-sim/types";
 
 type Props = {
   open: boolean;
   settings: LifeSimSettings;
+  pendingRebind: LifeSimInputAction | null;
   onToggle(): void;
   onChange(next: LifeSimSettings): void;
+  onStartRebind(action: LifeSimInputAction): void;
 };
 
 const actionLabels: Array<[LifeSimInputAction, string]> = [
@@ -24,7 +26,7 @@ const actionLabels: Array<[LifeSimInputAction, string]> = [
   ["hotbar-5", "핫바 5"],
 ];
 
-export function LifeSimSettingsPanel({ open, settings, onToggle, onChange }: Props) {
+export function LifeSimSettingsPanel({ open, settings, pendingRebind, onToggle, onChange, onStartRebind }: Props) {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
       <div className="mb-2 flex items-center justify-between">
@@ -114,14 +116,26 @@ export function LifeSimSettingsPanel({ open, settings, onToggle, onChange }: Pro
             </label>
           </div>
           <div className="rounded-xl border border-white/10 p-3">
-            <div className="mb-2 font-medium">현재 키 바인딩</div>
-            <div className="space-y-1">
+            <div className="mb-2 font-medium">키 리바인딩</div>
+            <div className="space-y-2">
               {actionLabels.map(([action, label]) => (
                 <div key={action} className="flex items-center justify-between gap-2">
                   <span>{label}</span>
-                  <span className="text-slate-400">{settings.keyBindings[action].join(" / ")}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400">{settings.keyBindings[action].join(" / ")}</span>
+                    <button
+                      type="button"
+                      onClick={() => onStartRebind(action)}
+                      className={`rounded-lg border px-2 py-1 ${pendingRebind === action ? "border-amber-300 bg-amber-400/15" : "border-white/10"}`}
+                    >
+                      {pendingRebind === action ? "키 입력..." : "변경"}
+                    </button>
+                  </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-3 text-[11px] text-slate-500">
+              리바인딩 중에는 가장 먼저 누른 키가 저장됩니다.
             </div>
           </div>
         </div>

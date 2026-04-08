@@ -22,7 +22,7 @@ export const lifeSimNpcs: LifeSimNpcDefinition[] = [
         x: 12,
         y: 4,
         hint: {
-          ko: "남쪽 아치 아래에서 낡은 지도와 필사본을 맞춰 봅니다.",
+          ko: "남쪽 아치 아래에서 오래된 지도와 필사본을 맞춰 봅니다.",
           en: "Compares old maps and copied fragments beneath the south arch.",
         },
       },
@@ -101,8 +101,17 @@ export const lifeSimDialogue: LifeSimDialogueLine[] = [
     speaker: "archivist",
     condition: "mine-visited",
     text: {
-      ko: "광산 안의 문양을 봤다면 기억해 두세요. 단순한 폐허가 아니라 오래된 그림자 행정의 흔적일지도 몰라요.",
+      ko: "광산의 문양을 봤다면 기억해 두세요. 단순한 폐허가 아니라 오래된 그림자 행정의 흔적일지도 몰라요.",
       en: "If you saw the sigils in the mine, remember them. They may be traces of an old shadow administration, not mere ruin.",
+    },
+  },
+  {
+    id: "archivist-friend",
+    speaker: "archivist",
+    condition: "default",
+    text: {
+      ko: "기록은 늘 사실만 남기지 않아요. 무엇이 지워졌는지 보는 법도 배워야 해요.",
+      en: "Records do not preserve only facts. You also have to learn how to read what was erased.",
     },
   },
   {
@@ -130,6 +139,15 @@ export const lifeSimDialogue: LifeSimDialogueLine[] = [
     text: {
       ko: "새벽 순무를 가져왔군요. 식재료로도 좋고, 정화 작업 전에 몸을 안정시키는 데도 좋아요.",
       en: "You brought a dawn turnip. Good for food, and good for steadying yourself before hard work.",
+    },
+  },
+  {
+    id: "mechanic-friend",
+    speaker: "mechanic",
+    condition: "default",
+    text: {
+      ko: "도구는 손끝보다 마음을 먼저 따라가요. 계속 돌아오면 이 마을도 당신을 기억하게 될 겁니다.",
+      en: "Tools follow intent before they follow hands. Keep returning, and this town will start remembering you too.",
     },
   },
 ];
