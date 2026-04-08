@@ -25,14 +25,14 @@ export const lifeSimItems: Record<LifeSimItemId, LifeSimItemDefinition> = {
   "turnip-seeds": {
     id: "turnip-seeds",
     name: { ko: "새벽 순무 씨앗", en: "Dawn Turnip Seeds" },
-    description: { ko: "며칠 동안 물을 주면 새벽 순무로 자랍니다.", en: "Grows into turnips after a few watered days." },
+    description: { ko: "며칠 동안 물을 주면 새벽 순무로 자라납니다.", en: "Grows into turnips after a few watered days." },
     stackable: true,
     category: "seed",
   },
   turnip: {
     id: "turnip",
     name: { ko: "새벽 순무", en: "Dawn Turnip" },
-    description: { ko: "거래나 선물에 쓰기 좋은 기본 작물입니다.", en: "A humble crop to trade or gift." },
+    description: { ko: "거래와 선물에 두루 쓰이는 기본 작물입니다.", en: "A humble crop to trade or gift." },
     stackable: true,
     category: "crop",
   },
@@ -64,7 +64,7 @@ export const lifeSimItems: Record<LifeSimItemId, LifeSimItemDefinition> = {
     id: "purity-lantern",
     name: { ko: "정화 등불", en: "Purity Lantern" },
     description: {
-      ko: "오래된 기반 시설을 안정화하고 정화 흐름을 되살리는 장치입니다.",
+      ko: "오래된 기반 시설을 안정화하고 정화 흐름을 되살리는 상징 장치입니다.",
       en: "A symbolic device used to cleanse old infrastructure.",
     },
     stackable: true,
@@ -73,7 +73,7 @@ export const lifeSimItems: Record<LifeSimItemId, LifeSimItemDefinition> = {
   "dawn-broth": {
     id: "dawn-broth",
     name: { ko: "새벽 수프", en: "Dawn Broth" },
-    description: { ko: "순무를 끓여 만든 회복식입니다. 기력을 회복합니다.", en: "A restorative soup that recovers energy." },
+    description: { ko: "순무를 끓여 만든 회복식입니다. 기력을 조금 회복합니다.", en: "A restorative soup that recovers energy." },
     stackable: true,
     category: "consumable",
   },

@@ -12,7 +12,7 @@ export const lifeSimNpcs: LifeSimNpcDefinition[] = [
         x: 10,
         y: 5,
         hint: {
-          ko: "광장 기록 보관소 앞에서 봉인된 문서를 정리합니다.",
+          ko: "광장 기록 보관고 앞에서 봉인된 문서를 정리합니다.",
           en: "Sorts sealed records outside the square archive.",
         },
       },
@@ -22,7 +22,7 @@ export const lifeSimNpcs: LifeSimNpcDefinition[] = [
         x: 12,
         y: 4,
         hint: {
-          ko: "남쪽 아치 아래에서 오래된 지도와 필사본을 맞춰 봅니다.",
+          ko: "남쪽 아치 아래에서 오래된 지도와 사본을 맞춰 봅니다.",
           en: "Compares old maps and copied fragments beneath the south arch.",
         },
       },
@@ -32,7 +32,7 @@ export const lifeSimNpcs: LifeSimNpcDefinition[] = [
         x: 8,
         y: 6,
         hint: {
-          ko: "광장 가장자리에서 잠긴 기록의 빈칸을 다시 읽습니다.",
+          ko: "광장 가장자리에서 사라진 기록의 빈칸을 다시 읽고 있습니다.",
           en: "Rereads the missing passages near the edge of the square.",
         },
       },
@@ -49,7 +49,7 @@ export const lifeSimNpcs: LifeSimNpcDefinition[] = [
         x: 5,
         y: 8,
         hint: {
-          ko: "정화 배관 옆에서 끊어진 선로를 점검합니다.",
+          ko: "정화 작업장 옆에서 끊어진 관로를 점검합니다.",
           en: "Checks broken purifier lines near the workyard.",
         },
       },
@@ -59,7 +59,7 @@ export const lifeSimNpcs: LifeSimNpcDefinition[] = [
         x: 10,
         y: 6,
         hint: {
-          ko: "농장 북쪽에서 무너진 다리와 배수로를 살핍니다.",
+          ko: "농장 북쪽에서 무너진 다리와 배수로를 살펴봅니다.",
           en: "Inspects the collapsed bridge and drainage route by the farm.",
         },
       },
@@ -83,7 +83,7 @@ export const lifeSimDialogue: LifeSimDialogueLine[] = [
     speaker: "archivist",
     condition: "default",
     text: {
-      ko: "봉인된 기록에는 이 마을 아래가 훨씬 거대한 체계였다고 남아 있어요. 하지만 가장 중요한 장이 비어 있습니다.",
+      ko: "봉인된 기록에는 이 마을 아래가 훨씬 거대한 체계였다고 적혀 있어요. 하지만 가장 중요한 쪽이 비어 있습니다.",
       en: "The sealed records say a much larger system once slept beneath this village, but the most important pages are missing.",
     },
   },
@@ -101,7 +101,7 @@ export const lifeSimDialogue: LifeSimDialogueLine[] = [
     speaker: "archivist",
     condition: "mine-visited",
     text: {
-      ko: "광산의 문양을 봤다면 기억해 두세요. 단순한 폐허가 아니라 오래된 그림자 행정의 흔적일지도 몰라요.",
+      ko: "광산의 문양을 봤다면 기억해 두세요. 단순한 붕괴 흔적이 아니라 오래된 그림자 행정의 자취일 수도 있어요.",
       en: "If you saw the sigils in the mine, remember them. They may be traces of an old shadow administration, not mere ruin.",
     },
   },
@@ -110,7 +110,7 @@ export const lifeSimDialogue: LifeSimDialogueLine[] = [
     speaker: "archivist",
     condition: "default",
     text: {
-      ko: "기록은 늘 사실만 남기지 않아요. 무엇이 지워졌는지 보는 법도 배워야 해요.",
+      ko: "기록은 사실만 남기지 않아요. 지워진 무언가를 읽어내는 법도 배워야 해요.",
       en: "Records do not preserve only facts. You also have to learn how to read what was erased.",
     },
   },
@@ -119,7 +119,7 @@ export const lifeSimDialogue: LifeSimDialogueLine[] = [
     speaker: "mechanic",
     condition: "default",
     text: {
-      ko: "겉만 고쳐서는 부족해요. 정화 배관을 다시 깨우면 마을 전체가 숨을 돌릴 수 있을 겁니다.",
+      ko: "겉만 고쳐서는 부족해요. 정화 관로를 다시 깨우면 마을 전체가 숨을 돌릴 수 있을 겁니다.",
       en: "Surface repairs are not enough. If we wake the purifier lines, the whole town can breathe again.",
     },
   },
@@ -128,7 +128,7 @@ export const lifeSimDialogue: LifeSimDialogueLine[] = [
     speaker: "mechanic",
     condition: "low-energy",
     text: {
-      ko: "기력이 많이 빠져 보이네요. 오늘은 일찍 쉬고 내일 다시 움직여요.",
+      ko: "기력이 많이 비어 보이네요. 오늘은 일찍 쉬고 내일 다시 움직여요.",
       en: "You look drained. Rest early tonight and move again tomorrow.",
     },
   },
@@ -146,7 +146,7 @@ export const lifeSimDialogue: LifeSimDialogueLine[] = [
     speaker: "mechanic",
     condition: "default",
     text: {
-      ko: "도구는 손끝보다 마음을 먼저 따라가요. 계속 돌아오면 이 마을도 당신을 기억하게 될 겁니다.",
+      ko: "도구는 손보다 마음을 먼저 따라가요. 계속 돌아오다 보면 이 마을도 당신을 기억하게 될 겁니다.",
       en: "Tools follow intent before they follow hands. Keep returning, and this town will start remembering you too.",
     },
   },

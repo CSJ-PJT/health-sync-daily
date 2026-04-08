@@ -41,7 +41,7 @@ function buildFarmTiles(): LifeSimTile[] {
       return {
         ...entry,
         bed: true,
-        signText: { ko: "여기에서 쉬면 다음 날 아침으로 넘어갑니다.", en: "You can sleep here." },
+        signText: { ko: "여기에서 수면을 취하고 다음 날로 넘어갈 수 있습니다.", en: "You can sleep here." },
       };
     }
     if (entry.x === 11 && entry.y === 6) {
@@ -84,7 +84,7 @@ function buildVillageTiles(): LifeSimTile[] {
       return {
         ...entry,
         signText: {
-          ko: "광장 아래에는 깊은 기록 보관고와 봉인된 정화 관로가 잠들어 있다는 소문이 있습니다.",
+          ko: "광장 아래에는 깊은 기록 보관고와 봉인된 정화 기반 시설이 잠들어 있다는 소문이 있습니다.",
           en: "Rumor says a deep archive and sealed purifier lines sleep beneath the square.",
         },
       };
@@ -117,7 +117,7 @@ function buildMineTiles(): LifeSimTile[] {
       return {
         ...entry,
         signText: {
-          ko: "부서진 문양 아래에서 오래된 그림자 행정 구조의 흔적이 아직도 희미하게 빛납니다.",
+          ko: "부서진 문양 아래에서 오래된 그림자 행정 구조의 흔적이 아직 빛납니다.",
           en: "Beneath the broken sigils, traces of an old shadow administration flicker.",
         },
       };
@@ -157,7 +157,7 @@ function buildNorthPassTiles(): LifeSimTile[] {
       return {
         ...entry,
         signText: {
-          ko: "이곳은 북부 개척 전초지입니다. 이후 거주지, 작업 구역, 별길 관문으로 확장될 예정입니다.",
+          ko: "여기는 북부 개척 전초지입니다. 이후 거주지, 작업 구역, 보급 관문으로 확장될 예정입니다.",
           en: "This northern reach will later expand into outer settlements and starward hubs.",
         },
       };
@@ -166,7 +166,7 @@ function buildNorthPassTiles(): LifeSimTile[] {
       return {
         ...entry,
         signText: {
-          ko: "돌 선반 아래에서 공명 결정이 드러납니다. 정착지 비콘의 재료로 쓰일 수 있습니다.",
+          ko: "돌 선반 아래에서 공명 결정이 드러납니다. 정착지 비콘 전력원으로 쓸 수 있습니다.",
           en: "Resonance crystals show beneath the stone shelf. They may help power a beacon.",
         },
       };
@@ -183,7 +183,7 @@ export const lifeSimMaps: Record<string, LifeSimMapDefinition> = {
     height: 14,
     tiles: buildFarmTiles(),
     ambientHint: {
-      ko: "오래된 정착지 가장자리에 있는 농장입니다. 새벽 바람이 이 흙을 다시 살릴 수 있다고 속삭입니다.",
+      ko: "오래된 정착지 가장자리에 남은 농장입니다. 새벽 바람이 이 땅을 다시 일으킬 수 있다고 속삭입니다.",
       en: "A farm at the edge of an old settlement. The dawn wind says this soil can recover.",
     },
   },
@@ -205,7 +205,7 @@ export const lifeSimMaps: Record<string, LifeSimMapDefinition> = {
     height: 14,
     tiles: buildMineTiles(),
     ambientHint: {
-      ko: "무너진 통로와 정화 관로가 얽혀 있습니다. 지하의 오래된 그림자는 아직 완전히 사라지지 않았습니다.",
+      ko: "무너진 통로와 정화 관로가 뒤엉켜 있습니다. 지하의 오래된 그림자는 아직 완전히 사라지지 않았습니다.",
       en: "Collapsed passages and purifier conduits twist together here. The old underground shadows have not fully faded.",
     },
   },
@@ -216,7 +216,7 @@ export const lifeSimMaps: Record<string, LifeSimMapDefinition> = {
     height: 14,
     tiles: buildNorthPassTiles(),
     ambientHint: {
-      ko: "북쪽 통로 너머로 펼쳐진 넓은 초지입니다. 앞으로 거주지와 작업 구역, 외곽 관문이 들어설 후보지입니다.",
+      ko: "북쪽 통로 너머로 이어지는 초원 지대입니다. 앞으로 거주지와 작업 구역이 들어설 전초 기지입니다.",
       en: "A broad plain beyond the northern passage, suitable for future homes and work districts.",
     },
   },

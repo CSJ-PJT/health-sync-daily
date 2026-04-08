@@ -106,24 +106,20 @@ export function renderLifeSimScene(canvas: HTMLCanvasElement, state: LifeSimStat
   if (state.player.facing === "right") ctx.fillRect(state.player.x * TILE_SIZE + TILE_SIZE - 10, state.player.y * TILE_SIZE + 14, 6, 6);
 
   ctx.fillStyle = "rgba(15,23,42,0.72)";
-  ctx.fillRect(10, 10, 320, 60);
+  ctx.fillRect(10, 10, 340, 64);
   ctx.fillStyle = "#f8fafc";
   ctx.font = "13px sans-serif";
-  ctx.fillText(`${t(map.name)} · ${state.time.day}일 차`, 20, 30);
+  ctx.fillText(`${t(map.name)} · ${state.time.day}일차`, 20, 30);
   const hour = Math.floor(state.time.minutes / 60);
   const minute = state.time.minutes % 60;
-  ctx.fillText(
-    `시간 ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} · 기력 ${state.player.energy}/${state.player.maxEnergy}`,
-    20,
-    50,
-  );
+  ctx.fillText(`시간 ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} · 기력 ${state.player.energy}/${state.player.maxEnergy}`, 20, 50);
 
   if (state.settings.showPerformanceOverlay) {
     ctx.fillStyle = "rgba(15,23,42,0.72)";
-    ctx.fillRect(canvas.width - 170, 10, 160, 64);
+    ctx.fillRect(canvas.width - 180, 10, 170, 68);
     ctx.fillStyle = "#cbd5e1";
-    ctx.fillText(`맵 크기 ${map.width}x${map.height}`, canvas.width - 160, 30);
-    ctx.fillText(`자원 노드 ${state.resourceNodes.length}`, canvas.width - 160, 48);
-    ctx.fillText(`로그 ${state.eventLog.length}`, canvas.width - 160, 66);
+    ctx.fillText(`맵 크기 ${map.width}x${map.height}`, canvas.width - 170, 30);
+    ctx.fillText(`자원 노드 ${state.resourceNodes.length}`, canvas.width - 170, 48);
+    ctx.fillText(`이벤트 로그 ${state.eventLog.length}`, canvas.width - 170, 66);
   }
 }
