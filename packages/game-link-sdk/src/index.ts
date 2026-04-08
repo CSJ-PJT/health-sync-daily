@@ -1,5 +1,7 @@
 import type { GameAccountLink, GameLinkBundle, GameLinkMission, GameLinkProfile, GameLinkReward } from "@health-sync/shared-types";
 
+const DEFAULT_PRODUCT_KEY = "fifth-dawn";
+
 type SupabaseLikeClient = {
   rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
 };
@@ -23,7 +25,11 @@ export async function connectGameAccount(
   return data as { linkToken: string; linkStatus: string };
 }
 
-export async function disconnectGameAccount(supabase: SupabaseLikeClient, profileId: string, userId: string) {
+export async function disconnectGameAccount(
+  supabase: SupabaseLikeClient,
+  profileId: string,
+  userId: string,
+) {
   const { error } = await supabase.rpc("disconnect_game_account", {
     target_profile_id: profileId,
     target_user_id: userId,
@@ -34,7 +40,11 @@ export async function disconnectGameAccount(supabase: SupabaseLikeClient, profil
   }
 }
 
-export async function refreshGameLinkBundle(supabase: SupabaseLikeClient, profileId: string, userId: string) {
+export async function refreshGameLinkBundle(
+  supabase: SupabaseLikeClient,
+  profileId: string,
+  userId: string,
+) {
   const { data, error } = await supabase.rpc("refresh_game_link_profile", {
     target_profile_id: profileId,
     target_user_id: userId,
@@ -47,7 +57,11 @@ export async function refreshGameLinkBundle(supabase: SupabaseLikeClient, profil
   return data as GameLinkProfile;
 }
 
-export async function getHealthSideGameLinkBundle(supabase: SupabaseLikeClient, profileId: string, userId: string) {
+export async function getHealthSideGameLinkBundle(
+  supabase: SupabaseLikeClient,
+  profileId: string,
+  userId: string,
+) {
   const { data, error } = await supabase.rpc("fetch_health_game_link_bundle", {
     target_profile_id: profileId,
     target_user_id: userId,
@@ -69,10 +83,12 @@ export async function getGameSideLinkBundle(
   supabase: SupabaseLikeClient,
   linkToken: string,
   gameAccountId: string,
+  productKey = DEFAULT_PRODUCT_KEY,
 ) {
   const { data, error } = await supabase.rpc("fetch_game_link_bundle", {
     supplied_link_token: linkToken,
     supplied_game_account_id: gameAccountId,
+    requested_product_key: productKey,
   });
 
   if (error) {

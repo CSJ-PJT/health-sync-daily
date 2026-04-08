@@ -1,4 +1,5 @@
 import type { LifeSimState } from "@/game/life-sim/types";
+import { FIFTH_DAWN_PRODUCT_KEY } from "@/config/gameProduct";
 import { supabase } from "@/integrations/supabase/client";
 import { getStoredGameAccountId, getStoredGameLinkToken } from "@/services/repositories/gameLinkRepository";
 
@@ -66,6 +67,7 @@ export function createCloudLifeSimSaveAdapter(): LifeSimSaveAdapter {
       const { data, error } = await supabase.rpc("fetch_life_sim_state", {
         supplied_link_token: token,
         supplied_game_account_id: gameAccountId,
+        requested_product_key: FIFTH_DAWN_PRODUCT_KEY,
         requested_slot: slot,
       });
       if (error || !data) return null;
@@ -79,6 +81,7 @@ export function createCloudLifeSimSaveAdapter(): LifeSimSaveAdapter {
       const { error } = await supabase.rpc("upsert_life_sim_state", {
         supplied_link_token: token,
         supplied_game_account_id: gameAccountId,
+        requested_product_key: FIFTH_DAWN_PRODUCT_KEY,
         requested_slot: slot,
         requested_state: state,
       });

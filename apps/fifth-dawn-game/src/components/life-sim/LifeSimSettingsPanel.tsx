@@ -1,5 +1,5 @@
 import { Settings2 } from "lucide-react";
-import { applyInputPreset, rebindInputAction, type LifeSimInputPreset } from "@/game/life-sim/state/settings";
+import { applyInputPreset, type LifeSimInputPreset } from "@/game/life-sim/state/settings";
 import type { LifeSimInputAction, LifeSimSaveMode, LifeSimSettings } from "@/game/life-sim/types";
 
 type Props = {
@@ -16,7 +16,7 @@ const actionLabels: Array<[LifeSimInputAction, string]> = [
   ["move-down", "이동 아래"],
   ["move-left", "이동 왼쪽"],
   ["move-right", "이동 오른쪽"],
-  ["interact", "대화/확인"],
+  ["interact", "대화 / 확인"],
   ["use-tool", "행동"],
   ["sleep", "수면"],
   ["hotbar-1", "핫바 1"],
@@ -26,13 +26,22 @@ const actionLabels: Array<[LifeSimInputAction, string]> = [
   ["hotbar-5", "핫바 5"],
 ];
 
+const saveModeLabels: Record<LifeSimSaveMode, string> = {
+  auto: "자동",
+  local: "로컬",
+  cloud: "클라우드",
+};
+
 export function LifeSimSettingsPanel({ open, settings, pendingRebind, onToggle, onChange, onStartRebind }: Props) {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
       <div className="mb-2 flex items-center justify-between">
         <div className="font-medium">환경 설정</div>
         <button type="button" onClick={onToggle} className="rounded-xl border border-white/10 px-2 py-1 text-xs">
-          <span className="inline-flex items-center gap-1"><Settings2 className="h-3.5 w-3.5" />{open ? "접기" : "열기"}</span>
+          <span className="inline-flex items-center gap-1">
+            <Settings2 className="h-3.5 w-3.5" />
+            {open ? "접기" : "열기"}
+          </span>
         </button>
       </div>
       {open ? (
@@ -67,9 +76,11 @@ export function LifeSimSettingsPanel({ open, settings, pendingRebind, onToggle, 
                 key={mode}
                 type="button"
                 onClick={() => onChange({ ...settings, saveMode: mode })}
-                className={`rounded-xl border px-2 py-2 ${settings.saveMode === mode ? "border-emerald-300 bg-emerald-400/15" : "border-white/10"}`}
+                className={`rounded-xl border px-2 py-2 ${
+                  settings.saveMode === mode ? "border-emerald-300 bg-emerald-400/15" : "border-white/10"
+                }`}
               >
-                {mode}
+                {saveModeLabels[mode]}
               </button>
             ))}
           </div>
@@ -81,7 +92,7 @@ export function LifeSimSettingsPanel({ open, settings, pendingRebind, onToggle, 
                 onClick={() => onChange(applyInputPreset(settings, preset))}
                 className="rounded-xl border border-white/10 px-2 py-2"
               >
-                {preset === "wasd" ? "WASD" : "Arrow"}
+                {preset === "wasd" ? "WASD" : "방향키"}
               </button>
             ))}
           </div>
@@ -126,16 +137,18 @@ export function LifeSimSettingsPanel({ open, settings, pendingRebind, onToggle, 
                     <button
                       type="button"
                       onClick={() => onStartRebind(action)}
-                      className={`rounded-lg border px-2 py-1 ${pendingRebind === action ? "border-amber-300 bg-amber-400/15" : "border-white/10"}`}
+                      className={`rounded-lg border px-2 py-1 ${
+                        pendingRebind === action ? "border-amber-300 bg-amber-400/15" : "border-white/10"
+                      }`}
                     >
-                      {pendingRebind === action ? "키 입력..." : "변경"}
+                      {pendingRebind === action ? "입력 대기..." : "변경"}
                     </button>
                   </div>
                 </div>
               ))}
             </div>
             <div className="mt-3 text-[11px] text-slate-500">
-              리바인딩 중에는 가장 먼저 누른 키가 저장됩니다.
+              리바인딩 중에는 원하는 키를 바로 누르면 적용됩니다. 취소하려면 Esc를 누르세요.
             </div>
           </div>
         </div>

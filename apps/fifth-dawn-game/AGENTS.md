@@ -25,3 +25,5 @@
 - Prefer Capacitor as the lowest-disruption first phone deployment path.
 - Keep the game host fullscreen-friendly and touch-safe.
 - Use app-local mobile config and scripts under this app rather than the legacy root shell.
+- Keep Fifth Dawn linkage scoped by the `fifth-dawn` product key.
+- Converged settlement / housing work is part of Fifth Dawn progression, not a parallel standalone product.

@@ -11,6 +11,7 @@ The chosen path is `Capacitor`, because it is the lowest-disruption option for t
 - App: `apps/fifth-dawn-game`
 - Capacitor config: `apps/fifth-dawn-game/capacitor.config.ts`
 - Mobile env example: `apps/fifth-dawn-game/.env.mobile.example`
+- Product scope env: `VITE_FIFTH_DAWN_PRODUCT_KEY`
 - Root helper scripts:
   - `npm run mobile:game:build`
   - `npm run mobile:game:copy:android`
@@ -64,6 +65,7 @@ These steps are intentionally not automated in source control:
   - settlement building panel
 - Verify local save and linked cloud save
 - Verify game-link token entry and refresh flow
+- Verify product-scoped linkage stays on `fifth-dawn`
 - Verify app resumes cleanly after backgrounding
 - Add icons / splash / package ids before store builds
 
@@ -71,4 +73,5 @@ These steps are intentionally not automated in source control:
 
 - Fifth Dawn remains playable without any health linkage.
 - The mobile shell must still consume only derived game-link values, never raw health records.
+- Linked cloud save and derived bonuses are both scoped by the `fifth-dawn` product key.
 - Future controller support and richer mobile input should be layered on top of the current input abstraction rather than bypassing it.

@@ -30,6 +30,8 @@ export type SettlementObject = {
   ownerUserId?: string;
 };
 
+export type SettlementUpgradeLevel = 1 | 2 | 3;
+
 export type SettlementState = {
   worldId: string;
   version: number;
@@ -37,8 +39,11 @@ export type SettlementState = {
   height: number;
   title: string;
   theme: "recovery-farm" | "dawn-square" | "star-hub";
+  level: SettlementUpgradeLevel;
   tiles: SettlementTile[];
   objects: SettlementObject[];
+  unlockedObjectTypes: SettlementObjectType[];
+  restoredStructures: string[];
   likes: number;
   visits: number;
 };

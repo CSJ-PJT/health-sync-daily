@@ -36,6 +36,7 @@ export type GameAccountLink = {
   profileId: string;
   userId: string;
   gameAccountId: string;
+  productKey: string;
   linkStatus: LinkStatus;
   linkToken: string | null;
   linkedAt: string | null;

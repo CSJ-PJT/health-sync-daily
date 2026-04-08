@@ -1,32 +1,53 @@
-import type { SettlementObject, SettlementObjectType, SettlementState, SettlementTerrain } from "@/game/settlement/settlementTypes";
+import { settlementObjectPalette } from "@/game/settlement/settlementPalette";
+import type {
+  SettlementObject,
+  SettlementObjectType,
+  SettlementState,
+  SettlementTerrain,
+  SettlementUpgradeLevel,
+} from "@/game/settlement/settlementTypes";
 
-export function createDefaultSettlement(title = "새벽 거주지"): SettlementState {
-  const width = 8;
-  const height = 8;
-  const tiles = Array.from({ length: width * height }, (_, index) => {
+function buildDefaultTiles(width: number, height: number) {
+  return Array.from({ length: width * height }, (_, index) => {
     const x = index % width;
     const y = Math.floor(index / width);
     return {
       x,
       y,
-      terrain: y >= 5 ? "garden" : y === 3 ? "plaza" : "grass",
+      terrain: x === 0 || y === 0 || x === width - 1 || y === height - 1 ? "stone" : "grass",
     } as const;
   });
+}
 
+function createObject(type: SettlementObjectType, x: number, y: number): SettlementObject {
   return {
-    worldId: "fifth-dawn-home",
-    version: 1,
-    width,
-    height,
+    id: `settlement-object-${type}-${x}-${y}-${Math.random().toString(36).slice(2, 8)}`,
+    type,
+    x,
+    y,
+  };
+}
+
+function resolveUnlockedObjectTypes(level: SettlementUpgradeLevel, existing?: SettlementObjectType[]) {
+  const byLevel = settlementObjectPalette
+    .filter((entry) => entry.unlockLevel <= level)
+    .map((entry) => entry.type);
+  return Array.from(new Set([...(existing || []), ...byLevel]));
+}
+
+export function createDefaultSettlement(title = "새벽 거주지"): SettlementState {
+  return {
+    worldId: "fifth-dawn-settlement",
+    version: 2,
+    width: 8,
+    height: 8,
     title,
     theme: "recovery-farm",
-    tiles,
-    objects: [
-      { id: "home-core", type: "home-core", x: 3, y: 2 },
-      { id: "beacon-1", type: "beacon", x: 4, y: 2 },
-      { id: "tree-1", type: "tree", x: 1, y: 1 },
-      { id: "garden-1", type: "garden-bed", x: 5, y: 6 },
-    ],
+    level: 1,
+    tiles: buildDefaultTiles(8, 8),
+    objects: [createObject("home-core", 3, 3), createObject("garden-bed", 4, 4)],
+    unlockedObjectTypes: resolveUnlockedObjectTypes(1),
+    restoredStructures: [],
     likes: 0,
     visits: 0,
   };
@@ -39,27 +60,17 @@ export function paintSettlementTile(state: SettlementState, x: number, y: number
   };
 }
 
-export function placeSettlementObject(
-  state: SettlementState,
-  x: number,
-  y: number,
-  type: SettlementObjectType,
-): SettlementState {
-  const existing = state.objects.find((entry) => entry.x === x && entry.y === y);
-  const nextObject: SettlementObject = existing
-    ? { ...existing, type }
-    : {
-        id: `settlement-object-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        type,
-        x,
-        y,
-      };
+export function placeSettlementObject(state: SettlementState, x: number, y: number, type: SettlementObjectType): SettlementState {
+  if (!state.unlockedObjectTypes.includes(type)) {
+    return state;
+  }
+
+  const nextObjects = state.objects.filter((entry) => !(entry.x === x && entry.y === y));
+  nextObjects.push(createObject(type, x, y));
 
   return {
     ...state,
-    objects: existing
-      ? state.objects.map((entry) => (entry.id === existing.id ? nextObject : entry))
-      : [...state.objects, nextObject],
+    objects: nextObjects,
   };
 }
 
@@ -67,5 +78,30 @@ export function removeSettlementObject(state: SettlementState, x: number, y: num
   return {
     ...state,
     objects: state.objects.filter((entry) => !(entry.x === x && entry.y === y)),
+  };
+}
+
+export function unlockSettlementStructure(state: SettlementState, structureKey: string): SettlementState {
+  if (state.restoredStructures.includes(structureKey)) {
+    return state;
+  }
+
+  return {
+    ...state,
+    restoredStructures: [...state.restoredStructures, structureKey],
+  };
+}
+
+export function upgradeSettlement(state: SettlementState): SettlementState {
+  const nextLevel = Math.min(3, state.level + 1) as SettlementUpgradeLevel;
+  if (nextLevel === state.level) {
+    return state;
+  }
+
+  return {
+    ...state,
+    level: nextLevel,
+    unlockedObjectTypes: resolveUnlockedObjectTypes(nextLevel, state.unlockedObjectTypes),
+    restoredStructures: Array.from(new Set([...state.restoredStructures, `level-${nextLevel}`])),
   };
 }

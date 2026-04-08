@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Hammer, Home, PaintBucket, Trash2 } from "lucide-react";
+import { Hammer, Home, PaintBucket, Sparkles, Trash2 } from "lucide-react";
 import { settlementObjectPalette, settlementTerrainPalette } from "@/game/settlement/settlementPalette";
 import type { SettlementObjectType, SettlementState, SettlementTerrain } from "@/game/settlement/settlementTypes";
 
@@ -10,6 +10,7 @@ type Props = {
   onPaint: (x: number, y: number, terrain: SettlementTerrain) => void;
   onPlace: (x: number, y: number, type: SettlementObjectType) => void;
   onRemove: (x: number, y: number) => void;
+  onUpgrade?: () => void;
 };
 
 function terrainColor(terrain: SettlementTerrain) {
@@ -31,7 +32,13 @@ function terrainColor(terrain: SettlementTerrain) {
   }
 }
 
-export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove }: Props) {
+const upgradeHint: Record<SettlementState["level"], string> = {
+  1: "정원, 표지판, 벤치 중심의 기본 거주지 단계입니다.",
+  2: "등불, 바닥 패널, 러닝 게이트가 열리는 중간 단계입니다.",
+  3: "비콘, 타워, 벽체까지 열리는 고급 정착지 단계입니다.",
+};
+
+export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove, onUpgrade }: Props) {
   const [tool, setTool] = useState<BuilderTool>("paint");
   const [selectedTerrain, setSelectedTerrain] = useState<SettlementTerrain>("garden");
   const [selectedObject, setSelectedObject] = useState<SettlementObjectType>("home-core");
@@ -42,6 +49,8 @@ export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove }: Pr
     return map;
   }, []);
 
+  const visibleObjects = settlementObjectPalette.filter((entry) => state.unlockedObjectTypes.includes(entry.type));
+
   const handleCellClick = (x: number, y: number) => {
     if (tool === "paint") onPaint(x, y, selectedTerrain);
     if (tool === "place") onPlace(x, y, selectedObject);
@@ -50,13 +59,25 @@ export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove }: Pr
 
   return (
     <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
-      <div className="flex items-center gap-2 font-medium">
-        <Home className="h-4 w-4 text-primary" />
-        정착지 확장
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 font-medium">
+          <Home className="h-4 w-4 text-primary" />
+          정착지 확장
+        </div>
+        <div className="rounded-full border border-amber-300/20 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
+          Lv.{state.level}
+        </div>
       </div>
       <p className="mt-2 text-xs text-slate-400">
-        FitCraft Island에서 다듬은 2D 건설 흐름을 Fifth Dawn의 거주지 확장과 정착지 복구 모드로 수렴한 기초 패널입니다.
+        FitCraft Island에서 발전하던 2D 건설 흐름을 Fifth Dawn의 거주지, 정착지, 후반 식민지 확장 기반으로 흡수한 모드입니다.
       </p>
+      <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-slate-300">
+        <div className="font-medium text-white">{state.title}</div>
+        <div className="mt-1">{upgradeHint[state.level]}</div>
+        <div className="mt-2 text-[11px] text-slate-400">
+          복구 구조물: {state.restoredStructures.length}개 · 방문 {state.visits} · 좋아요 {state.likes}
+        </div>
+      </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <button
@@ -98,7 +119,9 @@ export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove }: Pr
               key={entry.terrain}
               type="button"
               onClick={() => setSelectedTerrain(entry.terrain)}
-              className={`rounded-xl border px-3 py-2 text-left ${selectedTerrain === entry.terrain ? "border-primary bg-primary/15" : "border-white/10 bg-white/5"}`}
+              className={`rounded-xl border px-3 py-2 text-left ${
+                selectedTerrain === entry.terrain ? "border-primary bg-primary/15" : "border-white/10 bg-white/5"
+              }`}
             >
               {entry.label}
             </button>
@@ -108,12 +131,14 @@ export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove }: Pr
 
       {tool === "place" ? (
         <div className="mt-4 grid grid-cols-2 gap-2">
-          {settlementObjectPalette.map((entry) => (
+          {visibleObjects.map((entry) => (
             <button
               key={entry.type}
               type="button"
               onClick={() => setSelectedObject(entry.type)}
-              className={`rounded-xl border px-3 py-2 text-left ${selectedObject === entry.type ? "border-primary bg-primary/15" : "border-white/10 bg-white/5"}`}
+              className={`rounded-xl border px-3 py-2 text-left ${
+                selectedObject === entry.type ? "border-primary bg-primary/15" : "border-white/10 bg-white/5"
+              }`}
             >
               <span className="mr-2">{entry.emoji}</span>
               {entry.label}
@@ -122,7 +147,24 @@ export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove }: Pr
         </div>
       ) : null}
 
-      <div className="mt-4 grid gap-1 rounded-xl border border-white/10 bg-slate-950/40 p-2" style={{ gridTemplateColumns: `repeat(${state.width}, minmax(0, 1fr))` }}>
+      {onUpgrade ? (
+        <button
+          type="button"
+          onClick={onUpgrade}
+          disabled={state.level >= 3}
+          className="mt-4 w-full rounded-xl border border-amber-300/20 bg-amber-500/15 px-3 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span className="inline-flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            {state.level >= 3 ? "최종 정착지 단계" : `정착지 업그레이드 (다음 Lv.${state.level + 1})`}
+          </span>
+        </button>
+      ) : null}
+
+      <div
+        className="mt-4 grid gap-1 rounded-xl border border-white/10 bg-slate-950/40 p-2"
+        style={{ gridTemplateColumns: `repeat(${state.width}, minmax(0, 1fr))` }}
+      >
         {state.tiles.map((tile) => {
           const object = state.objects.find((entry) => entry.x === tile.x && entry.y === tile.y);
           return (
@@ -132,14 +174,10 @@ export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove }: Pr
               onClick={() => handleCellClick(tile.x, tile.y)}
               className={`relative aspect-square rounded-md border border-black/10 text-[10px] ${terrainColor(tile.terrain)}`}
             >
-              {object ? objectMap.get(object.type)?.emoji || "•" : ""}
+              {object ? objectMap.get(object.type)?.emoji || "" : ""}
             </button>
           );
         })}
-      </div>
-
-      <div className="mt-3 text-xs text-slate-400">
-        테마: {state.theme} · 좋아요 {state.likes} · 방문 {state.visits}
       </div>
     </div>
   );

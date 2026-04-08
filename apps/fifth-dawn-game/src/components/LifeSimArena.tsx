@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { LifeSimSettingsPanel } from "@/components/life-sim/LifeSimSettingsPanel";
 import { SettlementBuilderPanel } from "@/components/life-sim/SettlementBuilderPanel";
+import { LifeSimTouchControls } from "@/components/life-sim/LifeSimTouchControls";
 import { renderLifeSimScene } from "@/game/life-sim/engine/renderLifeSimScene";
 import { resolveInputAction } from "@/game/life-sim/engine/inputBindings";
 import { lifeSimItems } from "@/game/life-sim/data/items";
@@ -36,7 +37,7 @@ import {
   useSelectedHotbarItem,
   useToolAction,
 } from "@/game/life-sim/state/lifeSimState";
-import { paintSettlementTile, placeSettlementObject, removeSettlementObject } from "@/game/settlement/settlementState";
+import { paintSettlementTile, placeSettlementObject, removeSettlementObject, upgradeSettlement } from "@/game/settlement/settlementState";
 import type { LifeSimFacing, LifeSimInputAction, LifeSimRecipeId, LifeSimState } from "@/game/life-sim/types";
 import { loadLifeSimState, saveLifeSimState } from "@/services/repositories/lifeSimSaveRepository";
 import { loadLifeSimSettings, saveLifeSimSettings } from "@/services/repositories/lifeSimSettingsRepository";
@@ -275,6 +276,31 @@ export function LifeSimArena({ onExit }: Props) {
     setStatus(preset === "wasd" ? "WASD 입력 프리셋을 적용했습니다." : "방향키 입력 프리셋을 적용했습니다.");
   };
 
+  const applySettlementUpgrade = () => {
+    setState((current) => {
+      if (!current) return current;
+      if (current.settlement.level >= 3) {
+        setStatus("정착지는 이미 최종 단계입니다.");
+        return current;
+      }
+      if (current.progression.resonancePoints < current.settlement.level * 10) {
+        setStatus("정착지 업그레이드에는 더 많은 공명 포인트가 필요합니다.");
+        return current;
+      }
+
+      const nextSettlement = upgradeSettlement(current.settlement);
+      setStatus(`정착지를 Lv.${nextSettlement.level}로 확장했습니다.`);
+      return {
+        ...current,
+        settlement: nextSettlement,
+        progression: {
+          ...current.progression,
+          resonancePoints: current.progression.resonancePoints - current.settlement.level * 10,
+        },
+      };
+    });
+  };
+
   if (!state) {
     return <div className="flex h-full items-center justify-center text-sm text-white/80">{status}</div>;
   }
@@ -431,6 +457,7 @@ export function LifeSimArena({ onExit }: Props) {
             </button>
           </div>
         </div>
+        <LifeSimTouchControls onMove={applyMovement} onTool={applyTool} onInteract={applyInteract} onSleep={applySleep} />
       </section>
 
       <section className="min-h-0 space-y-4 overflow-y-auto rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
@@ -560,6 +587,7 @@ export function LifeSimArena({ onExit }: Props) {
                 : current,
             )
           }
+          onUpgrade={applySettlementUpgrade}
         />
 
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
