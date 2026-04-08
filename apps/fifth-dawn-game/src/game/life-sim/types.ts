@@ -1,3 +1,5 @@
+import type { SettlementState } from "@/game/settlement/settlementTypes";
+
 export type LocaleCode = "ko" | "en";
 
 export type LocalizedText = {
@@ -276,6 +278,7 @@ export type LifeSimState = {
   storyFlags: LifeSimStoryFlags;
   quests: LifeSimQuestState[];
   progression: LifeSimProgressionState;
+  settlement: SettlementState;
   healthBonuses: LifeSimHealthBonuses;
   settings: LifeSimSettings;
   lastDialogue?: {

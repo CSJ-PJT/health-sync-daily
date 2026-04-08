@@ -10,6 +10,13 @@ The repository is split into two products:
 The health app owns raw health ingestion and derivation.
 The game app owns gameplay and consumes only derived parameters.
 
+## Product Boundary
+
+- `apps/health-app` remains the health product.
+- `apps/fifth-dawn-game` is the standalone Fifth Dawn product.
+- `Pulse Frontier` remains inside the health app entertainment hub for now.
+- `FitCraft Island` is preserved as a source of building-system ideas and data structures, but it is converging into Fifth Dawn rather than becoming its own standalone app.
+
 ## Shared Packages
 
 - `@health-sync/shared-types`
@@ -77,3 +84,8 @@ The app still relies on the repository's existing local `profile_id` / `user_id`
 Next hardening step:
 
 - bind linkage RPCs and table policies to first-class authenticated ownership rather than local profile identifiers alone
+
+## Fifth Dawn Convergence Note
+
+The current Fifth Dawn app now reuses the creative-building direction from FitCraft Island through an in-game settlement/residence builder foundation.
+This avoids maintaining two separate long-term building products while preserving the useful work already done.

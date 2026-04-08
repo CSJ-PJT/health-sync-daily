@@ -4,6 +4,7 @@ import { lifeSimMaps } from "@/game/life-sim/data/maps";
 import { lifeSimDialogue } from "@/game/life-sim/data/npcs";
 import { lifeSimQuestDefinitions, initialLifeSimQuests } from "@/game/life-sim/data/quests";
 import { lifeSimRecipes } from "@/game/life-sim/data/recipes";
+import { createDefaultSettlement } from "@/game/settlement/settlementState";
 import { createLifeSimEventSink } from "@/game/life-sim/state/events";
 import { getNpcAtPosition } from "@/game/life-sim/state/npcSchedule";
 import { createDefaultLifeSimSettings } from "@/game/life-sim/state/settings";
@@ -471,6 +472,7 @@ export function createInitialLifeSimState(
       discoveredMaps: ["farm", "village"],
       completedQuestIds: [],
     },
+    settlement: createDefaultSettlement("새벽 거주지"),
     healthBonuses: bonuses,
     settings: createDefaultLifeSimSettings(),
     lastDialogue: undefined,

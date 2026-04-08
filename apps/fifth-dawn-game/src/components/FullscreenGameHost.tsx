@@ -1,4 +1,4 @@
-import { Maximize2, Minimize2, X } from "lucide-react";
+import { Maximize2, Minimize2, Smartphone, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
 type Props = {
@@ -11,11 +11,20 @@ type Props = {
 
 export function FullscreenGameHost({ title, subtitle, onExit, sidebar, children }: Props) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
 
   useEffect(() => {
-    const handler = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    const handler = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+      setIsCompact(window.innerWidth < 1024);
+    };
+    handler();
     document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
+    window.addEventListener("resize", handler);
+    return () => {
+      document.removeEventListener("fullscreenchange", handler);
+      window.removeEventListener("resize", handler);
+    };
   }, []);
 
   const toggleFullscreen = async () => {
@@ -36,6 +45,12 @@ export function FullscreenGameHost({ title, subtitle, onExit, sidebar, children 
             <p className="text-sm text-slate-300">{subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
+              <span className="inline-flex items-center gap-2">
+                <Smartphone className="h-4 w-4" />
+                {isCompact ? "모바일/태블릿 레이아웃" : "데스크톱 레이아웃"}
+              </span>
+            </div>
             <button
               type="button"
               onClick={toggleFullscreen}
@@ -54,21 +69,17 @@ export function FullscreenGameHost({ title, subtitle, onExit, sidebar, children 
               >
                 <span className="inline-flex items-center gap-2">
                   <X className="h-4 w-4" />
-                  나가기
+                  닫기
                 </span>
               </button>
             ) : null}
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[1fr_340px]">
-          <div className="min-h-0 rounded-[2rem] border border-white/10 bg-black/20 p-3 backdrop-blur">
-            {children}
-          </div>
+        <div className={`grid min-h-0 flex-1 gap-4 ${sidebar ? "xl:grid-cols-[1fr_340px]" : ""}`}>
+          <div className="min-h-0 rounded-[2rem] border border-white/10 bg-black/20 p-3 backdrop-blur">{children}</div>
           {sidebar ? (
-            <aside className="min-h-0 rounded-[2rem] border border-white/10 bg-black/20 p-4 backdrop-blur">
-              {sidebar}
-            </aside>
+            <aside className="min-h-0 rounded-[2rem] border border-white/10 bg-black/20 p-4 backdrop-blur">{sidebar}</aside>
           ) : null}
         </div>
       </div>

@@ -13,6 +13,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { LifeSimSettingsPanel } from "@/components/life-sim/LifeSimSettingsPanel";
+import { SettlementBuilderPanel } from "@/components/life-sim/SettlementBuilderPanel";
 import { renderLifeSimScene } from "@/game/life-sim/engine/renderLifeSimScene";
 import { resolveInputAction } from "@/game/life-sim/engine/inputBindings";
 import { lifeSimItems } from "@/game/life-sim/data/items";
@@ -35,6 +36,7 @@ import {
   useSelectedHotbarItem,
   useToolAction,
 } from "@/game/life-sim/state/lifeSimState";
+import { paintSettlementTile, placeSettlementObject, removeSettlementObject } from "@/game/settlement/settlementState";
 import type { LifeSimFacing, LifeSimInputAction, LifeSimRecipeId, LifeSimState } from "@/game/life-sim/types";
 import { loadLifeSimState, saveLifeSimState } from "@/services/repositories/lifeSimSaveRepository";
 import { loadLifeSimSettings, saveLifeSimSettings } from "@/services/repositories/lifeSimSettingsRepository";
@@ -525,6 +527,40 @@ export function LifeSimArena({ onExit }: Props) {
             <div>북쪽 통로: {state.storyFlags.restoredBridge ? "복구 완료" : "복구 필요"}</div>
           </div>
         </div>
+
+        <SettlementBuilderPanel
+          state={state.settlement}
+          onPaint={(x, y, terrain) =>
+            setState((current) =>
+              current
+                ? {
+                    ...current,
+                    settlement: paintSettlementTile(current.settlement, x, y, terrain),
+                  }
+                : current,
+            )
+          }
+          onPlace={(x, y, type) =>
+            setState((current) =>
+              current
+                ? {
+                    ...current,
+                    settlement: placeSettlementObject(current.settlement, x, y, type),
+                  }
+                : current,
+            )
+          }
+          onRemove={(x, y) =>
+            setState((current) =>
+              current
+                ? {
+                    ...current,
+                    settlement: removeSettlementObject(current.settlement, x, y),
+                  }
+                : current,
+            )
+          }
+        />
 
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
           <div className="font-medium">조작 안내</div>

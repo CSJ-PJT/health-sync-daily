@@ -35,7 +35,7 @@ export default function App() {
 
   const subtitle = useMemo(() => {
     if (!bundle?.profile) {
-      return "복구 농장과 마을 광장, 정화 광산을 오가는 탑다운 생활 RPG 수직 슬라이스";
+      return "복구 농장, 여명 광장, 정화 광산을 오가는 톱다운 라이프 심 RPG 수직 슬라이스";
     }
     return `활동 ${bundle.profile.activityTier} · 수면 ${bundle.profile.sleepTier} · 공명 ${bundle.profile.resonancePoints}`;
   }, [bundle]);
@@ -50,18 +50,18 @@ export default function App() {
             <div className="text-xs uppercase tracking-[0.25em] text-amber-200/70">Lore</div>
             <h2 className="mt-2 text-lg font-semibold">Longest Dawn Slice</h2>
             <p className="mt-2 text-slate-300">
-              오래된 공명선이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 지상은 서서히 회복되고 있고, 지하의 깊은 기록과 그림자 행정의 흔적은
-              아직 완전히 밝혀지지 않았습니다.
+              오래된 공명층이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 지상을 복구해 가고, 지하의 깊은 기록과 그림자 행정의
+              잔흔을 정화하며 가장 긴 새벽을 지나 아침으로 향합니다.
             </p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
             <div className="mb-2 flex items-center gap-2 font-medium">
               <Link2 className="h-4 w-4 text-emerald-300" />
-              Game Link
+              Fifth Dawn Link
             </div>
             <p className="text-slate-300">
-              링크 토큰과 게임 계정을 연결하면 원본 건강 데이터가 아니라 파생된 게임 안전 지표만 받아옵니다.
+              건강 앱에서 만든 파생 지표만 연동합니다. 원본 건강 데이터는 이 게임 앱으로 직접 들어오지 않습니다.
             </p>
             <input
               value={gameAccountIdInput}
@@ -106,7 +106,7 @@ export default function App() {
                 ? "파생 지표를 불러오는 중입니다."
                 : bundle?.accountLink
                   ? `연결 상태: ${bundle.accountLink.linkStatus} · 게임 계정 ${bundle.accountLink.gameAccountId}`
-                  : "현재는 로컬 단독 플레이 상태입니다."}
+                  : "현재는 로컬 전용 플레이 상태입니다."}
             </div>
           </div>
 

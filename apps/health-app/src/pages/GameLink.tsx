@@ -50,8 +50,8 @@ export default function GameLink() {
     if (!profileId || !gameAccountId.trim()) return;
     await connectGameAccount(supabase as never, profileId, userId, gameAccountId.trim());
     toast({
-      title: "게임 계정을 연결했습니다",
-      description: "건강 데이터에서 파생된 게임 전용 지표만 안전하게 동기화합니다.",
+      title: "Fifth Dawn 계정을 연결했습니다",
+      description: "원본 건강 데이터가 아니라 파생된 게임 전용 지표만 안전하게 전달됩니다.",
     });
     await reload();
   };
@@ -60,8 +60,8 @@ export default function GameLink() {
     if (!profileId) return;
     await disconnectGameAccount(supabase as never, profileId, userId);
     toast({
-      title: "게임 계정 연결을 해제했습니다",
-      description: "이후에는 새로운 게임 보너스와 미션이 전송되지 않습니다.",
+      title: "Fifth Dawn 연결을 해제했습니다",
+      description: "이후에는 새 보너스와 미션 동기화가 중단됩니다.",
     });
     await reload();
   };
@@ -71,7 +71,7 @@ export default function GameLink() {
     await refreshGameLinkBundle(supabase as never, profileId, userId);
     toast({
       title: "파생 게임 지표를 갱신했습니다",
-      description: "원본 건강 기록이 아니라 게임 전용 파생 지표만 다시 계산했습니다.",
+      description: "원본 기록이 아니라 게임 전용 파생값만 다시 계산했습니다.",
     });
     await reload();
   };
@@ -81,10 +81,10 @@ export default function GameLink() {
       <Header showNav />
       <div className="mx-auto max-w-5xl space-y-6 p-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Game Link</h1>
+          <h1 className="text-3xl font-bold">Fifth Dawn Link</h1>
           <p className="text-sm text-muted-foreground">
-            독립 게임 앱에는 원본 건강 데이터가 전달되지 않습니다. 걸음, 수면, 회복, 수분 같은
-            항목은 게임 전용 파생 지표로 변환된 뒤에만 공유됩니다.
+            독립 게임 앱인 Fifth Dawn에는 원본 건강 데이터가 직접 전달되지 않습니다. 걸음, 수면, 회복, 수분, 일관성 같은
+            항목을 게임 전용 파생 지표로 바꾼 뒤에만 공유합니다.
           </p>
         </div>
 
@@ -97,11 +97,7 @@ export default function GameLink() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
-              <Input
-                value={gameAccountId}
-                onChange={(event) => setGameAccountId(event.target.value)}
-                placeholder="게임 계정 ID"
-              />
+              <Input value={gameAccountId} onChange={(event) => setGameAccountId(event.target.value)} placeholder="게임 계정 ID" />
               <Button className="gap-2" onClick={handleConnect} disabled={!profileId}>
                 <ShieldCheck className="h-4 w-4" />
                 연결
@@ -116,7 +112,7 @@ export default function GameLink() {
                 ? "연결 정보를 불러오는 중입니다."
                 : bundle?.accountLink
                   ? `현재 상태: ${bundle.accountLink.linkStatus} · 게임 계정 ${bundle.accountLink.gameAccountId}`
-                  : "아직 연결된 게임 계정이 없습니다."}
+                  : "아직 연결된 Fifth Dawn 계정이 없습니다."}
             </div>
             {bundle?.accountLink ? (
               <div className="grid gap-3 md:grid-cols-2">
@@ -155,7 +151,7 @@ export default function GameLink() {
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed p-6 text-sm text-muted-foreground">
-                아직 계산된 게임 링크 지표가 없습니다.
+                아직 계산된 Fifth Dawn 파생 지표가 없습니다.
               </div>
             )}
           </CardContent>
@@ -178,7 +174,7 @@ export default function GameLink() {
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-muted-foreground">현재 노출된 미션이 없습니다.</div>
+                <div className="text-sm text-muted-foreground">현재 노출된 연동 미션이 없습니다.</div>
               )}
             </CardContent>
           </Card>
@@ -193,13 +189,11 @@ export default function GameLink() {
                   <div key={reward.id} className="rounded-xl border p-3 text-sm">
                     <div className="font-medium">{reward.rewardKey}</div>
                     <div className="mt-1 text-muted-foreground">{reward.rewardType}</div>
-                    <div className="mt-2 text-xs text-primary">
-                      {reward.claimedAt ? "수령 완료" : "게임 앱에서 대기 중"}
-                    </div>
+                    <div className="mt-2 text-xs text-primary">{reward.claimedAt ? "수령 완료" : "게임 앱으로 대기 중"}</div>
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-muted-foreground">아직 연동된 보상이 없습니다.</div>
+                <div className="text-sm text-muted-foreground">아직 연동 보상이 없습니다.</div>
               )}
             </CardContent>
           </Card>

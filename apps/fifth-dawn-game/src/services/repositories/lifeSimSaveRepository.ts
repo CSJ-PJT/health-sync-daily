@@ -1,6 +1,7 @@
 import type { GameLinkProfile } from "@health-sync/shared-types";
 import { createInitialLifeSimState } from "@/game/life-sim/state/lifeSimState";
 import type { LifeSimHealthBonuses, LifeSimState } from "@/game/life-sim/types";
+import { createDefaultSettlement } from "@/game/settlement/settlementState";
 import { loadDerivedGameLinkBundle } from "@/services/repositories/gameLinkRepository";
 import {
   createLocalLifeSimSaveAdapter,
@@ -40,14 +41,21 @@ export async function loadLifeSimBonuses() {
 
 export async function loadLifeSimState(slot = "main"): Promise<LifeSimState> {
   const bonuses = await loadLifeSimBonuses();
+  const fallback = createInitialLifeSimState(bonuses);
   for (const adapter of resolveLifeSimLoadAdapters()) {
     const loaded = await adapter.load(slot);
     if (!loaded) continue;
 
     const hydrated = {
+      ...fallback,
       ...loaded,
       slot,
       healthBonuses: bonuses,
+      settlement: loaded.settlement || createDefaultSettlement("새벽 거주지"),
+      relationships: {
+        ...fallback.relationships,
+        ...loaded.relationships,
+      },
     };
 
     if (adapter.id === "cloud") {
@@ -57,7 +65,7 @@ export async function loadLifeSimState(slot = "main"): Promise<LifeSimState> {
     return hydrated;
   }
 
-  return createInitialLifeSimState(bonuses);
+  return fallback;
 }
 
 export async function saveLifeSimState(state: LifeSimState, slot = "main") {
