@@ -1,7 +1,7 @@
 import { lifeSimItems } from "@/game/life-sim/data/items";
 import { getLifeSimLocale, t } from "@/game/life-sim/data/localization";
 import { lifeSimMaps } from "@/game/life-sim/data/maps";
-import { lifeSimDialogue, lifeSimNpcs } from "@/game/life-sim/data/npcs";
+import { lifeSimDialogue } from "@/game/life-sim/data/npcs";
 import { lifeSimQuestDefinitions, initialLifeSimQuests } from "@/game/life-sim/data/quests";
 import { lifeSimRecipes } from "@/game/life-sim/data/recipes";
 import { createLifeSimEventSink } from "@/game/life-sim/state/events";
@@ -15,6 +15,7 @@ import type {
   LifeSimItemId,
   LifeSimMapId,
   LifeSimNpcId,
+  LifeSimProgressionState,
   LifeSimQuestId,
   LifeSimQuestState,
   LifeSimRecipeId,
@@ -93,9 +94,7 @@ function getPlot(state: LifeSimState, x: number, y: number) {
 
 function upsertPlot(state: LifeSimState, patch: LifeSimCropPlot) {
   const index = state.plots.findIndex((plot) => plot.x === patch.x && plot.y === patch.y);
-  if (index === -1) {
-    return [...state.plots, patch];
-  }
+  if (index === -1) return [...state.plots, patch];
   return state.plots.map((plot, plotIndex) => (plotIndex === index ? patch : plot));
 }
 
@@ -124,11 +123,7 @@ function updateRelationship(
   };
 }
 
-function completeQuest(
-  quests: LifeSimQuestState[],
-  questId: LifeSimQuestId,
-  day: number,
-): LifeSimQuestState[] {
+function completeQuest(quests: LifeSimQuestState[], questId: LifeSimQuestId, day: number): LifeSimQuestState[] {
   return quests.map((quest) =>
     quest.id === questId && quest.status !== "completed"
       ? { ...quest, status: "completed", completedOnDay: day }
@@ -136,35 +131,97 @@ function completeQuest(
   );
 }
 
+function updateProgression(
+  progression: LifeSimProgressionState,
+  patch: Partial<LifeSimProgressionState>,
+): LifeSimProgressionState {
+  return {
+    ...progression,
+    ...patch,
+  };
+}
+
+function grantQuestReward(state: LifeSimState, questId: LifeSimQuestId) {
+  switch (questId) {
+    case "first-harvest":
+      return appendMessage(
+        {
+          ...state,
+          player: withInventoryDelta(state, "dawn-broth", 1),
+          progression: updateProgression(state.progression, {
+            resonancePoints: state.progression.resonancePoints + 5,
+            completedQuestIds: [...state.progression.completedQuestIds, questId],
+          }),
+        },
+        createMessage("퀘스트 완료", "첫 수확을 마쳤습니다. 새벽 수프 1개와 공명 5를 획득했습니다."),
+      );
+    case "mine-recon":
+      return appendMessage(
+        {
+          ...state,
+          progression: updateProgression(state.progression, {
+            resonancePoints: state.progression.resonancePoints + 10,
+            unlockedRecipes: Array.from(new Set([...state.progression.unlockedRecipes, "purity-lantern"])),
+            completedQuestIds: [...state.progression.completedQuestIds, questId],
+          }),
+        },
+        createMessage("퀘스트 완료", "광산 정찰을 마쳤습니다. 정화 등불 설계도와 공명 10을 얻었습니다."),
+      );
+    case "repair-lantern":
+      return appendMessage(
+        {
+          ...state,
+          relationships: updateRelationship(state.relationships, "mechanic", state.time.day, 2),
+          progression: updateProgression(state.progression, {
+            resonancePoints: state.progression.resonancePoints + 15,
+            unlockedRecipes: Array.from(new Set([...state.progression.unlockedRecipes, "bridge-kit"])),
+            completedQuestIds: [...state.progression.completedQuestIds, questId],
+          }),
+        },
+        createMessage("퀘스트 완료", "등불 복구를 마쳤습니다. 공명 15와 복구 키트 설계도를 해금했습니다."),
+      );
+    case "restore-bridge":
+      return appendMessage(
+        {
+          ...state,
+          progression: updateProgression(state.progression, {
+            resonancePoints: state.progression.resonancePoints + 20,
+            completedQuestIds: [...state.progression.completedQuestIds, questId],
+          }),
+        },
+        createMessage("퀘스트 완료", "무너진 통로를 복원했습니다. 공명 20과 다음 지역의 단서를 확보했습니다."),
+      );
+  }
+}
+
 function refreshQuestState(state: LifeSimState) {
-  let nextQuests = state.quests;
+  let nextState = state;
   const sink = createLifeSimEventSink(state.eventLog);
 
   const maybeComplete = (questId: LifeSimQuestId, condition: boolean) => {
-    const current = nextQuests.find((quest) => quest.id === questId);
+    const current = nextState.quests.find((quest) => quest.id === questId);
     if (!condition || !current || current.status === "completed") return;
-    nextQuests = completeQuest(nextQuests, questId, state.time.day);
+    nextState = {
+      ...nextState,
+      quests: completeQuest(nextState.quests, questId, nextState.time.day),
+    };
     sink.emit("quest_completed", { questId });
+    nextState = grantQuestReward(nextState, questId);
   };
 
-  maybeComplete("first-harvest", state.storyFlags.harvestedFirstCrop);
-  maybeComplete("mine-recon", state.storyFlags.enteredMine);
-  maybeComplete("repair-lantern", state.storyFlags.repairedLantern);
-  maybeComplete("restore-bridge", state.storyFlags.restoredBridge);
+  maybeComplete("first-harvest", nextState.storyFlags.harvestedFirstCrop);
+  maybeComplete("mine-recon", nextState.storyFlags.enteredMine);
+  maybeComplete("repair-lantern", nextState.storyFlags.repairedLantern);
+  maybeComplete("restore-bridge", nextState.storyFlags.restoredBridge);
 
-  return {
-    ...state,
-    quests: nextQuests,
-  };
+  return nextState;
 }
 
 function progressCrops(state: LifeSimState) {
   return state.plots.map((plot) => {
     if (!plot.cropKind) return plot;
     const wateredToday = plot.wateredOnDay === state.time.day;
-    const nextStage = wateredToday
-      ? Math.min(plot.growthStage + 1 + state.healthBonuses.cropEfficiencyBonus, 3)
-      : plot.growthStage;
+    const nextStage = wateredToday ? Math.min(plot.growthStage + 1 + state.healthBonuses.cropEfficiencyBonus, 3) : plot.growthStage;
     return {
       ...plot,
       wateredOnDay: undefined,
@@ -196,7 +253,6 @@ function chooseDialogue(state: LifeSimState, npcId: LifeSimNpcId): LifeSimDialog
         return state.player.energy <= Math.floor(state.player.maxEnergy * 0.3);
       case "first-day":
         return state.time.day === 1;
-      case "default":
       default:
         return false;
     }
@@ -205,12 +261,24 @@ function chooseDialogue(state: LifeSimState, npcId: LifeSimNpcId): LifeSimDialog
   return priority || npcLines.find((line) => line.condition === "default") || npcLines[0];
 }
 
+export function isRecipeUnlocked(state: LifeSimState, recipeId: LifeSimRecipeId) {
+  return state.progression.unlockedRecipes.includes(recipeId);
+}
+
 function canCraftRecipe(state: LifeSimState, recipeId: LifeSimRecipeId) {
+  if (!isRecipeUnlocked(state, recipeId)) return false;
   const recipe = lifeSimRecipes[recipeId];
   return recipe.ingredients.every((ingredient) => (state.player.inventory[ingredient.itemId] || 0) >= ingredient.amount);
 }
 
 export function craftRecipe(state: LifeSimState, recipeId: LifeSimRecipeId): LifeSimActionResult {
+  if (!isRecipeUnlocked(state, recipeId)) {
+    return {
+      state,
+      message: createMessage("제작 잠김", "이 레시피는 아직 해금되지 않았습니다."),
+    };
+  }
+
   const recipe = lifeSimRecipes[recipeId];
   if (!canCraftRecipe(state, recipeId)) {
     return {
@@ -246,17 +314,11 @@ export function craftRecipe(state: LifeSimState, recipeId: LifeSimRecipeId): Lif
 export function consumeSelectedItem(state: LifeSimState): LifeSimActionResult {
   const selectedItem = useSelectedHotbarItem(state);
   if (selectedItem !== "dawn-broth") {
-    return {
-      state,
-      message: createMessage("사용 불가", "지금 선택한 아이템은 직접 사용할 수 없습니다."),
-    };
+    return { state, message: createMessage("사용 불가", "지금 선택한 아이템은 직접 사용할 수 없습니다.") };
   }
 
   if ((state.player.inventory["dawn-broth"] || 0) <= 0) {
-    return {
-      state,
-      message: createMessage("수프 부족", "새벽 수프가 인벤토리에 없습니다."),
-    };
+    return { state, message: createMessage("수프 부족", "새벽 수프가 인벤토리에 없습니다.") };
   }
 
   return {
@@ -274,14 +336,10 @@ export function consumeSelectedItem(state: LifeSimState): LifeSimActionResult {
 }
 
 export function createInitialLifeSimState(
-  bonuses: LifeSimHealthBonuses = {
-    startEnergyBonus: 0,
-    recoveryBonus: 0,
-    cropEfficiencyBonus: 0,
-  },
+  bonuses: LifeSimHealthBonuses = { startEnergyBonus: 0, recoveryBonus: 0, cropEfficiencyBonus: 0 },
 ): LifeSimState {
   return {
-    version: 2,
+    version: 3,
     slot: "main",
     player: {
       mapId: "farm",
@@ -305,10 +363,7 @@ export function createInitialLifeSimState(
       hotbar: ["hoe", "turnip-seeds", "watering-can", "pickaxe", "dawn-broth"],
       selectedHotbarIndex: 0,
     },
-    time: {
-      day: 1,
-      minutes: 6 * 60,
-    },
+    time: { day: 1, minutes: 6 * 60 },
     plots: [],
     resourceNodes: [
       { id: "ore-1", mapId: "mine", x: 8, y: 6, itemId: "ore-fragment" },
@@ -340,6 +395,12 @@ export function createInitialLifeSimState(
       restoredBridge: false,
     },
     quests: initialLifeSimQuests,
+    progression: {
+      resonancePoints: 0,
+      unlockedRecipes: ["dawn-broth"],
+      discoveredMaps: ["farm", "village"],
+      completedQuestIds: [],
+    },
     healthBonuses: bonuses,
     settings: createDefaultLifeSimSettings(),
     lastDialogue: undefined,
@@ -371,23 +432,14 @@ export function movePlayer(state: LifeSimState, facing: LifeSimFacing): LifeSimS
 
   let nextState: LifeSimState = {
     ...state,
-    player: {
-      ...state.player,
-      facing,
-    },
+    player: { ...state.player, facing },
   };
 
-  if (!nextTile || !nextTile.walkable) {
-    return nextState;
-  }
+  if (!nextTile || !nextTile.walkable) return nextState;
 
   nextState = {
     ...nextState,
-    player: {
-      ...nextState.player,
-      x: nextTile.x,
-      y: nextTile.y,
-    },
+    player: { ...nextState.player, x: nextTile.x, y: nextTile.y },
   };
 
   if (touchingHazard) {
@@ -413,6 +465,10 @@ export function movePlayer(state: LifeSimState, facing: LifeSimFacing): LifeSimS
           ...nextState.storyFlags,
           enteredMine: nextTile.warpTo.mapId === "mine" ? true : nextState.storyFlags.enteredMine,
         },
+        progression: {
+          ...nextState.progression,
+          discoveredMaps: Array.from(new Set([...nextState.progression.discoveredMaps, nextTile.warpTo.mapId])),
+        },
       },
       createMessage(t(lifeSimMaps[nextTile.warpTo.mapId].name), t(lifeSimMaps[nextTile.warpTo.mapId].ambientHint)),
     );
@@ -427,15 +483,9 @@ export function cycleHazards(state: LifeSimState) {
     hazards: state.hazards.map((hazard) => {
       const next = hazard[hazard.axis] + hazard.direction;
       if (next < hazard.range[0] || next > hazard.range[1]) {
-        return {
-          ...hazard,
-          direction: (hazard.direction === 1 ? -1 : 1) as 1 | -1,
-        };
+        return { ...hazard, direction: (hazard.direction === 1 ? -1 : 1) as 1 | -1 };
       }
-      return {
-        ...hazard,
-        [hazard.axis]: next,
-      };
+      return { ...hazard, [hazard.axis]: next };
     }),
   };
 }
@@ -445,10 +495,7 @@ export function advanceClock(state: LifeSimState, minutes = 10) {
   if (nextMinutes < 24 * 60) {
     return {
       ...state,
-      time: {
-        ...state.time,
-        minutes: nextMinutes,
-      },
+      time: { ...state.time, minutes: nextMinutes },
     };
   }
   return sleepUntilNextDay(state);
@@ -457,31 +504,21 @@ export function advanceClock(state: LifeSimState, minutes = 10) {
 export function sleepUntilNextDay(state: LifeSimState) {
   const sink = createLifeSimEventSink(state.eventLog);
   sink.emit("day_ended", { day: state.time.day });
-
   const nextDay = state.time.day + 1;
   const recoveredEnergy = state.player.maxEnergy + state.healthBonuses.recoveryBonus;
 
-  const nextState: LifeSimState = appendMessage(
-    {
-      ...state,
-      time: {
-        day: nextDay,
-        minutes: 6 * 60,
+  return refreshQuestState(
+    appendMessage(
+      {
+        ...state,
+        time: { day: nextDay, minutes: 6 * 60 },
+        player: { ...state.player, mapId: "farm", x: 13, y: 3, energy: recoveredEnergy },
+        plots: progressCrops(state),
+        resourceNodes: refreshResourceNodes(state),
       },
-      player: {
-        ...state.player,
-        mapId: "farm",
-        x: 13,
-        y: 3,
-        energy: recoveredEnergy,
-      },
-      plots: progressCrops(state),
-      resourceNodes: refreshResourceNodes(state),
-    },
-    createMessage("다음 날", `${nextDay}일차가 시작되었습니다. 기력이 회복되고 작물이 자랐습니다.`),
+      createMessage("다음 날", `${nextDay}일차가 시작되었습니다. 기력이 회복되고 작물이 자랐습니다.`),
+    ),
   );
-
-  return refreshQuestState(nextState);
 }
 
 export function useSelectedHotbarItem(state: LifeSimState) {
@@ -491,35 +528,19 @@ export function useSelectedHotbarItem(state: LifeSimState) {
 export function useToolAction(state: LifeSimState): LifeSimActionResult {
   const selectedItem = useSelectedHotbarItem(state);
   const frontTile = getFrontTile(state);
-  if (!frontTile) {
-    return { state };
-  }
+  if (!frontTile) return { state };
 
-  if (selectedItem === "dawn-broth") {
-    return consumeSelectedItem(state);
-  }
+  if (selectedItem === "dawn-broth") return consumeSelectedItem(state);
 
   if (selectedItem === "hoe") {
     if (state.player.mapId !== "farm" || !frontTile.tillable) {
       return { state, message: createMessage("괭이", "농장의 경작 가능한 흙에서만 사용할 수 있습니다.") };
     }
     const existing = getPlot(state, frontTile.x, frontTile.y);
-    const plot: LifeSimCropPlot = existing || {
-      x: frontTile.x,
-      y: frontTile.y,
-      tilled: true,
-      growthStage: 0,
-      readyToHarvest: false,
-    };
+    const plot: LifeSimCropPlot = existing || { x: frontTile.x, y: frontTile.y, tilled: true, growthStage: 0, readyToHarvest: false };
     return {
       state: appendMessage(
-        spendEnergy(
-          {
-            ...state,
-            plots: upsertPlot(state, { ...plot, tilled: true }),
-          },
-          1,
-        ),
+        spendEnergy({ ...state, plots: upsertPlot(state, { ...plot, tilled: true }) }, 1),
         createMessage("밭 갈기", "흙을 갈아 씨앗을 심을 수 있도록 만들었습니다."),
       ),
     };
@@ -557,13 +578,7 @@ export function useToolAction(state: LifeSimState): LifeSimActionResult {
     }
     return {
       state: appendMessage(
-        spendEnergy(
-          {
-            ...state,
-            plots: upsertPlot(state, { ...plot, wateredOnDay: state.time.day }),
-          },
-          1,
-        ),
+        spendEnergy({ ...state, plots: upsertPlot(state, { ...plot, wateredOnDay: state.time.day }) }, 1),
         createMessage("물 주기", "밭에 물을 주었습니다."),
       ),
     };
@@ -571,11 +586,7 @@ export function useToolAction(state: LifeSimState): LifeSimActionResult {
 
   if (selectedItem === "pickaxe") {
     const node = state.resourceNodes.find(
-      (entry) =>
-        entry.mapId === state.player.mapId &&
-        !entry.depletedUntilDay &&
-        entry.x === frontTile.x &&
-        entry.y === frontTile.y,
+      (entry) => entry.mapId === state.player.mapId && !entry.depletedUntilDay && entry.x === frontTile.x && entry.y === frontTile.y,
     );
     if (!node) {
       return { state, message: createMessage("채광", "캘 수 있는 광석이나 고철이 없습니다.") };
@@ -587,9 +598,7 @@ export function useToolAction(state: LifeSimState): LifeSimActionResult {
         {
           ...state,
           player: withInventoryDelta(state, node.itemId, 1),
-          resourceNodes: state.resourceNodes.map((entry) =>
-            entry.id === node.id ? { ...entry, depletedUntilDay: state.time.day + 1 } : entry,
-          ),
+          resourceNodes: state.resourceNodes.map((entry) => (entry.id === node.id ? { ...entry, depletedUntilDay: state.time.day + 1 } : entry)),
         },
         2,
       ),
@@ -618,12 +627,9 @@ export function useToolAction(state: LifeSimState): LifeSimActionResult {
       {
         ...state,
         player: withInventoryDelta(state, "bridge-kit", -1),
-        storyFlags: {
-          ...state.storyFlags,
-          restoredBridge: true,
-        },
+        storyFlags: { ...state.storyFlags, restoredBridge: true },
       },
-      createMessage("다리 복구", "농장 북쪽의 무너진 통로를 복구했습니다. 다음 업데이트에서 새로운 지역으로 이어집니다."),
+      createMessage("다리 복구", "농장 북쪽의 무너진 통로를 복구했습니다. 새로운 지역으로 이어질 준비가 되었습니다."),
     );
     return { state: refreshQuestState(nextState) };
   }
@@ -633,29 +639,21 @@ export function useToolAction(state: LifeSimState): LifeSimActionResult {
 
 export function interactInWorld(state: LifeSimState): LifeSimActionResult {
   const frontTile = getFrontTile(state);
-  if (!frontTile) {
-    return { state };
-  }
+  if (!frontTile) return { state };
 
   const npc = getNpcAtPosition(state, state.player.mapId, frontTile.x, frontTile.y);
-
   if (npc) {
     const line = chooseDialogue(state, npc.id);
     const sink = createLifeSimEventSink(state.eventLog);
     sink.emit("npc_talked", { npcId: npc.id, lineId: line.id });
 
     const canRepairLantern =
-      npc.id === "mechanic" &&
-      (state.player.inventory["purity-lantern"] || 0) > 0 &&
-      !state.storyFlags.repairedLantern;
+      npc.id === "mechanic" && (state.player.inventory["purity-lantern"] || 0) > 0 && !state.storyFlags.repairedLantern;
 
-    let nextState: LifeSimState = appendMessage(
+    let nextState = appendMessage(
       {
         ...state,
-        lastDialogue: {
-          npcId: npc.id,
-          lines: [t(line.text)],
-        },
+        lastDialogue: { npcId: npc.id, lines: [t(line.text)] },
         relationships: updateRelationship(state.relationships, npc.id, state.time.day),
         storyFlags: {
           ...state.storyFlags,
@@ -674,15 +672,11 @@ export function interactInWorld(state: LifeSimState): LifeSimActionResult {
         createMessage("정화 등불", "정비공 도윤이 정화 등불을 안정화했습니다. 광산 깊은 곳으로 갈 준비가 됐습니다."),
       );
     }
-
     return { state: refreshQuestState(nextState) };
   }
 
   if (frontTile.bed && state.player.mapId === "farm") {
-    return {
-      state: sleepUntilNextDay(state),
-      message: createMessage("취침", "오늘을 마무리하고 다음 날로 넘어갑니다."),
-    };
+    return { state: sleepUntilNextDay(state), message: createMessage("취침", "오늘을 마무리하고 다음 날로 넘어갑니다.") };
   }
 
   const plot = getPlot(state, frontTile.x, frontTile.y);
@@ -698,10 +692,7 @@ export function interactInWorld(state: LifeSimState): LifeSimActionResult {
             ? { ...entry, cropKind: undefined, growthStage: 0, readyToHarvest: false, wateredOnDay: undefined }
             : entry,
         ),
-        storyFlags: {
-          ...state.storyFlags,
-          harvestedFirstCrop: true,
-        },
+        storyFlags: { ...state.storyFlags, harvestedFirstCrop: true },
       },
       createMessage("수확", "새벽 순무를 수확했습니다."),
     );
@@ -709,15 +700,10 @@ export function interactInWorld(state: LifeSimState): LifeSimActionResult {
   }
 
   if (frontTile.signText) {
-    return {
-      state: appendMessage(state, createMessage("표지판", t(frontTile.signText))),
-    };
+    return { state: appendMessage(state, createMessage("표지판", t(frontTile.signText))) };
   }
 
-  return {
-    state,
-    message: createMessage("탐색", "상호작용할 대상이 없습니다."),
-  };
+  return { state, message: createMessage("탐색", "상호작용할 대상이 없습니다.") };
 }
 
 export function selectHotbarIndex(state: LifeSimState, index: number) {

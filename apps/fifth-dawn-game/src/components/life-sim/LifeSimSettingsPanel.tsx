@@ -1,6 +1,6 @@
 import { Settings2 } from "lucide-react";
 import { applyInputPreset, type LifeSimInputPreset } from "@/game/life-sim/state/settings";
-import type { LifeSimSaveMode, LifeSimSettings } from "@/game/life-sim/types";
+import type { LifeSimInputAction, LifeSimSaveMode, LifeSimSettings } from "@/game/life-sim/types";
 
 type Props = {
   open: boolean;
@@ -9,7 +9,7 @@ type Props = {
   onChange(next: LifeSimSettings): void;
 };
 
-const actionLabels: Array<[keyof LifeSimSettings["keyBindings"], string]> = [
+const actionLabels: Array<[LifeSimInputAction, string]> = [
   ["move-up", "이동 위"],
   ["move-down", "이동 아래"],
   ["move-left", "이동 왼쪽"],
@@ -86,7 +86,12 @@ export function LifeSimSettingsPanel({ open, settings, onToggle, onChange }: Pro
           <div className="grid gap-2">
             <button
               type="button"
-              onClick={() => onChange({ ...settings, inputMode: settings.inputMode === "keyboard-mouse" ? "controller-ready" : "keyboard-mouse" })}
+              onClick={() =>
+                onChange({
+                  ...settings,
+                  inputMode: settings.inputMode === "keyboard-mouse" ? "controller-ready" : "keyboard-mouse",
+                })
+              }
               className="rounded-xl border border-white/10 px-2 py-2 text-left"
             >
               입력 모드: {settings.inputMode === "keyboard-mouse" ? "키보드 + 마우스" : "컨트롤러 준비"}

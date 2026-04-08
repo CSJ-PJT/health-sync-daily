@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Save,
   Soup,
+  Sparkles,
   Sprout,
   Wheat,
   Wrench,
@@ -26,17 +27,14 @@ import {
   cycleHazards,
   getQuestLabel,
   interactInWorld,
+  isRecipeUnlocked,
   movePlayer,
   selectHotbarIndex,
   sleepUntilNextDay,
   useSelectedHotbarItem,
   useToolAction,
 } from "@/game/life-sim/state/lifeSimState";
-import type {
-  LifeSimFacing,
-  LifeSimRecipeId,
-  LifeSimState,
-} from "@/game/life-sim/types";
+import type { LifeSimFacing, LifeSimRecipeId, LifeSimState } from "@/game/life-sim/types";
 import { loadLifeSimState, saveLifeSimState } from "@/services/repositories/lifeSimSaveRepository";
 import { loadLifeSimSettings, saveLifeSimSettings } from "@/services/repositories/lifeSimSettingsRepository";
 
@@ -111,10 +109,7 @@ export function LifeSimArena({ onExit }: Props) {
       const next = await loadLifeSimState("main");
       if (cancelled) return;
       const settings = loadLifeSimSettings();
-      setState({
-        ...next,
-        settings,
-      });
+      setState({ ...next, settings });
       setStatus("복구 농장에 도착했습니다. 밭을 갈고, 마을의 기록을 모으며, 광산의 오래된 설비를 정화해 보세요.");
     }
     void load();
@@ -253,8 +248,10 @@ export function LifeSimArena({ onExit }: Props) {
           <div>맵: {getMapLabel(state.player.mapId)}</div>
           <div>시간: {state.time.day}일차 · {formatClock(state.time.minutes)}</div>
           <div>기력: {state.player.energy} / {state.player.maxEnergy}</div>
-          <div>
-            건강 보너스 · 시작 {state.healthBonuses.startEnergyBonus} / 회복 {state.healthBonuses.recoveryBonus} / 작물 {state.healthBonuses.cropEfficiencyBonus}
+          <div>건강 보너스: 시작 {state.healthBonuses.startEnergyBonus} / 회복 {state.healthBonuses.recoveryBonus} / 작물 {state.healthBonuses.cropEfficiencyBonus}</div>
+          <div className="inline-flex items-center gap-2 text-amber-200">
+            <Sparkles className="h-4 w-4" />
+            공명 포인트 {state.progression.resonancePoints}
           </div>
         </div>
 
@@ -297,17 +294,19 @@ export function LifeSimArena({ onExit }: Props) {
           <div className="space-y-2">
             {(Object.keys(lifeSimRecipes) as LifeSimRecipeId[]).map((recipeId) => {
               const recipe = lifeSimRecipes[recipeId];
+              const unlocked = isRecipeUnlocked(state, recipeId);
               return (
                 <button
                   key={recipeId}
                   type="button"
-                  onClick={() => setSelectedRecipe(recipeId)}
+                  onClick={() => unlocked && setSelectedRecipe(recipeId)}
                   className={`w-full rounded-2xl border px-3 py-3 text-left text-sm ${
-                    selectedRecipe === recipeId ? "border-sky-300 bg-sky-500/15" : "border-white/10 bg-black/20"
-                  }`}
+                    selectedRecipe === recipeId && unlocked ? "border-sky-300 bg-sky-500/15" : "border-white/10 bg-black/20"
+                  } ${unlocked ? "" : "opacity-60"}`}
                 >
                   <div className="font-medium">{t(recipe.title)}</div>
                   <div className="mt-1 text-xs text-white/70">{t(recipe.description)}</div>
+                  {!unlocked ? <div className="mt-2 text-[11px] text-amber-300">관련 퀘스트 완료 후 해금</div> : null}
                 </button>
               );
             })}

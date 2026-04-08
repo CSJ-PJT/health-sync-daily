@@ -217,6 +217,13 @@ export type LifeSimSettings = {
   keyBindings: Record<LifeSimInputAction, string[]>;
 };
 
+export type LifeSimProgressionState = {
+  resonancePoints: number;
+  unlockedRecipes: LifeSimRecipeId[];
+  discoveredMaps: LifeSimMapId[];
+  completedQuestIds: LifeSimQuestId[];
+};
+
 export type LifeSimEventName =
   | "crop_harvested"
   | "npc_talked"
@@ -251,6 +258,7 @@ export type LifeSimState = {
   relationships: Record<LifeSimNpcId, LifeSimRelationshipState>;
   storyFlags: LifeSimStoryFlags;
   quests: LifeSimQuestState[];
+  progression: LifeSimProgressionState;
   healthBonuses: LifeSimHealthBonuses;
   settings: LifeSimSettings;
   lastDialogue?: {
