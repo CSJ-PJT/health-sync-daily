@@ -51,14 +51,16 @@ export type LifeSimItemId =
   | "turnip"
   | "ore-fragment"
   | "scrap-bundle"
-  | "purity-lantern";
+  | "purity-lantern"
+  | "dawn-broth"
+  | "bridge-kit";
 
 export type LifeSimItemDefinition = {
   id: LifeSimItemId;
   name: LocalizedText;
   description: LocalizedText;
   stackable: boolean;
-  category: "tool" | "seed" | "crop" | "resource" | "artifact";
+  category: "tool" | "seed" | "crop" | "resource" | "artifact" | "consumable" | "crafted";
 };
 
 export type LifeSimCropKind = "turnip";
@@ -102,6 +104,10 @@ export type LifeSimNpcDefinition = {
   mapId: LifeSimMapId;
   x: number;
   y: number;
+  scheduleHint: {
+    morning: LocalizedText;
+    evening: LocalizedText;
+  };
 };
 
 export type LifeSimDialogueLine = {
@@ -114,6 +120,7 @@ export type LifeSimDialogueLine = {
 export type LifeSimRelationshipState = {
   friendship: number;
   lastTalkDay?: number;
+  level: 0 | 1 | 2 | 3;
 };
 
 export type LifeSimStoryFlags = {
@@ -122,6 +129,36 @@ export type LifeSimStoryFlags = {
   enteredMine: boolean;
   harvestedFirstCrop: boolean;
   repairedLantern: boolean;
+  cookedFirstMeal: boolean;
+  restoredBridge: boolean;
+};
+
+export type LifeSimQuestId = "first-harvest" | "mine-recon" | "repair-lantern" | "restore-bridge";
+
+export type LifeSimQuestStatus = "available" | "completed";
+
+export type LifeSimQuestDefinition = {
+  id: LifeSimQuestId;
+  title: LocalizedText;
+  description: LocalizedText;
+  rewardText: LocalizedText;
+};
+
+export type LifeSimQuestState = {
+  id: LifeSimQuestId;
+  status: LifeSimQuestStatus;
+  completedOnDay?: number;
+};
+
+export type LifeSimRecipeId = "dawn-broth" | "purity-lantern" | "bridge-kit";
+
+export type LifeSimRecipeDefinition = {
+  id: LifeSimRecipeId;
+  resultItemId: LifeSimItemId;
+  resultAmount: number;
+  ingredients: Array<{ itemId: LifeSimItemId; amount: number }>;
+  title: LocalizedText;
+  description: LocalizedText;
 };
 
 export type LifeSimInventory = Record<LifeSimItemId, number>;
@@ -176,7 +213,9 @@ export type LifeSimEventName =
   | "resource_mined"
   | "hazard_hit"
   | "day_ended"
-  | "story_flag_changed";
+  | "story_flag_changed"
+  | "recipe_crafted"
+  | "quest_completed";
 
 export type LifeSimGameplayEvent = {
   id: string;
@@ -201,6 +240,7 @@ export type LifeSimState = {
   hazards: LifeSimHazard[];
   relationships: Record<LifeSimNpcId, LifeSimRelationshipState>;
   storyFlags: LifeSimStoryFlags;
+  quests: LifeSimQuestState[];
   healthBonuses: LifeSimHealthBonuses;
   settings: LifeSimSettings;
   lastDialogue?: {
