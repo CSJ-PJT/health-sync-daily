@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "@health-sync/game-link-sdk": "workspace:*",
-    "@health-sync/shared-types": "workspace:*",
+    "@capacitor/android": "^7.4.4",
+    "@health-sync/game-link-sdk": "file:../../packages/game-link-sdk",
+    "@health-sync/shared-types": "file:../../packages/shared-types",
     "@supabase/supabase-js": "^2.84.0",
     "lucide-react": "^0.462.0",
     "react": "^18.3.1",
@@ -15,6 +16,8 @@
     "dev": "vite --port 8081",
     "build": "vite build",
     "preview": "vite preview",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
     "cap:copy:android": "npx cap copy android",
     "cap:sync:android": "npx cap sync android",
     "cap:open:android": "npx cap open android"

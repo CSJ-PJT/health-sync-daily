@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link2, Sparkles } from "lucide-react";
 import { FullscreenGameHost } from "@/components/FullscreenGameHost";
 import { LifeSimArena } from "@/components/LifeSimArena";
+import { fifthDawnMobileShell } from "@/config/mobileShell";
 import type { GameLinkBundle } from "@health-sync/shared-types";
 import {
   clearStoredGameAccountId,
@@ -35,14 +36,14 @@ export default function App() {
 
   const subtitle = useMemo(() => {
     if (!bundle?.profile) {
-      return "복구 농장, 여명 광장, 정화 광산을 오가는 톱다운 라이프 심 RPG 수직 슬라이스";
+      return "복구 농장, 여명 광장, 정화 광산, 북부 개척지를 잇는 탑다운 라이프심 RPG 수직 슬라이스";
     }
     return `활동 ${bundle.profile.activityTier} · 수면 ${bundle.profile.sleepTier} · 공명 ${bundle.profile.resonancePoints}`;
   }, [bundle]);
 
   return (
     <FullscreenGameHost
-      title="Fifth Dawn Valley"
+      title={fifthDawnMobileShell.appName}
       subtitle={subtitle}
       sidebar={
         <div className="space-y-4 text-sm text-slate-200">
@@ -50,8 +51,8 @@ export default function App() {
             <div className="text-xs uppercase tracking-[0.25em] text-amber-200/70">Lore</div>
             <h2 className="mt-2 text-lg font-semibold">Longest Dawn Slice</h2>
             <p className="mt-2 text-slate-300">
-              오래된 공명층이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 지상을 복구해 가고, 지하의 깊은 기록과 그림자 행정의
-              잔흔을 정화하며 가장 긴 새벽을 지나 아침으로 향합니다.
+              오래된 공명층이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 땅을 복구하고 지하의 깊은 기록과 그림자 행정의
+              흔적을 정화하며, 가장 긴 새벽을 지나 다음 아침으로 나아갑니다.
             </p>
           </div>
 
@@ -126,6 +127,9 @@ export default function App() {
             ) : (
               <div className="text-slate-400">링크하지 않아도 게임은 그대로 플레이할 수 있습니다.</div>
             )}
+            <div className="mt-3 text-xs text-slate-500">
+              모바일 셸 설정: {fifthDawnMobileShell.preferredOrientation} / {fifthDawnMobileShell.productKey}
+            </div>
           </div>
         </div>
       }

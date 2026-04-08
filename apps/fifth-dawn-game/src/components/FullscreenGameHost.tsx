@@ -48,7 +48,7 @@ export function FullscreenGameHost({ title, subtitle, onExit, sidebar, children 
             <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
               <span className="inline-flex items-center gap-2">
                 <Smartphone className="h-4 w-4" />
-                {isCompact ? "모바일/태블릿 레이아웃" : "데스크톱 레이아웃"}
+                {isCompact ? "모바일 / 태블릿 레이아웃" : "데스크톱 레이아웃"}
               </span>
             </div>
             <button

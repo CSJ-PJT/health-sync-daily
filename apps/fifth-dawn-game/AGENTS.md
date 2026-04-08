@@ -27,3 +27,8 @@
 - Use app-local mobile config and scripts under this app rather than the legacy root shell.
 - Keep Fifth Dawn linkage scoped by the `fifth-dawn` product key.
 - Converged settlement / housing work is part of Fifth Dawn progression, not a parallel standalone product.
+- Before native project creation, keep browser build and touch-safe UI green.
+- Native shell creation should use:
+  - `npm run mobile:game:add:android`
+  - `npm run mobile:game:add:ios`
+- Use `docs/fifth-dawn-mobile.md` and `docs/fifth-dawn-mobile-release-checklist.md` as the source of truth before first phone deployment.

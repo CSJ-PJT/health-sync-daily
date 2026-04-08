@@ -14,6 +14,8 @@ The chosen path is `Capacitor`, because it is the lowest-disruption option for t
 - Product scope env: `VITE_FIFTH_DAWN_PRODUCT_KEY`
 - Root helper scripts:
   - `npm run mobile:game:build`
+  - `npm run mobile:game:add:android`
+  - `npm run mobile:game:add:ios`
   - `npm run mobile:game:copy:android`
   - `npm run mobile:game:sync:android`
   - `npm run mobile:game:open:android`
@@ -25,6 +27,7 @@ From repository root:
 ```powershell
 npm run build:game
 npm run mobile:game:build
+npm run mobile:game:add:android
 npm run mobile:game:copy:android
 npm run mobile:game:sync:android
 npm run mobile:game:open:android
@@ -35,6 +38,7 @@ From the app directory:
 ```powershell
 cd apps/fifth-dawn-game
 npm run build
+npm run cap:add:android
 npm run cap:copy:android
 npm run cap:sync:android
 npm run cap:open:android
@@ -45,12 +49,15 @@ npm run cap:open:android
 These steps are intentionally not automated in source control:
 
 1. Install and/or confirm `@capacitor/cli`
+   - current local check: not installed in this repo yet
 2. Add native platforms the first time
-   - `npx cap add android`
-   - `npx cap add ios`
+   - `npm run mobile:game:add:android`
+   - `npm run mobile:game:add:ios`
 3. Configure Android package id / iOS bundle id for the release target
 4. Add icons, splash, signing, certificates, and store metadata
 5. Verify orientation and safe-area behavior on real devices
+6. Add `adb` to PATH or keep using the explicit SDK path
+   - current local SDK path exists: `C:\Users\dan18\AppData\Local\Android\Sdk\platform-tools\adb.exe`
 
 ## Recommended First Mobile Release Checklist
 
@@ -68,6 +75,7 @@ These steps are intentionally not automated in source control:
 - Verify product-scoped linkage stays on `fifth-dawn`
 - Verify app resumes cleanly after backgrounding
 - Add icons / splash / package ids before store builds
+- Follow `docs/fifth-dawn-mobile-release-checklist.md` before store submission
 
 ## Notes
 

@@ -10,6 +10,13 @@ const config = {
     backgroundColor: "#07111f",
     allowMixedContent: false,
   },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 1200,
+      backgroundColor: process.env.VITE_FIFTH_DAWN_STATUS_BAR_COLOR || "#07111f",
+      showSpinner: false,
+    },
+  },
 };
 
 export default config;

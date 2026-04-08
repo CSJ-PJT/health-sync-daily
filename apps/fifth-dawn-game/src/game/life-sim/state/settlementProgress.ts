@@ -57,3 +57,16 @@ export function getSettlementFacilities(state: SettlementState) {
 
   return facilities;
 }
+
+export function getNextSettlementGoal(state: SettlementState) {
+  if (state.level === 1) {
+    return "정화 공방과 러닝 게이트가 열릴 때까지 공명을 모으세요.";
+  }
+  if (state.level === 2) {
+    return "공명 비콘과 외곽 방벽이 열리는 최종 단계로 향하세요.";
+  }
+  if (!state.restoredStructures.includes("north-outpost")) {
+    return "북부 전초기지를 열어 외곽 정착지 기반을 확장하세요.";
+  }
+  return "정착지 기반이 안정화되었습니다. 다음 거주 구역 설계를 준비하세요.";
+}
