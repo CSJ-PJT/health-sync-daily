@@ -7,7 +7,7 @@ export const lifeSimRecipes: Record<LifeSimRecipeId, LifeSimRecipeDefinition> = 
     resultAmount: 1,
     ingredients: [{ itemId: "turnip", amount: 2 }],
     title: { ko: "새벽 수프", en: "Dawn Broth" },
-    description: { ko: "순무 두 개로 끓여 기력 회복에 도움을 주는 수프입니다.", en: "Cook turnips into a restorative broth." },
+    description: { ko: "순무 두 개를 끓여 기력을 회복하는 수프를 만듭니다.", en: "Cook turnips into a restorative broth." },
   },
   "purity-lantern": {
     id: "purity-lantern",

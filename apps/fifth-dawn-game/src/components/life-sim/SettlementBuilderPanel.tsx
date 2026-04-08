@@ -33,9 +33,9 @@ function terrainColor(terrain: SettlementTerrain) {
 }
 
 const upgradeHint: Record<SettlementState["level"], string> = {
-  1: "정원, 표지판, 벤치 중심의 기본 거주지 단계입니다.",
+  1: "정원과 기본 벤치 중심의 초기 거주 단계입니다.",
   2: "등불, 바닥 패널, 러닝 게이트가 열리는 중간 단계입니다.",
-  3: "비콘, 타워, 벽체까지 열리는 고급 정착지 단계입니다.",
+  3: "비콘과 감시 타워, 외곽 방벽까지 갖춘 고도 정착지 단계입니다.",
 };
 
 export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove, onUpgrade }: Props) {
@@ -69,13 +69,13 @@ export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove, onUp
         </div>
       </div>
       <p className="mt-2 text-xs text-slate-400">
-        FitCraft Island에서 발전하던 2D 건설 흐름을 Fifth Dawn의 거주지, 정착지, 후반 식민지 확장 기반으로 흡수한 모드입니다.
+        FitCraft Island에서 발전하던 2D 건설 흐름을 Fifth Dawn의 거주지, 정착지, 외곽 전초지 확장 기반으로 흡수한 모드입니다.
       </p>
       <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-slate-300">
         <div className="font-medium text-white">{state.title}</div>
         <div className="mt-1">{upgradeHint[state.level]}</div>
         <div className="mt-2 text-[11px] text-slate-400">
-          복구 구조물: {state.restoredStructures.length}개 · 방문 {state.visits} · 좋아요 {state.likes}
+          복구 구조물 {state.restoredStructures.length}개 · 방문 {state.visits} · 좋아요 {state.likes}
         </div>
       </div>
 

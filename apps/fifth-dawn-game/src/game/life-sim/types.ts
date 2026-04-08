@@ -57,6 +57,7 @@ export type LifeSimItemId =
   | "turnip"
   | "ore-fragment"
   | "scrap-bundle"
+  | "resonance-shard"
   | "purity-lantern"
   | "dawn-broth"
   | "bridge-kit";
@@ -87,7 +88,7 @@ export type LifeSimResourceNode = {
   mapId: LifeSimMapId;
   x: number;
   y: number;
-  itemId: "ore-fragment" | "scrap-bundle";
+  itemId: "ore-fragment" | "scrap-bundle" | "resonance-shard";
   depletedUntilDay?: number;
 };
 
@@ -141,9 +142,10 @@ export type LifeSimStoryFlags = {
   repairedLantern: boolean;
   cookedFirstMeal: boolean;
   restoredBridge: boolean;
+  surveyedNorthReach: boolean;
 };
 
-export type LifeSimQuestId = "first-harvest" | "mine-recon" | "repair-lantern" | "restore-bridge";
+export type LifeSimQuestId = "first-harvest" | "mine-recon" | "repair-lantern" | "restore-bridge" | "north-reach";
 
 export type LifeSimQuestStatus = "available" | "completed";
 

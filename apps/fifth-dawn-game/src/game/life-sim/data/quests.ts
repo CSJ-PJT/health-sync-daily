@@ -4,7 +4,7 @@ export const lifeSimQuestDefinitions: Record<LifeSimQuestId, LifeSimQuestDefinit
   "first-harvest": {
     id: "first-harvest",
     title: { ko: "첫 수확", en: "First Harvest" },
-    description: { ko: "순무를 길러 첫 작물을 수확하세요.", en: "Grow and harvest your first crop." },
+    description: { ko: "새벽 순무를 길러 처음으로 수확해 보세요.", en: "Grow and harvest your first crop." },
     rewardText: { ko: "새벽 수프 1개 + 공명 5", en: "1 Dawn Broth + 5 Resonance" },
   },
   "mine-recon": {
@@ -20,7 +20,7 @@ export const lifeSimQuestDefinitions: Record<LifeSimQuestId, LifeSimQuestDefinit
     id: "repair-lantern",
     title: { ko: "등불 복구", en: "Restore the Lantern" },
     description: {
-      ko: "정화 등불을 제작해 정비공에게 보여주세요.",
+      ko: "정화 등불을 제작해 정비공에게 보여 주세요.",
       en: "Craft a Purity Lantern and show it to the mechanic.",
     },
     rewardText: { ko: "공명 15 + 다리 복구 키트 레시피", en: "15 Resonance + Bridge Kit recipe" },
@@ -29,10 +29,19 @@ export const lifeSimQuestDefinitions: Record<LifeSimQuestId, LifeSimQuestDefinit
     id: "restore-bridge",
     title: { ko: "무너진 통로", en: "Broken Passage" },
     description: {
-      ko: "복구 키트를 제작해 농장 북쪽 다리를 되살리세요.",
+      ko: "복구 키트를 제작해 농장 북쪽 다리를 복원하세요.",
       en: "Craft a repair kit and restore the northern bridge.",
     },
     rewardText: { ko: "공명 20 + 다음 지역 단서", en: "20 Resonance + next region clue" },
+  },
+  "north-reach": {
+    id: "north-reach",
+    title: { ko: "북부 개척지 조사", en: "Survey the Northern Reach" },
+    description: {
+      ko: "북부 개척지에 진입해 공명 파편을 채집하고 정착 후보지를 확인하세요.",
+      en: "Enter the Northern Reach, mine a resonance shard, and scout the settlement site.",
+    },
+    rewardText: { ko: "공명 12 + 북부 전초기지 해금", en: "12 Resonance + northern outpost unlock" },
   },
 };
 

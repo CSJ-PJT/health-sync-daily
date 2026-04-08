@@ -29,11 +29,11 @@ export function getSettlementUnlockedHighlights(state: SettlementState) {
   if (state.level === 2) {
     return ["등불", "바닥 패널", "러닝 게이트"];
   }
-  return ["비콘", "타워", "벽체"];
+  return ["비콘", "감시 타워", "외곽 방벽"];
 }
 
 export function getSettlementFacilities(state: SettlementState) {
-  const facilities = ["거주 중심지", "저장 상자"];
+  const facilities = ["거주 중심지", "작은 작업대"];
 
   if (state.level >= 2) {
     facilities.push("정화 공방", "러닝 게이트", "등불 네트워크");
@@ -43,12 +43,16 @@ export function getSettlementFacilities(state: SettlementState) {
     facilities.push("공명 비콘", "감시 타워", "외곽 방벽");
   }
 
+  if (state.restoredStructures.includes("purity-lantern")) {
+    facilities.push("정화 회로");
+  }
+
   if (state.restoredStructures.includes("north-bridge")) {
     facilities.push("북쪽 통로");
   }
 
-  if (state.restoredStructures.includes("purity-lantern")) {
-    facilities.push("정화 회로");
+  if (state.restoredStructures.includes("north-outpost")) {
+    facilities.push("북부 전초기지");
   }
 
   return facilities;
