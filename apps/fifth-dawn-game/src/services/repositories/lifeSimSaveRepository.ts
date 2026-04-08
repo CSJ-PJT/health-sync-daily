@@ -4,8 +4,8 @@ import type { LifeSimHealthBonuses, LifeSimState } from "@/game/life-sim/types";
 import { createDefaultSettlement } from "@/game/settlement/settlementState";
 import { loadDerivedGameLinkBundle } from "@/services/repositories/gameLinkRepository";
 import {
+  createCloudLifeSimSaveAdapter,
   createLocalLifeSimSaveAdapter,
-  resolveLifeSimLoadAdapters,
   resolveLifeSimSaveAdapters,
 } from "@/services/repositories/lifeSimPersistence";
 
@@ -33,36 +33,56 @@ function toHealthBonuses(profile?: GameLinkProfile | null): LifeSimHealthBonuses
   });
 }
 
-
 export async function loadLifeSimBonuses() {
-  const bundle = await loadDerivedGameLinkBundle();
-  return toHealthBonuses(bundle?.profile);
+  try {
+    const bundle = await Promise.race([
+      loadDerivedGameLinkBundle(),
+      new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1200)),
+    ]);
+    return toHealthBonuses(bundle?.profile);
+  } catch {
+    return toHealthBonuses(null);
+  }
 }
 
 export async function loadLifeSimState(slot = "main"): Promise<LifeSimState> {
   const bonuses = await loadLifeSimBonuses();
   const fallback = createInitialLifeSimState(bonuses);
-  for (const adapter of resolveLifeSimLoadAdapters()) {
-    const loaded = await adapter.load(slot);
-    if (!loaded) continue;
+  const localAdapter = createLocalLifeSimSaveAdapter();
+  const cloudAdapter = createCloudLifeSimSaveAdapter();
 
-    const hydrated = {
-      ...fallback,
-      ...loaded,
-      slot,
-      healthBonuses: bonuses,
-      settlement: loaded.settlement || createDefaultSettlement("새벽 거주지"),
-      relationships: {
-        ...fallback.relationships,
-        ...loaded.relationships,
-      },
-    };
+  const hydrateState = (loaded: LifeSimState) => ({
+    ...fallback,
+    ...loaded,
+    slot,
+    healthBonuses: bonuses,
+    settlement: loaded.settlement || createDefaultSettlement("새벽 거주지"),
+    relationships: {
+      ...fallback.relationships,
+      ...loaded.relationships,
+    },
+  });
 
-    if (adapter.id === "cloud") {
-      await createLocalLifeSimSaveAdapter().save(hydrated, slot);
+  const localLoaded = await localAdapter.load(slot);
+  if (localLoaded) {
+    return hydrateState(localLoaded);
+  }
+
+  if (cloudAdapter.isAvailable()) {
+    try {
+      const cloudLoaded = await Promise.race([
+        cloudAdapter.load(slot),
+        new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1500)),
+      ]);
+
+      if (cloudLoaded) {
+        const hydrated = hydrateState(cloudLoaded);
+        await localAdapter.save(hydrated, slot);
+        return hydrated;
+      }
+    } catch {
+      return fallback;
     }
-
-    return hydrated;
   }
 
   return fallback;
@@ -73,6 +93,7 @@ export async function saveLifeSimState(state: LifeSimState, slot = "main") {
     ...state,
     slot,
   };
+
   for (const adapter of resolveLifeSimSaveAdapters(next)) {
     await adapter.save(next, slot);
   }
