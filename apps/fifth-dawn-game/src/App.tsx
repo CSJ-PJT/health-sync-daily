@@ -39,7 +39,7 @@ export default function App() {
 
   const subtitle = useMemo(() => {
     if (!bundle?.profile) {
-      return "복구 농장, 여명 광장, 정화 광산, 북부 개척지를 잇는 탑다운 라이프심 RPG 수직 슬라이스";
+      return "복구 농장, 여명 광장, 정화 광산, 북부 개척지를 잇는 탑다운 라이프심 RPG";
     }
     return `활동 ${bundle.profile.activityTier} · 수면 ${bundle.profile.sleepTier} · 공명 ${bundle.profile.resonancePoints}`;
   }, [bundle]);
