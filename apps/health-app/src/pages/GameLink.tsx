@@ -32,7 +32,7 @@ export default function GameLink() {
 
     setLoading(true);
     try {
-      const next = await getHealthSideGameLinkBundle(supabase as never, profileId);
+      const next = await getHealthSideGameLinkBundle(supabase as never, profileId, userId);
       setBundle(next);
       if (next?.accountLink?.gameAccountId) {
         setGameAccountId(next.accountLink.gameAccountId);
@@ -58,7 +58,7 @@ export default function GameLink() {
 
   const handleDisconnect = async () => {
     if (!profileId) return;
-    await disconnectGameAccount(supabase as never, profileId);
+    await disconnectGameAccount(supabase as never, profileId, userId);
     toast({
       title: "게임 계정 연결을 해제했습니다",
       description: "이후에는 새로운 게임 보너스와 미션이 전송되지 않습니다.",
@@ -68,7 +68,7 @@ export default function GameLink() {
 
   const handleRefresh = async () => {
     if (!profileId) return;
-    await refreshGameLinkBundle(supabase as never, profileId);
+    await refreshGameLinkBundle(supabase as never, profileId, userId);
     toast({
       title: "파생 게임 지표를 갱신했습니다",
       description: "원본 건강 기록이 아니라 게임 전용 파생 지표만 다시 계산했습니다.",

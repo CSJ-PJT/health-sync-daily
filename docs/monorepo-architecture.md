@@ -71,6 +71,7 @@ No raw heart-rate streams, full sleep records, nutrition logs, or body compositi
 The app still relies on the repository's existing local `profile_id` / `user_id` identity model rather than a fully tightened authenticated user session. Because of that:
 
 - linkage RPCs are safer than open table access
+- health-side RPCs now verify `profile_id + user_id` together before returning link data
 - but they still need a stricter auth model later
 
 Next hardening step:

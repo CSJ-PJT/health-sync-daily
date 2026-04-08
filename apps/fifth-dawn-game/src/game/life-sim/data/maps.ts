@@ -10,7 +10,7 @@ function tile(x: number, y: number, partial: Partial<LifeSimTile>): LifeSimTile 
   };
 }
 
-function buildFarmTiles() {
+function buildFarmTiles(): LifeSimTile[] {
   const tiles: LifeSimTile[] = [];
   for (let y = 0; y < 14; y += 1) {
     for (let x = 0; x < 18; x += 1) {
@@ -35,7 +35,7 @@ function buildFarmTiles() {
 
   return tiles.map((entry) => {
     if (entry.x === 9 && entry.y === 6) {
-      return { ...entry, terrain: "path", warpTo: { mapId: "village", x: 2, y: 7 } };
+      return { ...entry, terrain: "path", warpTo: { mapId: "village" as const, x: 2, y: 7 } };
     }
     if (entry.x === 13 && entry.y === 3) {
       return {
@@ -48,7 +48,7 @@ function buildFarmTiles() {
   });
 }
 
-function buildVillageTiles() {
+function buildVillageTiles(): LifeSimTile[] {
   const tiles: LifeSimTile[] = [];
   for (let y = 0; y < 14; y += 1) {
     for (let x = 0; x < 18; x += 1) {
@@ -66,10 +66,10 @@ function buildVillageTiles() {
 
   return tiles.map((entry) => {
     if (entry.x === 1 && entry.y === 7) {
-      return { ...entry, warpTo: { mapId: "farm", x: 9, y: 6 } };
+      return { ...entry, warpTo: { mapId: "farm" as const, x: 9, y: 6 } };
     }
     if (entry.x === 15 && entry.y === 7) {
-      return { ...entry, warpTo: { mapId: "mine", x: 2, y: 6 } };
+      return { ...entry, warpTo: { mapId: "mine" as const, x: 2, y: 6 } };
     }
     if (entry.x === 9 && entry.y === 3) {
       return {
@@ -84,7 +84,7 @@ function buildVillageTiles() {
   });
 }
 
-function buildMineTiles() {
+function buildMineTiles(): LifeSimTile[] {
   const tiles: LifeSimTile[] = [];
   for (let y = 0; y < 14; y += 1) {
     for (let x = 0; x < 18; x += 1) {
@@ -102,7 +102,7 @@ function buildMineTiles() {
 
   return tiles.map((entry) => {
     if (entry.x === 1 && entry.y === 6) {
-      return { ...entry, warpTo: { mapId: "village", x: 15, y: 7 } };
+      return { ...entry, warpTo: { mapId: "village" as const, x: 15, y: 7 } };
     }
     if (entry.x === 12 && entry.y === 5) {
       return {

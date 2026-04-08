@@ -278,7 +278,7 @@ export function cycleHazards(state: LifeSimState) {
       if (next < hazard.range[0] || next > hazard.range[1]) {
         return {
           ...hazard,
-          direction: hazard.direction === 1 ? -1 : 1,
+          direction: (hazard.direction === 1 ? -1 : 1) as 1 | -1,
         };
       }
       return {

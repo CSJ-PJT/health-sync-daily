@@ -23,9 +23,10 @@ export async function connectGameAccount(
   return data as { linkToken: string; linkStatus: string };
 }
 
-export async function disconnectGameAccount(supabase: SupabaseLikeClient, profileId: string) {
+export async function disconnectGameAccount(supabase: SupabaseLikeClient, profileId: string, userId: string) {
   const { error } = await supabase.rpc("disconnect_game_account", {
     target_profile_id: profileId,
+    target_user_id: userId,
   });
 
   if (error) {
@@ -33,9 +34,10 @@ export async function disconnectGameAccount(supabase: SupabaseLikeClient, profil
   }
 }
 
-export async function refreshGameLinkBundle(supabase: SupabaseLikeClient, profileId: string) {
+export async function refreshGameLinkBundle(supabase: SupabaseLikeClient, profileId: string, userId: string) {
   const { data, error } = await supabase.rpc("refresh_game_link_profile", {
     target_profile_id: profileId,
+    target_user_id: userId,
   });
 
   if (error) {
@@ -45,9 +47,10 @@ export async function refreshGameLinkBundle(supabase: SupabaseLikeClient, profil
   return data as GameLinkProfile;
 }
 
-export async function getHealthSideGameLinkBundle(supabase: SupabaseLikeClient, profileId: string) {
+export async function getHealthSideGameLinkBundle(supabase: SupabaseLikeClient, profileId: string, userId: string) {
   const { data, error } = await supabase.rpc("fetch_health_game_link_bundle", {
     target_profile_id: profileId,
+    target_user_id: userId,
   });
 
   if (error) {
