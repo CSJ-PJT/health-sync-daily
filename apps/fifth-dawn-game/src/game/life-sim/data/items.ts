@@ -11,14 +11,14 @@ export const lifeSimItems: Record<LifeSimItemId, LifeSimItemDefinition> = {
   "watering-can": {
     id: "watering-can",
     name: { ko: "물뿌리개", en: "Watering Can" },
-    description: { ko: "밭과 작물에 물을 주어 다음 날 자라게 합니다.", en: "Waters crops for daily growth." },
+    description: { ko: "밭과 화단에 물을 주어 다음 날 자라게 합니다.", en: "Waters crops for daily growth." },
     stackable: false,
     category: "tool",
   },
   pickaxe: {
     id: "pickaxe",
     name: { ko: "정화 곡괭이", en: "Purifier Pickaxe" },
-    description: { ko: "광산의 광석과 고철 더미를 캘 수 있습니다.", en: "Breaks ore veins and scrap bundles." },
+    description: { ko: "광산의 광석과 고철 무더기를 캘 수 있습니다.", en: "Breaks ore veins and scrap bundles." },
     stackable: false,
     category: "tool",
   },
@@ -32,7 +32,7 @@ export const lifeSimItems: Record<LifeSimItemId, LifeSimItemDefinition> = {
   turnip: {
     id: "turnip",
     name: { ko: "새벽 순무", en: "Dawn Turnip" },
-    description: { ko: "거래하거나 선물할 수 있는 기본 작물입니다.", en: "A humble crop to trade or gift." },
+    description: { ko: "거래하거나 선물하기 좋은 기본 작물입니다.", en: "A humble crop to trade or gift." },
     stackable: true,
     category: "crop",
   },
@@ -46,7 +46,7 @@ export const lifeSimItems: Record<LifeSimItemId, LifeSimItemDefinition> = {
   "scrap-bundle": {
     id: "scrap-bundle",
     name: { ko: "고철 묶음", en: "Scrap Bundle" },
-    description: { ko: "정비공이 수리 재료로 쓰는 오래된 부품 꾸러미입니다.", en: "Repair parts prized by the Mechanic." },
+    description: { ko: "정비공이 수리 재료로 여기는 오래된 부품 꾸러미입니다.", en: "Repair parts prized by the Mechanic." },
     stackable: true,
     category: "resource",
   },
@@ -54,7 +54,7 @@ export const lifeSimItems: Record<LifeSimItemId, LifeSimItemDefinition> = {
     id: "purity-lantern",
     name: { ko: "정화 등불", en: "Purity Lantern" },
     description: {
-      ko: "오래된 기반 시설의 균열을 잠시 안정시키는 정화 장치입니다.",
+      ko: "오래된 기반 시설의 균열을 안정시키고 정화하는 상징 장치입니다.",
       en: "A symbolic device used to cleanse old infrastructure.",
     },
     stackable: true,

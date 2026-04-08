@@ -48,7 +48,7 @@ function buildFarmTiles(): LifeSimTile[] {
       return {
         ...entry,
         signText: {
-          ko: "농장 북쪽의 무너진 통로는 복구 키트가 있으면 다시 열릴 것 같습니다.",
+          ko: "농장 북쪽 무너진 통로는 복구 키트가 있으면 다시 열릴 것 같습니다.",
           en: "The broken northern passage may reopen with a repair kit.",
         },
       };
@@ -84,7 +84,7 @@ function buildVillageTiles(): LifeSimTile[] {
       return {
         ...entry,
         signText: {
-          ko: "광장 아래에는 깊은 기록 보관소와 봉인된 정화 관로가 잠들어 있다는 소문이 남아 있습니다.",
+          ko: "광장 아래에는 깊은 기록 보관고와 닫힌 정화 관로가 잠들어 있다는 소문이 있습니다.",
           en: "Rumor says a deep archive and sealed purifier lines sleep beneath the square.",
         },
       };
@@ -117,7 +117,7 @@ function buildMineTiles(): LifeSimTile[] {
       return {
         ...entry,
         signText: {
-          ko: "부서진 문양 아래에서 오래된 그림자 행정 구조의 흔적이 아직 미세하게 빛납니다.",
+          ko: "부서진 문양 아래에서 오래된 그림자 행정 구조의 흔적이 미세하게 빛납니다.",
           en: "Beneath the broken sigils, traces of an old shadow administration flicker.",
         },
       };
@@ -134,7 +134,7 @@ export const lifeSimMaps: Record<string, LifeSimMapDefinition> = {
     height: 14,
     tiles: buildFarmTiles(),
     ambientHint: {
-      ko: "오래된 정착지 가장자리의 농장입니다. 새벽 바람이 이 흙이 다시 살아날 수 있다고 속삭입니다.",
+      ko: "오래된 정착지 가장자리에 있는 농장입니다. 새벽 바람이 이 땅이 다시 살아날 수 있다고 속삭입니다.",
       en: "A farm at the edge of an old settlement. The dawn wind says this soil can recover.",
     },
   },
@@ -145,7 +145,7 @@ export const lifeSimMaps: Record<string, LifeSimMapDefinition> = {
     height: 14,
     tiles: buildVillageTiles(),
     ambientHint: {
-      ko: "평화로운 광장 아래에는 깊은 기록과 잊힌 기반 시설이 봉인된 채 남아 있습니다.",
+      ko: "평화로운 광장 아래에는 깊은 기록과 잊힌 기반 시설이 잠들어 있습니다.",
       en: "Beneath the peaceful square lie sealed records and forgotten infrastructure.",
     },
   },
@@ -156,7 +156,7 @@ export const lifeSimMaps: Record<string, LifeSimMapDefinition> = {
     height: 14,
     tiles: buildMineTiles(),
     ambientHint: {
-      ko: "무너진 통로와 정화 관로가 얽힌 곳입니다. 지하의 오래된 그림자는 아직 완전히 사라지지 않았습니다.",
+      ko: "무너진 통로와 정화 관로가 뒤엉킨 곳입니다. 지하의 오래된 그림자는 아직 완전히 사라지지 않았습니다.",
       en: "Collapsed passages and purifier conduits twist together here. The old underground shadows have not fully faded.",
     },
   },

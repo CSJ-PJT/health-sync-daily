@@ -24,6 +24,7 @@ import { lifeSimRecipes } from "@/game/life-sim/data/recipes";
 import { getScheduledNpcsForMap, getNpcScheduleStop } from "@/game/life-sim/state/npcSchedule";
 import { getActiveQuestSummary } from "@/game/life-sim/state/questRouting";
 import { applyInputPreset, rebindInputAction } from "@/game/life-sim/state/settings";
+import { getSettlementTierLabel, getSettlementUnlockedHighlights, getSettlementUpgradeCost } from "@/game/life-sim/state/settlementProgress";
 import {
   advanceClock,
   craftRecipe,
@@ -122,7 +123,7 @@ export function LifeSimArena({ onExit }: Props) {
       if (cancelled) return;
       const settings = loadLifeSimSettings();
       setState({ ...next, settings });
-      setStatus("복구 농장이 깨어났습니다. 밭을 가꾸고 마을의 기록을 모으며 광산 아래 잔재를 정화해 보세요.");
+      setStatus("복구 농장에 도착했습니다. 밭을 가꾸고, 기록을 모으고, 광산 아래 오래된 시설을 정화해 보세요.");
     }
     void load();
     return () => {
@@ -279,12 +280,13 @@ export function LifeSimArena({ onExit }: Props) {
   const applySettlementUpgrade = () => {
     setState((current) => {
       if (!current) return current;
+      const cost = getSettlementUpgradeCost(current.settlement.level);
       if (current.settlement.level >= 3) {
         setStatus("정착지는 이미 최종 단계입니다.");
         return current;
       }
-      if (current.progression.resonancePoints < current.settlement.level * 10) {
-        setStatus("정착지 업그레이드에는 더 많은 공명 포인트가 필요합니다.");
+      if (current.progression.resonancePoints < cost) {
+        setStatus(`정착지 업그레이드에는 공명 포인트 ${cost}가 필요합니다.`);
         return current;
       }
 
@@ -295,7 +297,7 @@ export function LifeSimArena({ onExit }: Props) {
         settlement: nextSettlement,
         progression: {
           ...current.progression,
-          resonancePoints: current.progression.resonancePoints - current.settlement.level * 10,
+          resonancePoints: current.progression.resonancePoints - cost,
         },
       };
     });
@@ -315,7 +317,7 @@ export function LifeSimArena({ onExit }: Props) {
 
         <div className="space-y-2 text-sm text-slate-200">
           <div>맵: {getMapLabel(state.player.mapId)}</div>
-          <div>시간: {state.time.day}일 차 {formatClock(state.time.minutes)}</div>
+          <div>시간: {state.time.day}일차 {formatClock(state.time.minutes)}</div>
           <div>기력: {state.player.energy} / {state.player.maxEnergy}</div>
           <div>
             건강 보너스: 시작 {state.healthBonuses.startEnergyBonus} / 회복 {state.healthBonuses.recoveryBonus} / 작물 효율{" "}
@@ -362,7 +364,7 @@ export function LifeSimArena({ onExit }: Props) {
         </div>
 
         <div>
-          <div className="mb-2 text-sm font-medium">제작대</div>
+          <div className="mb-2 text-sm font-medium">제작 목록</div>
           <div className="space-y-2">
             {(Object.keys(lifeSimRecipes) as LifeSimRecipeId[]).map((recipeId) => {
               const recipe = lifeSimRecipes[recipeId];
@@ -396,7 +398,7 @@ export function LifeSimArena({ onExit }: Props) {
           onChange={(settings) => setState((current) => (current ? { ...current, settings } : current))}
           onStartRebind={(action) => {
             setPendingRebind(action);
-            setStatus(`"${action}" 동작에 연결할 새 키를 누르세요. 취소하려면 Esc를 누르세요.`);
+            setStatus(`"${action}" 동작에 연결할 키를 누르세요. 취소하려면 Esc를 누르세요.`);
           }}
         />
 
@@ -465,8 +467,7 @@ export function LifeSimArena({ onExit }: Props) {
           <div className="text-xs uppercase tracking-[0.25em] text-sky-200/70">Field Guide</div>
           <h2 className="mt-2 text-xl font-semibold">현장 가이드</h2>
           <p className="mt-2 text-sm text-slate-300">
-            밭을 가꾸고, 광산 자원을 모아 제작과 복구를 진행하세요. 마을 사람들과 대화하면 깊은 기록과 정화 계획이 조금씩
-            열립니다.
+            밭을 가꾸고, 광산 자원을 모아 제작과 복구를 진행하세요. 마을 주민과 대화하면 깊은 기록과 정화 계획이 조금씩 드러납니다.
           </p>
         </div>
 
@@ -499,7 +500,7 @@ export function LifeSimArena({ onExit }: Props) {
                   <div className="font-medium">{t(definition.title)}</div>
                   <div className="mt-1 text-xs text-white/70">{t(definition.description)}</div>
                   <div className="mt-2 text-xs text-emerald-300">
-                    {quest.status === "completed" ? `완료됨 · 보상 ${t(definition.rewardText)}` : `진행 중 · 보상 ${t(definition.rewardText)}`}
+                    {quest.status === "completed" ? `완료 · 보상 ${t(definition.rewardText)}` : `진행 중 · 보상 ${t(definition.rewardText)}`}
                   </div>
                 </div>
               );
@@ -551,7 +552,20 @@ export function LifeSimArena({ onExit }: Props) {
             <div>해금 레시피: {state.progression.unlockedRecipes.length}개</div>
             <div>발견한 지역: {state.progression.discoveredMaps.length}곳</div>
             <div>완료한 퀘스트: {state.progression.completedQuestIds.length}개</div>
-            <div>북쪽 통로: {state.storyFlags.restoredBridge ? "복구 완료" : "복구 필요"}</div>
+            <div>북쪽 다리: {state.storyFlags.restoredBridge ? "복구 완료" : "복구 필요"}</div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+          <div className="font-medium">정착지 진행</div>
+          <div className="mt-2 text-slate-300">
+            {getSettlementTierLabel(state.settlement.level)} · Lv.{state.settlement.level}
+          </div>
+          <div className="mt-2 text-xs text-white/70">
+            해금 하이라이트: {getSettlementUnlockedHighlights(state.settlement).join(", ")}
+          </div>
+          <div className="mt-2 text-xs text-amber-200">
+            다음 업그레이드 비용: {state.settlement.level >= 3 ? "최종 단계" : `공명 ${getSettlementUpgradeCost(state.settlement.level)}`}
           </div>
         </div>
 
@@ -604,8 +618,8 @@ export function LifeSimArena({ onExit }: Props) {
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
           <div className="font-medium">링크 보너스</div>
           <p className="mt-2 text-slate-300">
-            Health App과 연결하면 원본 건강 데이터가 아니라 파생된 게임 보너스만 받아 시작 기력, 회복, 작물 효율이
-            조금 올라갑니다. 연결하지 않아도 전체 플레이는 그대로 가능합니다.
+            Health App과 연결하면 원본 건강 데이터가 아니라 파생된 안전한 게임 보너스만 받아 시작 기력, 회복, 작물 효율이 조금 올라갑니다.
+            연결하지 않아도 전체 플레이는 그대로 가능합니다.
           </p>
           {onExit ? (
             <button type="button" className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm" onClick={onExit}>

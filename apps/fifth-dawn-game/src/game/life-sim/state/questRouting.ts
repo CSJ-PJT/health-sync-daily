@@ -11,14 +11,14 @@ function objectiveTextByQuest(state: LifeSimState, questId: LifeSimQuestId): Loc
     case "mine-recon":
       return state.storyFlags.enteredMine
         ? { ko: "광산 정찰을 마쳤습니다.", en: "Mine recon completed." }
-        : { ko: "마을 북쪽 통로를 따라 광산 유적에 들어가 보세요.", en: "Enter the mine ruins through the northern route." };
+        : { ko: "마을 북동쪽 통로를 따라 광산 유적 안으로 들어가 보세요.", en: "Enter the mine ruins through the eastern route." };
     case "repair-lantern":
       return state.storyFlags.repairedLantern
         ? { ko: "정화 등불 복구를 마쳤습니다.", en: "Purity lantern repaired." }
-        : { ko: "광산 자원을 모아 정화 등불을 제작하고 정비공에게 가져가세요.", en: "Craft a purity lantern and bring it to the mechanic." };
+        : { ko: "광산 자원을 모아 정화 등불을 만들고 정비공에게 가져가세요.", en: "Craft a purity lantern and bring it to the mechanic." };
     case "restore-bridge":
       return state.storyFlags.restoredBridge
-        ? { ko: "북쪽 다리를 복구했습니다.", en: "The northern bridge is restored." }
+        ? { ko: "북쪽 다리 복구를 마쳤습니다.", en: "The northern bridge is restored." }
         : { ko: "복구 키트를 제작해 농장 북쪽 다리 표식에서 사용하세요.", en: "Craft a repair kit and use it at the northern bridge marker." };
   }
 }
