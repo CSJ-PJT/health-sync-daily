@@ -1,4 +1,5 @@
 import type {
+  DeepStakeState,
   LifeSimPlayerState,
   LifeSimQuestJournalState,
   LifeSimRelationshipJournalState,
@@ -35,4 +36,8 @@ export function getLifeSimRelationshipSlice(state: LifeSimState): LifeSimRelatio
 
 export function getLifeSimSettlementSlice(state: LifeSimState): SettlementState {
   return state.settlement;
+}
+
+export function getLifeSimDeepStakeSlice(state: LifeSimState): DeepStakeState {
+  return state.deepStake;
 }

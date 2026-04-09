@@ -21,9 +21,19 @@ import { lifeSimItems } from "@/game/life-sim/data/items";
 import { getLifeSimLocale, t } from "@/game/life-sim/data/localization";
 import { lifeSimNpcs } from "@/game/life-sim/data/npcs";
 import { lifeSimRecipes } from "@/game/life-sim/data/recipes";
+import { deepStakeFactionNames } from "@/game/life-sim/data/deepStake";
 import { getScheduledNpcsForMap, getNpcScheduleStop } from "@/game/life-sim/state/npcSchedule";
+import {
+  applyDeepStakeChoice,
+  applySettlementStructureInfluence,
+  getAscensionStageMeta,
+  getDeepStakeChoiceLabel,
+  getDeepStakeSignalHint,
+  getResonanceBand,
+} from "@/game/life-sim/state/deepStake";
 import { getActiveQuestSummary } from "@/game/life-sim/state/questRouting";
 import {
+  getLifeSimDeepStakeSlice,
   getLifeSimPlayerSlice,
   getLifeSimQuestSlice,
   getLifeSimRelationshipSlice,
@@ -54,7 +64,7 @@ import {
   getNextSettlementGoal,
 } from "@/game/life-sim/state/settlementProgress";
 import { paintSettlementTile, placeSettlementObject, removeSettlementObject, upgradeSettlement } from "@/game/settlement/settlementState";
-import type { LifeSimFacing, LifeSimInputAction, LifeSimRecipeId, LifeSimState } from "@/game/life-sim/types";
+import type { DeepStakeChoiceId, LifeSimFacing, LifeSimInputAction, LifeSimRecipeId, LifeSimState } from "@/game/life-sim/types";
 import { loadLifeSimState, saveLifeSimState } from "@/services/repositories/lifeSimSaveRepository";
 import { loadLifeSimSettings, saveLifeSimSettings } from "@/services/repositories/lifeSimSettingsRepository";
 
@@ -254,6 +264,13 @@ export function LifeSimArena({ onExit }: Props) {
   const questSlice = useMemo(() => (state ? getLifeSimQuestSlice(state) : null), [state]);
   const relationshipSlice = useMemo(() => (state ? getLifeSimRelationshipSlice(state) : null), [state]);
   const settlementSlice = useMemo(() => (state ? getLifeSimSettlementSlice(state) : null), [state]);
+  const deepStakeSlice = useMemo(() => (state ? getLifeSimDeepStakeSlice(state) : null), [state]);
+  const resonanceBand = useMemo(() => (deepStakeSlice ? getResonanceBand(deepStakeSlice) : null), [deepStakeSlice]);
+  const ascensionMeta = useMemo(() => (deepStakeSlice ? getAscensionStageMeta(deepStakeSlice.ascensionStage) : null), [deepStakeSlice]);
+  const visibleChoices = useMemo<DeepStakeChoiceId[]>(
+    () => ["village-recovery-vow", "accept-luminous-guidance", "study-deep-archive", "accept-shadow-bargain"],
+    [],
+  );
 
   const saveNow = async () => {
     if (!state) return;
@@ -296,6 +313,16 @@ export function LifeSimArena({ onExit }: Props) {
       const result = craftRecipe(current, selectedRecipe);
       if (result.message) setStatus(`${result.message.title}: ${result.message.body}`);
       return result.state;
+    });
+  };
+
+  const applyDeepStakeDecision = (choiceId: DeepStakeChoiceId) => {
+    setState((current) => {
+      if (!current) return current;
+      const next = applyDeepStakeChoice(current, choiceId);
+      const choiceMeta = getDeepStakeChoiceLabel(choiceId);
+      setStatus(`${choiceMeta.title}: ${choiceMeta.summary}`);
+      return next;
     });
   };
 
@@ -353,6 +380,7 @@ export function LifeSimArena({ onExit }: Props) {
   const currentSettlement = settlementSlice || state.settlement;
   const currentRelations = relationshipSlice?.relationships || state.relationships;
   const currentProgression = questSlice?.progression || state.progression;
+  const currentDeepStake = deepStakeSlice || state.deepStake;
   const progressionOverview = getProgressionOverview(currentProgression, worldSlice?.storyFlags || state.storyFlags);
 
   return (
@@ -528,6 +556,56 @@ export function LifeSimArena({ onExit }: Props) {
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+          <div className="font-medium">세력 친화도</div>
+          <div className="mt-3 space-y-2">
+            {Object.entries(currentDeepStake.factionAffinities).map(([factionId, value]) => (
+              <div key={factionId} className="rounded-xl border border-white/10 px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <span>{t(deepStakeFactionNames[factionId as keyof typeof deepStakeFactionNames])}</span>
+                  <span>{value}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 text-xs text-slate-400">
+            이 값은 향후 공명대 기반 그룹, 전선 압력, 협동 분대, 전쟁 시스템의 기초 값으로 사용됩니다.
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+          <div className="font-medium">4D 지원 감지</div>
+          <div className="mt-2 text-slate-300">
+            {currentDeepStake.supportSignals.filter((entry) => entry.sensed).length
+              ? `${currentDeepStake.supportSignals.filter((entry) => entry.sensed).length}개의 보호/오멘 신호를 감지하고 있습니다.`
+              : "아직은 미세한 파동만 남아 있습니다. 공명 안정과 각성 선명도를 더 높여야 합니다."}
+          </div>
+          <div className="mt-3 space-y-2 text-xs text-sky-100">
+            {currentDeepStake.supportSignals.slice(0, 2).map((entry) => (
+              <div key={entry.id} className="rounded-xl border border-white/10 px-3 py-2">
+                {t(entry.note)}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+          <div className="font-medium">5D 관문 기초</div>
+          <div className="mt-2 text-slate-300">
+            공명 그룹 키: <span className="text-sky-200">{currentDeepStake.warFoundation.resonanceGroupingKey}</span>
+          </div>
+          <div className="mt-1 text-slate-300">전선 압력: {currentDeepStake.warFoundation.territorialPressure} / 100</div>
+          <div className="mt-3 space-y-2 text-xs">
+            {currentDeepStake.worldHints.map((world) => (
+              <div key={world.id} className="rounded-xl border border-white/10 px-3 py-2">
+                <div className="font-medium">{t(world.title)}</div>
+                <div className="mt-1 text-slate-300">{t(world.summary)}</div>
+                <div className="mt-1 text-[11px] text-amber-200">{world.unlocked ? "관문 감지 가능" : "아직 잠김"}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
           <div className="font-medium">현재 안내</div>
           <div className="mt-2 text-slate-300">{status}</div>
           {bootError ? <div className="mt-2 text-xs text-amber-300">{bootError}</div> : null}
@@ -540,6 +618,52 @@ export function LifeSimArena({ onExit }: Props) {
             <div className="mt-1 text-slate-300">{activeQuest.objective}</div>
           </div>
         ) : null}
+
+        <div className="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-500/10 p-4 text-sm">
+          <div className="font-medium text-fuchsia-100">Deep Stake 정렬</div>
+          <div className="mt-2 text-white">{resonanceBand?.title}</div>
+          <div className="mt-1 text-xs text-slate-300">{resonanceBand?.summary}</div>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-200">
+            <div>빛 정렬 {currentDeepStake.alignment.luminousAffinity}</div>
+            <div>그림자 정렬 {currentDeepStake.alignment.shadowAffinity}</div>
+            <div>공명 안정 {currentDeepStake.alignment.resonanceStability}</div>
+            <div>오염 압력 {currentDeepStake.alignment.corruptionPressure}</div>
+            <div>각성 선명도 {currentDeepStake.alignment.awakeningClarity}</div>
+            <div>감응도 {currentDeepStake.alignment.attunement}</div>
+          </div>
+          <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-xs">
+            <div className="font-medium text-sky-100">{ascensionMeta?.title}</div>
+            <div className="mt-1 text-slate-300">{ascensionMeta?.summary}</div>
+          </div>
+          <div className="mt-3 text-xs text-amber-100">오멘: {getDeepStakeSignalHint(currentDeepStake)}</div>
+        </div>
+
+        <div className="rounded-2xl border border-violet-300/20 bg-violet-500/10 p-4 text-sm">
+          <div className="font-medium text-violet-100">초기 선택</div>
+          <div className="mt-2 text-xs text-slate-300">
+            이 선택들은 진행을 막지 않으며, 향후 공명대와 세력 친화도를 서서히 기울이는 토대입니다.
+          </div>
+          <div className="mt-3 space-y-2">
+            {visibleChoices.map((choiceId) => {
+              const choiceMeta = getDeepStakeChoiceLabel(choiceId);
+              const chosen = currentDeepStake.chosenPaths.includes(choiceId);
+              return (
+                <button
+                  key={choiceId}
+                  type="button"
+                  onClick={() => applyDeepStakeDecision(choiceId)}
+                  disabled={chosen}
+                  className={`w-full rounded-xl border px-3 py-3 text-left ${
+                    chosen ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100" : "border-white/10 bg-black/20"
+                  }`}
+                >
+                  <div className="font-medium">{choiceMeta.title}</div>
+                  <div className="mt-1 text-xs text-slate-300">{choiceMeta.summary}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
           <div className="font-medium">현재 선택한 도구</div>
@@ -643,10 +767,13 @@ export function LifeSimArena({ onExit }: Props) {
           onPlace={(x, y, type) =>
             setState((current) =>
               current
-                ? {
-                    ...current,
-                    settlement: placeSettlementObject(current.settlement, x, y, type),
-                  }
+                ? applySettlementStructureInfluence(
+                    {
+                      ...current,
+                      settlement: placeSettlementObject(current.settlement, x, y, type),
+                    },
+                    type,
+                  )
                 : current,
             )
           }

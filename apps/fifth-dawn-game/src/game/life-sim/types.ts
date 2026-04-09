@@ -134,6 +134,89 @@ export type LifeSimRelationshipState = {
   rewardedLevels: number[];
 };
 
+export type DeepStakeFactionId =
+  | "luminous-companions"
+  | "serpent-court"
+  | "deep-archive"
+  | "dawnkeepers"
+  | "shadow-administration";
+
+export type DeepStakeBandId =
+  | "unstable-shadow-band"
+  | "mixed-threshold-band"
+  | "dawn-aligned-band"
+  | "high-luminous-band";
+
+export type DeepStakeAscensionStage =
+  | "three-d-world"
+  | "four-d-threshold"
+  | "dawn-transition"
+  | "fifth-threshold"
+  | "true-ascension"
+  | "five-d-residency";
+
+export type DeepStakeChoiceId =
+  | "village-recovery-vow"
+  | "accept-luminous-guidance"
+  | "study-deep-archive"
+  | "accept-shadow-bargain";
+
+export type DeepStakeAlignmentState = {
+  luminousAffinity: number;
+  shadowAffinity: number;
+  resonanceStability: number;
+  corruptionPressure: number;
+  awakeningClarity: number;
+  compassion: number;
+  domination: number;
+  attunement: number;
+};
+
+export type DeepStakeFactionAffinityState = Record<DeepStakeFactionId, number>;
+
+export type DeepStakeSupportSignal = {
+  id: string;
+  type: "blessing-pulse" | "encouragement-signal" | "protective-wave" | "shadow-whisper";
+  sourceFactionId: DeepStakeFactionId;
+  strength: number;
+  sensed: boolean;
+  note: LocalizedText;
+};
+
+export type DeepStakeWarFoundationState = {
+  resonanceGroupingKey: string;
+  preferredSide: "luminous" | "threshold" | "shadow";
+  territorialPressure: number;
+  futureSquadEligible: boolean;
+};
+
+export type DeepStakeFiveDWorldHint = {
+  id: string;
+  title: LocalizedText;
+  summary: LocalizedText;
+  unlocked: boolean;
+};
+
+export type DeepStakeCodexEntry = {
+  id: string;
+  title: LocalizedText;
+  body: LocalizedText;
+  unlocked: boolean;
+};
+
+export type DeepStakeState = {
+  alignment: DeepStakeAlignmentState;
+  factionAffinities: DeepStakeFactionAffinityState;
+  chosenPaths: DeepStakeChoiceId[];
+  supportSignals: DeepStakeSupportSignal[];
+  warFoundation: DeepStakeWarFoundationState;
+  ascensionStage: DeepStakeAscensionStage;
+  trueAscensionUnlocked: boolean;
+  fiveDResidencyUnlocked: boolean;
+  codexEntries: DeepStakeCodexEntry[];
+  worldHints: DeepStakeFiveDWorldHint[];
+};
+
 export type LifeSimStoryFlags = {
   metArchivist: boolean;
   metMechanic: boolean;
@@ -280,6 +363,7 @@ export type LifeSimState = {
   storyFlags: LifeSimStoryFlags;
   quests: LifeSimQuestState[];
   progression: LifeSimProgressionState;
+  deepStake: DeepStakeState;
   settlement: SettlementState;
   healthBonuses: LifeSimHealthBonuses;
   settings: LifeSimSettings;

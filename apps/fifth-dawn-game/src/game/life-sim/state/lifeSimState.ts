@@ -4,6 +4,7 @@ import { lifeSimMaps } from "@/game/life-sim/data/maps";
 import { lifeSimDialogue } from "@/game/life-sim/data/npcs";
 import { lifeSimQuestDefinitions, initialLifeSimQuests } from "@/game/life-sim/data/quests";
 import { lifeSimRecipes } from "@/game/life-sim/data/recipes";
+import { applyQuestDeepStakeInfluence, createInitialDeepStakeState } from "@/game/life-sim/state/deepStake";
 import { createDefaultSettlement, unlockSettlementStructure } from "@/game/settlement/settlementState";
 import { createLifeSimEventSink } from "@/game/life-sim/state/events";
 import { getNpcAtPosition } from "@/game/life-sim/state/npcSchedule";
@@ -286,7 +287,7 @@ function refreshQuestState(state: LifeSimState) {
       quests: completeQuest(nextState.quests, questId, nextState.time.day),
     };
     sink.emit("quest_completed", { questId });
-    nextState = grantQuestReward(nextState, questId);
+    nextState = applyQuestDeepStakeInfluence(grantQuestReward(nextState, questId), questId);
   };
 
   maybeComplete("first-harvest", nextState.storyFlags.harvestedFirstCrop);
@@ -425,7 +426,7 @@ export function createInitialLifeSimState(
   bonuses: LifeSimHealthBonuses = { startEnergyBonus: 0, recoveryBonus: 0, cropEfficiencyBonus: 0 },
 ): LifeSimState {
   return {
-    version: 3,
+    version: 4,
     slot: "main",
     player: {
       mapId: "farm",
@@ -490,6 +491,7 @@ export function createInitialLifeSimState(
       discoveredMaps: ["farm", "village"],
       completedQuestIds: [],
     },
+    deepStake: createInitialDeepStakeState(),
     settlement: createDefaultSettlement("새벽 거주지"),
     healthBonuses: bonuses,
     settings: createDefaultLifeSimSettings(),
