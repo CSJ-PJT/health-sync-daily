@@ -113,9 +113,9 @@ function getRelationshipLabel(level: number) {
 
 function getNextRelationshipReward(level: number) {
   if (level < 1) return "1단계 보상: 새벽 순무 씨앗 2개";
-  if (level < 2) return "2단계 보상: NPC 전용 선물 + 공명 3";
-  if (level < 3) return "3단계 보상: 공명 포인트 8";
-  return "관계도 보상을 모두 획득했습니다.";
+  if (level < 2) return "2단계 보상: 전용 선물 + 공명 3";
+  if (level < 3) return "3단계 보상: 공명 8";
+  return "관계도 보상을 모두 받았습니다.";
 }
 
 export function LifeSimArena({ onExit }: Props) {
@@ -138,7 +138,7 @@ export function LifeSimArena({ onExit }: Props) {
         const settings = loadLifeSimSettings();
         setState({ ...next, settings });
         setBootError(null);
-        setStatus("복구 농장이 깨어났습니다. 밭을 가꾸고 광산 자원을 모아 정착지와 북부 개척지를 이어 보세요.");
+        setStatus("복구 농장에 도착했습니다. 밭을 가꾸고 광산 자원을 모아 정착지와 북부 개척지를 이어 보세요.");
       } catch {
         if (cancelled) return;
         const settings = loadLifeSimSettings();
@@ -148,8 +148,8 @@ export function LifeSimArena({ onExit }: Props) {
           cropEfficiencyBonus: 0,
         });
         setState({ ...fallback, settings });
-        setBootError("저장소 또는 네트워크 문제로 기본 상태로 시작했습니다.");
-        setStatus("기본 농장 상태로 시작했습니다. 링크 없이도 그대로 플레이할 수 있습니다.");
+        setBootError("로컬 또는 클라우드 저장을 불러오지 못해 기본 상태로 시작했습니다.");
+        setStatus("기본 농장 상태로 시작했습니다. 링크가 없어도 그대로 플레이할 수 있습니다.");
       }
     }
 
@@ -320,7 +320,7 @@ export function LifeSimArena({ onExit }: Props) {
         return current;
       }
       if (current.progression.resonancePoints < cost) {
-        setStatus(`정착지 업그레이드에는 공명 포인트 ${cost}가 필요합니다.`);
+        setStatus(`정착지 업그레이드에는 공명 ${cost}가 필요합니다.`);
         return current;
       }
 
@@ -342,9 +342,9 @@ export function LifeSimArena({ onExit }: Props) {
       <div className="flex h-full min-h-[60vh] items-center justify-center">
         <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-black/30 p-8 text-center text-white/90">
           <div className="text-xs uppercase tracking-[0.35em] text-emerald-200/70">Fifth Dawn Boot</div>
-          <h2 className="mt-3 text-2xl font-semibold">라이프심 월드를 준비하는 중입니다</h2>
+          <h2 className="mt-3 text-2xl font-semibold">라이프심 월드를 준비하고 있습니다</h2>
           <p className="mt-3 text-sm text-slate-300">{status}</p>
-          <div className="mt-6 text-xs text-slate-500">오프라인 상태여도 잠시 후 기본 농장으로 진입합니다.</div>
+          <div className="mt-6 text-xs text-slate-500">오프라인 상태여도 즉시 기본 농장으로 진입합니다.</div>
         </div>
       </div>
     );
@@ -368,7 +368,7 @@ export function LifeSimArena({ onExit }: Props) {
           <div>시간: {state.time.day}일차 {formatClock(state.time.minutes)}</div>
           <div>기력: {playerSlice?.energy || state.player.energy} / {playerSlice?.maxEnergy || state.player.maxEnergy}</div>
           <div>
-            건강 보너스: 시작 {state.healthBonuses.startEnergyBonus} / 회복 {state.healthBonuses.recoveryBonus} / 재배 효율{" "}
+            건강 보너스: 시작 {state.healthBonuses.startEnergyBonus} / 회복 {state.healthBonuses.recoveryBonus} / 성장 효율{" "}
             {state.healthBonuses.cropEfficiencyBonus}
           </div>
           <div className="inline-flex items-center gap-2 text-amber-200">
@@ -598,9 +598,9 @@ export function LifeSimArena({ onExit }: Props) {
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
           <div className="font-medium">진행도</div>
           <div className="mt-3 space-y-2 text-slate-300">
-            <div>해금 레시피: {progressionOverview.unlockedRecipeCount}개</div>
-            <div>발견 지역: {progressionOverview.discoveredMapCount}곳</div>
-            <div>완료 퀘스트: {progressionOverview.completedQuestCount}개</div>
+            <div>해금 레시피 {progressionOverview.unlockedRecipeCount}개</div>
+            <div>발견 지역 {progressionOverview.discoveredMapCount}곳</div>
+            <div>완료 퀘스트 {progressionOverview.completedQuestCount}개</div>
             <div>북쪽 다리: {progressionOverview.restoredBridge ? "복구 완료" : "복구 필요"}</div>
             <div>북부 조사: {progressionOverview.surveyedNorthReach ? "완료" : "미완료"}</div>
             <div className="pt-1 text-xs text-sky-200">{getProgressionHint(currentProgression, worldSlice?.storyFlags || state.storyFlags)}</div>
@@ -669,7 +669,7 @@ export function LifeSimArena({ onExit }: Props) {
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
           <div className="font-medium">링크 보너스</div>
           <p className="mt-2 text-slate-300">
-            Health App과 연결하면 원본 건강 데이터가 아니라 파생된 안전 보너스만 받아 시작 기력, 회복, 재배 효율이 조금 올라갑니다.
+            Health App과 연결하면 원본 건강 데이터가 아니라 파생된 안전 보너스만 받아 시작 기력, 회복, 성장 효율이 조금 올라갑니다.
             연결하지 않아도 전체 플레이는 그대로 가능합니다.
           </p>
           {onExit ? (

@@ -54,9 +54,8 @@ export default function App() {
             <div className="text-xs uppercase tracking-[0.25em] text-amber-200/70">Lore</div>
             <h2 className="mt-2 text-lg font-semibold">Longest Dawn Slice</h2>
             <p className="mt-2 text-slate-300">
-              오래된 공명층이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 농장을 복구하고 지표의 깊은
-              기록과 그림자 행정을 추적해 정화 회로를 되살리며, 가장 긴 새벽 너머의 다음 거점으로
-              향합니다.
+              오래된 공명층이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 농장을 복구하고 지표의 깊은 기록과 그림자 행정의 흔적을
+              추적해 정화 통로를 열고, 가장 긴 새벽 너머의 다음 거점으로 나아갑니다.
             </p>
           </div>
 
@@ -66,8 +65,7 @@ export default function App() {
               Fifth Dawn Link
             </div>
             <p className="text-slate-300">
-              건강 앱에서 만든 파생 지표만 연동합니다. 원본 건강 데이터는 이 게임 앱으로 직접 들어오지
-              않습니다.
+              건강 앱에서 만든 파생 지표만 연동합니다. 원본 건강 데이터는 게임으로 직접 들어오지 않습니다.
             </p>
             <input
               value={gameAccountIdInput}
@@ -126,7 +124,7 @@ export default function App() {
                 <div>활동 등급: {bundle.profile.activityTier}</div>
                 <div>수면 등급: {bundle.profile.sleepTier}</div>
                 <div>회복 등급: {bundle.profile.recoveryTier}</div>
-                <div>주간 움직임 점수: {bundle.profile.weeklyMovementScore}</div>
+                <div>주간 이동 점수: {bundle.profile.weeklyMovementScore}</div>
                 <div>공명 포인트: {bundle.profile.resonancePoints}</div>
               </div>
             ) : (
