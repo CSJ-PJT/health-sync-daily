@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { LifeSimSettingsPanel } from "@/components/life-sim/LifeSimSettingsPanel";
 import { SettlementBuilderPanel } from "@/components/life-sim/SettlementBuilderPanel";
+import { StorePanel } from "@/components/life-sim/StorePanel";
 import { LifeSimTouchControls } from "@/components/life-sim/LifeSimTouchControls";
 import { renderLifeSimScene } from "@/game/life-sim/engine/renderLifeSimScene";
 import { resolveInputAction } from "@/game/life-sim/engine/inputBindings";
@@ -63,8 +64,10 @@ import {
   getSettlementUpgradeCost,
   getNextSettlementGoal,
 } from "@/game/life-sim/state/settlementProgress";
-import { paintSettlementTile, placeSettlementObject, removeSettlementObject, upgradeSettlement } from "@/game/settlement/settlementState";
+import { paintSettlementTile, placeSettlementObject, removeSettlementObject, setSettlementTheme, upgradeSettlement } from "@/game/settlement/settlementState";
+import type { CommerceCatalogState } from "@/game/shop/types";
 import type { DeepStakeChoiceId, LifeSimFacing, LifeSimInputAction, LifeSimRecipeId, LifeSimState } from "@/game/life-sim/types";
+import { loadCommerceCatalogState, purchaseCatalogProduct, restoreCatalogPurchases } from "@/services/repositories/commerceRepository";
 import { loadLifeSimState, saveLifeSimState } from "@/services/repositories/lifeSimSaveRepository";
 import { loadLifeSimSettings, saveLifeSimSettings } from "@/services/repositories/lifeSimSettingsRepository";
 
@@ -138,6 +141,7 @@ export function LifeSimArena({ onExit }: Props) {
   const [pendingRebind, setPendingRebind] = useState<LifeSimInputAction | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [canvasReady, setCanvasReady] = useState(false);
+  const [commerceState, setCommerceState] = useState<CommerceCatalogState | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,12 +149,15 @@ export function LifeSimArena({ onExit }: Props) {
     async function load() {
       try {
         const next = await loadLifeSimState("main");
+        const commerce = await loadCommerceCatalogState();
         if (cancelled) return;
         const settings = loadLifeSimSettings();
         setState({ ...next, settings });
+        setCommerceState(commerce);
         setBootError(null);
         setStatus("복구 농장에 도착했습니다. 밭을 가꾸고 광산 자원을 모아 정착지와 북부 개척지를 이어 보세요.");
       } catch {
+        const commerce = await loadCommerceCatalogState();
         if (cancelled) return;
         const settings = loadLifeSimSettings();
         const fallback = createInitialLifeSimState({
@@ -159,6 +166,7 @@ export function LifeSimArena({ onExit }: Props) {
           cropEfficiencyBonus: 0,
         });
         setState({ ...fallback, settings });
+        setCommerceState(commerce);
         setBootError("로컬 또는 클라우드 저장을 불러오지 못해 기본 상태로 시작했습니다.");
         setStatus("기본 농장 상태로 시작했습니다. 링크가 없어도 그대로 플레이할 수 있습니다.");
       }
@@ -273,6 +281,34 @@ export function LifeSimArena({ onExit }: Props) {
     () => ["village-recovery-vow", "accept-luminous-guidance", "study-deep-archive", "accept-shadow-bargain"],
     [],
   );
+  const commerceUnlocks = useMemo(
+    () =>
+      commerceState
+        ? {
+            settlementObjectTypes: Array.from(
+              new Set(
+                commerceState.entitlements
+                  .filter((entry) => entry.owned && entry.status === "fulfilled")
+                  .flatMap((entry) => {
+                    const product = commerceState.products.find((productEntry) => productEntry.id === entry.productId);
+                    return product?.unlocks.settlementObjectTypes || [];
+                  }),
+              ),
+            ),
+            settlementThemes: Array.from(
+              new Set(
+                commerceState.entitlements
+                  .filter((entry) => entry.owned && entry.status === "fulfilled")
+                  .flatMap((entry) => {
+                    const product = commerceState.products.find((productEntry) => productEntry.id === entry.productId);
+                    return product?.unlocks.settlementThemes || [];
+                  }),
+              ),
+            ),
+          }
+        : { settlementObjectTypes: [], settlementThemes: [] },
+    [commerceState],
+  );
 
   const saveNow = async () => {
     if (!state) return;
@@ -366,6 +402,18 @@ export function LifeSimArena({ onExit }: Props) {
     });
   };
 
+  const handlePurchase = async (productId: Parameters<typeof purchaseCatalogProduct>[0]) => {
+    const next = await purchaseCatalogProduct(productId);
+    setCommerceState(next);
+    setStatus(next.diagnosticsMessage);
+  };
+
+  const handleRestorePurchases = async () => {
+    const next = await restoreCatalogPurchases();
+    setCommerceState(next);
+    setStatus(next.diagnosticsMessage);
+  };
+
   if (!state) {
     return (
       <div className="flex h-full min-h-[60vh] items-center justify-center">
@@ -387,7 +435,7 @@ export function LifeSimArena({ onExit }: Props) {
 
   return (
     <div className="grid h-full min-h-[720px] gap-4 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
-      <section className="min-h-0 space-y-4 overflow-y-auto rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
+      <section className="order-2 hidden min-h-0 space-y-4 overflow-y-auto rounded-[1.6rem] border border-white/10 bg-white/5 p-4 xl:order-1 xl:block">
         <div>
           <div className="text-xs uppercase tracking-[0.25em] text-emerald-200/70">Player</div>
           <h2 className="mt-2 text-xl font-semibold">현재 상태</h2>
@@ -492,7 +540,7 @@ export function LifeSimArena({ onExit }: Props) {
         ) : null}
       </section>
 
-      <section className="flex min-h-0 flex-col gap-4 rounded-[1.6rem] border border-white/10 bg-black/30 p-4">
+      <section className="order-1 flex min-h-0 flex-col gap-4 rounded-[1.6rem] border border-white/10 bg-black/30 p-4 xl:order-2">
         <div className="rounded-2xl border border-sky-300/15 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
           <div className="font-medium">바로 플레이하기</div>
           <div className="mt-1 text-xs text-sky-50/80">
@@ -565,9 +613,48 @@ export function LifeSimArena({ onExit }: Props) {
           </div>
         </div>
         <LifeSimTouchControls onMove={applyMovement} onTool={applyTool} onInteract={applyInteract} onSleep={applySleep} />
+
+        <div className="grid gap-3 xl:hidden">
+          <details className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
+            <summary className="cursor-pointer font-medium">현재 상태</summary>
+            <div className="mt-3 space-y-2 text-sm">
+              <div>맵: {getMapLabel(playerSlice?.mapId || state.player.mapId)}</div>
+              <div>시간: {state.time.day}일차 {formatClock(state.time.minutes)}</div>
+              <div>기력: {playerSlice?.energy || state.player.energy} / {playerSlice?.maxEnergy || state.player.maxEnergy}</div>
+              <div>공명 포인트: {state.progression.resonancePoints}</div>
+            </div>
+          </details>
+
+          <details className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
+            <summary className="cursor-pointer font-medium">활성 퀘스트와 안내</summary>
+            <div className="mt-3 space-y-2">
+              {activeQuest ? (
+                <>
+                  <div className="font-medium text-amber-100">{activeQuest.title}</div>
+                  <div className="text-slate-300">{activeQuest.objective}</div>
+                </>
+              ) : (
+                <div className="text-slate-300">현재 활성 퀘스트가 없습니다.</div>
+              )}
+              <div className="text-xs text-sky-200">{status}</div>
+            </div>
+          </details>
+
+          <details className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
+            <summary className="cursor-pointer font-medium">정착지와 상점</summary>
+            <div className="mt-3 space-y-2 text-sm">
+              <div>{getSettlementTierLabel(currentSettlement.level)} · Lv.{currentSettlement.level}</div>
+              <div className="text-slate-300">시설: {getSettlementFacilities(currentSettlement).join(", ")}</div>
+              <div className="text-xs text-amber-200">
+                다음 업그레이드 비용: {currentSettlement.level >= 3 ? "최종 단계" : `공명 ${getSettlementUpgradeCost(currentSettlement.level)}`}
+              </div>
+              {commerceState ? <div className="text-xs text-slate-400">상점 상품 {commerceState.products.length}개</div> : null}
+            </div>
+          </details>
+        </div>
       </section>
 
-      <section className="min-h-0 space-y-4 overflow-y-auto rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
+      <section className="order-3 hidden min-h-0 space-y-4 overflow-y-auto rounded-[1.6rem] border border-white/10 bg-white/5 p-4 xl:block">
         <div>
           <div className="text-xs uppercase tracking-[0.25em] text-sky-200/70">Guide</div>
           <h2 className="mt-2 text-xl font-semibold">현장 가이드</h2>
@@ -775,6 +862,8 @@ export function LifeSimArena({ onExit }: Props) {
 
         <SettlementBuilderPanel
           state={state.settlement}
+          extraUnlockedObjectTypes={commerceUnlocks.settlementObjectTypes}
+          unlockedThemes={commerceUnlocks.settlementThemes}
           onPaint={(x, y, terrain) =>
             setState((current) =>
               current
@@ -808,8 +897,20 @@ export function LifeSimArena({ onExit }: Props) {
                 : current,
             )
           }
+          onThemeChange={(theme) =>
+            setState((current) =>
+              current
+                ? {
+                    ...current,
+                    settlement: setSettlementTheme(current.settlement, theme),
+                  }
+                : current,
+            )
+          }
           onUpgrade={applySettlementUpgrade}
         />
+
+        {commerceState ? <StorePanel state={commerceState} onPurchase={handlePurchase} onRestore={handleRestorePurchases} /> : null}
 
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
           <div className="font-medium">조작 안내</div>

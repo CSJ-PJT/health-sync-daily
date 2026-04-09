@@ -69,7 +69,7 @@ export function FullscreenGameHost({ title, subtitle, onExit, sidebar, children 
               >
                 <span className="inline-flex items-center gap-2">
                   <X className="h-4 w-4" />
-                  닫기
+                  나가기
                 </span>
               </button>
             ) : null}
@@ -78,9 +78,7 @@ export function FullscreenGameHost({ title, subtitle, onExit, sidebar, children 
 
         <div className={`grid min-h-0 flex-1 gap-4 ${sidebar ? "xl:grid-cols-[1fr_340px]" : ""}`}>
           <div className="min-h-0 rounded-[2rem] border border-white/10 bg-black/20 p-3 backdrop-blur">{children}</div>
-          {sidebar ? (
-            <aside className="min-h-0 rounded-[2rem] border border-white/10 bg-black/20 p-4 backdrop-blur">{sidebar}</aside>
-          ) : null}
+          {sidebar ? <aside className="min-h-0 rounded-[2rem] border border-white/10 bg-black/20 p-4 backdrop-blur">{sidebar}</aside> : null}
         </div>
       </div>
     </div>

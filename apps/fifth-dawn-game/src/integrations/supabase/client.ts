@@ -1,12 +1,32 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { getRuntimeConfig, getSafeSupabaseConfig } from "@/config/runtimeConfig";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+let cachedClient: SupabaseClient | null | undefined;
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-});
+export function getSupabaseClient() {
+  if (cachedClient !== undefined) {
+    return cachedClient;
+  }
+
+  const safeConfig = getSafeSupabaseConfig();
+  if (!safeConfig) {
+    const runtimeConfig = getRuntimeConfig();
+    console.info(`[Deep Stake] ${runtimeConfig.statusMessage}`);
+    cachedClient = null;
+    return cachedClient;
+  }
+
+  cachedClient = createClient(safeConfig.supabaseUrl, safeConfig.supabasePublishableKey, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
+
+  return cachedClient;
+}
+
+export function hasSupabaseClient() {
+  return Boolean(getSupabaseClient());
+}

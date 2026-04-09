@@ -32,3 +32,11 @@
   - `npm run mobile:game:add:android`
   - `npm run mobile:game:add:ios`
 - Use `docs/fifth-dawn-mobile.md` and `docs/fifth-dawn-mobile-release-checklist.md` as the source of truth before first phone deployment.
+- Android Gradle debug commands should use the stable cache helper:
+  - `npm run mobile:game:assemble:android`
+  - `npm run mobile:game:install:android`
+  - `npm run mobile:game:install:android:info`
+  - `npm run mobile:game:install:android:stacktrace`
+  - `npm run mobile:game:adb:devices`
+  - `npm run mobile:game:gradle:stop`
+- Avoid random per-run `GRADLE_USER_HOME` values during local debugging. Use the stable helper scripts unless a one-off diagnosis requires otherwise.

@@ -1,7 +1,7 @@
 import type { GameLinkBundle } from "@health-sync/shared-types";
 import { getGameSideLinkBundle } from "@health-sync/game-link-sdk";
 import { FIFTH_DAWN_PRODUCT_KEY } from "@/config/gameProduct";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/integrations/supabase/client";
 
 const LINK_TOKEN_KEY = "fifth_dawn_game_link_token";
 const GAME_ACCOUNT_ID_KEY = "fifth_dawn_game_account_id";
@@ -34,6 +34,9 @@ export async function loadDerivedGameLinkBundle(token?: string, gameAccountId?: 
   const linkToken = token || getStoredGameLinkToken();
   const resolvedGameAccountId = gameAccountId || getStoredGameAccountId();
   if (!linkToken || !resolvedGameAccountId) return null;
+
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
 
   try {
     return await getGameSideLinkBundle(supabase as never, linkToken, resolvedGameAccountId, FIFTH_DAWN_PRODUCT_KEY);

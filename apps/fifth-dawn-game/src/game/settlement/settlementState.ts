@@ -4,6 +4,7 @@ import type {
   SettlementObjectType,
   SettlementState,
   SettlementTerrain,
+  SettlementTheme,
   SettlementUpgradeLevel,
 } from "@/game/settlement/settlementTypes";
 
@@ -103,5 +104,12 @@ export function upgradeSettlement(state: SettlementState): SettlementState {
     level: nextLevel,
     unlockedObjectTypes: resolveUnlockedObjectTypes(nextLevel, state.unlockedObjectTypes),
     restoredStructures: Array.from(new Set([...state.restoredStructures, `level-${nextLevel}`])),
+  };
+}
+
+export function setSettlementTheme(state: SettlementState, theme: SettlementTheme): SettlementState {
+  return {
+    ...state,
+    theme,
   };
 }

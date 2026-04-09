@@ -6,6 +6,14 @@ export type SettlementTile = {
   terrain: SettlementTerrain;
 };
 
+export type SettlementTheme =
+  | "recovery-farm"
+  | "dawn-square"
+  | "star-hub"
+  | "luminous-garden"
+  | "star-hub-prime"
+  | "origin-home";
+
 export type SettlementObjectType =
   | "tree"
   | "bench"
@@ -18,7 +26,18 @@ export type SettlementObjectType =
   | "sign"
   | "home-core"
   | "garden-bed"
-  | "beacon";
+  | "beacon"
+  | "founder-banner"
+  | "founder-spire"
+  | "dawn-crate"
+  | "starter-lamp"
+  | "luminous-arch"
+  | "garden-beacon"
+  | "star-gate"
+  | "portal-spire"
+  | "hub-plaza"
+  | "origin-screen"
+  | "origin-bed";
 
 export type SettlementObject = {
   id: string;
@@ -38,7 +57,7 @@ export type SettlementState = {
   width: number;
   height: number;
   title: string;
-  theme: "recovery-farm" | "dawn-square" | "star-hub";
+  theme: SettlementTheme;
   level: SettlementUpgradeLevel;
   tiles: SettlementTile[];
   objects: SettlementObject[];

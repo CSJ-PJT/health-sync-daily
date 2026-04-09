@@ -9,7 +9,8 @@ const androidIndexPath = resolve(appRoot, "android", "app", "src", "main", "asse
 
 const distHtml = readFileSync(distIndexPath, "utf8")
   .replaceAll('src="/assets/', 'src="./assets/')
-  .replaceAll('href="/assets/', 'href="./assets/');
+  .replaceAll('href="/assets/', 'href="./assets/')
+  .replaceAll(' crossorigin', '');
 
 writeFileSync(androidIndexPath, distHtml, "utf8");
 

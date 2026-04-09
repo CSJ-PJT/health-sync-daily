@@ -48,3 +48,5 @@ export type GameLinkBundle = {
   missions: GameLinkMission[];
   rewards: GameLinkReward[];
 };
+
+export * from "./deepStake";

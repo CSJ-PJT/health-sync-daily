@@ -40,7 +40,7 @@ export function LifeSimSettingsPanel({ open, settings, pendingRebind, onToggle, 
         <button type="button" onClick={onToggle} className="rounded-xl border border-white/10 px-2 py-1 text-xs">
           <span className="inline-flex items-center gap-1">
             <Settings2 className="h-3.5 w-3.5" />
-            {open ? "접기" : "열기"}
+            {open ? "닫기" : "열기"}
           </span>
         </button>
       </div>
@@ -86,12 +86,7 @@ export function LifeSimSettingsPanel({ open, settings, pendingRebind, onToggle, 
           </div>
           <div className="grid grid-cols-2 gap-2">
             {(["wasd", "arrows"] as LifeSimInputPreset[]).map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => onChange(applyInputPreset(settings, preset))}
-                className="rounded-xl border border-white/10 px-2 py-2"
-              >
+              <button key={preset} type="button" onClick={() => onChange(applyInputPreset(settings, preset))} className="rounded-xl border border-white/10 px-2 py-2">
                 {preset === "wasd" ? "WASD" : "방향키"}
               </button>
             ))}
@@ -147,9 +142,7 @@ export function LifeSimSettingsPanel({ open, settings, pendingRebind, onToggle, 
                 </div>
               ))}
             </div>
-            <div className="mt-3 text-[11px] text-slate-500">
-              리바인딩 중에는 원하는 키를 바로 누르면 적용됩니다. 취소하려면 Esc를 누르세요.
-            </div>
+            <div className="mt-3 text-[11px] text-slate-500">리바인딩 중에는 원하는 키를 바로 누르면 적용됩니다. 취소하려면 Esc를 누르세요.</div>
           </div>
         </div>
       ) : null}
