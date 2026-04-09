@@ -19,7 +19,7 @@
     "cap:add:android": "npx cap add android",
     "cap:add:ios": "npx cap add ios",
     "cap:copy:android": "npx cap copy android",
-    "cap:sync:android": "npx cap sync android",
+    "cap:sync:android": "npx cap sync android && node scripts/fix-capacitor-asset-paths.mjs",
     "cap:open:android": "npx cap open android"
   }
 }
