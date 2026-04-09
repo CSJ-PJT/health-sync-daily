@@ -463,9 +463,17 @@ export function LifeSimArena({ onExit }: Props) {
       </section>
 
       <section className="flex min-h-0 flex-col gap-4 rounded-[1.6rem] border border-white/10 bg-black/30 p-4">
-        <div className="min-h-0 flex-1 overflow-auto rounded-[1.4rem] border border-white/10 bg-black/30 p-2">
-          <canvas ref={canvasRef} className="mx-auto max-w-full rounded-xl bg-black/20" />
+        <div className="rounded-2xl border border-sky-300/15 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+          <div className="font-medium">바로 플레이하기</div>
+          <div className="mt-1 text-xs text-sky-50/80">
+            화면이 어둡게 보이더라도 중앙 캔버스가 월드입니다. 이동 후 `E`, `Space`, `Q`로 상호작용할 수 있습니다.
+          </div>
         </div>
+
+        <div className="min-h-0 flex-1 overflow-auto rounded-[1.4rem] border border-white/10 bg-black/30 p-2">
+          <canvas ref={canvasRef} className="mx-auto max-w-full rounded-xl bg-black/20 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]" />
+        </div>
+
         <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
           <div className="grid grid-cols-3 gap-2">
             <div />

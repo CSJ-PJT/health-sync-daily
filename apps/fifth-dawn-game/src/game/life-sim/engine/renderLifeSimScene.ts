@@ -106,20 +106,22 @@ export function renderLifeSimScene(canvas: HTMLCanvasElement, state: LifeSimStat
   if (state.player.facing === "right") ctx.fillRect(state.player.x * TILE_SIZE + TILE_SIZE - 10, state.player.y * TILE_SIZE + 14, 6, 6);
 
   ctx.fillStyle = "rgba(15,23,42,0.72)";
-  ctx.fillRect(10, 10, 340, 64);
+  ctx.fillRect(10, 10, 360, 74);
   ctx.fillStyle = "#f8fafc";
   ctx.font = "13px sans-serif";
   ctx.fillText(`${t(map.name)} · ${state.time.day}일차`, 20, 30);
   const hour = Math.floor(state.time.minutes / 60);
   const minute = state.time.minutes % 60;
   ctx.fillText(`시간 ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} · 기력 ${state.player.energy}/${state.player.maxEnergy}`, 20, 50);
+  ctx.fillText(`E 대화 · Space 행동 · Q 수면`, 20, 68);
 
   if (state.settings.showPerformanceOverlay) {
     ctx.fillStyle = "rgba(15,23,42,0.72)";
-    ctx.fillRect(canvas.width - 180, 10, 170, 68);
+    ctx.fillRect(canvas.width - 190, 10, 180, 78);
     ctx.fillStyle = "#cbd5e1";
-    ctx.fillText(`맵 크기 ${map.width}x${map.height}`, canvas.width - 170, 30);
-    ctx.fillText(`자원 노드 ${state.resourceNodes.length}`, canvas.width - 170, 48);
-    ctx.fillText(`이벤트 로그 ${state.eventLog.length}`, canvas.width - 170, 66);
+    ctx.fillText(`맵 크기 ${map.width}x${map.height}`, canvas.width - 180, 30);
+    ctx.fillText(`자원 노드 ${state.resourceNodes.length}`, canvas.width - 180, 48);
+    ctx.fillText(`이벤트 로그 ${state.eventLog.length}`, canvas.width - 180, 66);
+    ctx.fillText(`핫바 ${state.player.selectedHotbarIndex + 1}`, canvas.width - 180, 84);
   }
 }
