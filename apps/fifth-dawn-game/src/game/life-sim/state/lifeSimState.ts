@@ -4,7 +4,7 @@ import { lifeSimMaps } from "@/game/life-sim/data/maps";
 import { lifeSimDialogue } from "@/game/life-sim/data/npcs";
 import { lifeSimQuestDefinitions, initialLifeSimQuests } from "@/game/life-sim/data/quests";
 import { lifeSimRecipes } from "@/game/life-sim/data/recipes";
-import { applyQuestDeepStakeInfluence, createInitialDeepStakeState } from "@/game/life-sim/state/deepStake";
+import { applyQuestDeepStakeInfluence, createInitialDeepStakeState, getDeepStakeNpcEcho } from "@/game/life-sim/state/deepStake";
 import { createDefaultSettlement, unlockSettlementStructure } from "@/game/settlement/settlementState";
 import { createLifeSimEventSink } from "@/game/life-sim/state/events";
 import { getNpcAtPosition } from "@/game/life-sim/state/npcSchedule";
@@ -789,6 +789,11 @@ export function interactInWorld(state: LifeSimState): LifeSimActionResult {
       },
       createMessage(t(npc.name), t(line.text)),
     );
+
+    const deepStakeEcho = getDeepStakeNpcEcho(nextState, npc.id);
+    if (deepStakeEcho) {
+      nextState = appendMessage(nextState, createMessage(deepStakeEcho.title, deepStakeEcho.body));
+    }
 
     nextState = applyRelationshipMilestoneRewards(nextState, npc.id);
 

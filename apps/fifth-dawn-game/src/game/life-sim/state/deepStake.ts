@@ -7,6 +7,7 @@ import type {
   DeepStakeChoiceId,
   DeepStakeFactionId,
   DeepStakeState,
+  LifeSimNpcId,
   LifeSimState,
 } from "@/game/life-sim/types";
 
@@ -347,4 +348,62 @@ export function getDeepStakeSignalHint(state: DeepStakeState) {
     return t({ ko: "아직 높은 차원의 흔적은 흐릿합니다. 정화와 공명을 더 쌓아야 합니다.", en: "Higher-dimensional traces are still faint. Build more purification and resonance." }, locale);
   }
   return t(visible[0].note, locale);
+}
+
+export function getDeepStakeNpcEcho(state: LifeSimState, npcId: LifeSimNpcId) {
+  const locale = getLifeSimLocale();
+
+  if (npcId === "archivist" && state.deepStake.chosenPaths.includes("study-deep-archive")) {
+    return {
+      title: t({ ko: "심층 기록의 공명", en: "Deep Archive Resonance" }, locale),
+      body: t(
+        {
+          ko: "아리아는 당신이 빈 기록에서 의미를 읽기 시작했다고 말합니다. 이제 오멘과 봉인된 문양이 더 선명하게 남습니다.",
+          en: "Aria says you have begun reading meaning from erased records. Omens and sealed sigils now linger more clearly.",
+        },
+        locale,
+      ),
+    };
+  }
+
+  if (npcId === "archivist" && state.deepStake.chosenPaths.includes("accept-luminous-guidance")) {
+    return {
+      title: t({ ko: "빛의 동행자 흔적", en: "Luminous Companion Trace" }, locale),
+      body: t(
+        {
+          ko: "기록관은 당신 주변의 공명 흔적이 더 밝아졌다고 속삭입니다. 아직 직접 개입은 아니지만, 분명한 응답이 시작됐습니다.",
+          en: "The archivist whispers that the resonance around you has brightened. It is not direct intervention yet, but a clear response has begun.",
+        },
+        locale,
+      ),
+    };
+  }
+
+  if (npcId === "mechanic" && state.deepStake.chosenPaths.includes("village-recovery-vow")) {
+    return {
+      title: t({ ko: "복구 서약의 반응", en: "Recovery Vow Response" }, locale),
+      body: t(
+        {
+          ko: "도윤은 정착지의 배치가 이제 사람을 지키는 방향으로 정돈되기 시작했다고 말합니다.",
+          en: "Doyun says the settlement layout is beginning to organize itself toward protection and recovery.",
+        },
+        locale,
+      ),
+    };
+  }
+
+  if (npcId === "mechanic" && state.deepStake.chosenPaths.includes("accept-shadow-bargain")) {
+    return {
+      title: t({ ko: "불안한 출력", en: "Uneasy Output" }, locale),
+      body: t(
+        {
+          ko: "정비공은 관로가 지나치게 빠르게 반응한다고 경고합니다. 힘은 늘었지만 압력도 함께 올라갔습니다.",
+          en: "The mechanic warns that the lines are responding too quickly. Power has increased, but so has pressure.",
+        },
+        locale,
+      ),
+    };
+  }
+
+  return null;
 }
