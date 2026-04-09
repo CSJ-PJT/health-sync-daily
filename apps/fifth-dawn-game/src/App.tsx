@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link2, Sparkles } from "lucide-react";
 import { FullscreenGameHost } from "@/components/FullscreenGameHost";
+import { GameRuntimeBoundary } from "@/components/GameRuntimeBoundary";
 import { LifeSimArena } from "@/components/LifeSimArena";
 import { fifthDawnMobileShell } from "@/config/mobileShell";
 import type { GameLinkBundle } from "@health-sync/shared-types";
@@ -19,6 +20,7 @@ export default function App() {
   const [gameAccountIdInput, setGameAccountIdInput] = useState(getStoredGameAccountId());
   const [bundle, setBundle] = useState<GameLinkBundle | null>(null);
   const [loadingLink, setLoadingLink] = useState(false);
+  const [bootState, setBootState] = useState("앱 셸을 준비하고 있습니다.");
 
   const refreshBundle = async (token?: string, gameAccountId?: string) => {
     setLoadingLink(true);
@@ -34,6 +36,7 @@ export default function App() {
     const background = fifthDawnMobileShell.statusBarColor;
     document.documentElement.style.backgroundColor = background;
     document.body.style.backgroundColor = background;
+    setBootState("Fifth Dawn 셸이 켜졌습니다. 링크 정보와 월드를 순서대로 불러옵니다.");
     void refreshBundle();
   }, []);
 
@@ -45,99 +48,114 @@ export default function App() {
   }, [bundle]);
 
   return (
-    <FullscreenGameHost
-      title={fifthDawnMobileShell.appName}
-      subtitle={subtitle}
-      sidebar={
-        <div className="space-y-4 text-sm text-slate-200">
-          <div>
-            <div className="text-xs uppercase tracking-[0.25em] text-amber-200/70">Lore</div>
-            <h2 className="mt-2 text-lg font-semibold">Longest Dawn Slice</h2>
-            <p className="mt-2 text-slate-300">
-              오래된 공명층이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 농장을 복구하고 지표의 깊은 기록과 그림자 행정의 흔적을
-              추적해 정화 통로를 열고, 가장 긴 새벽 너머의 다음 거점으로 나아갑니다.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-            <div className="mb-2 flex items-center gap-2 font-medium">
-              <Link2 className="h-4 w-4 text-emerald-300" />
-              Fifth Dawn Link
-            </div>
-            <p className="text-slate-300">
-              건강 앱에서 만든 파생 지표만 연동합니다. 원본 건강 데이터는 게임으로 직접 들어오지 않습니다.
-            </p>
-            <input
-              value={gameAccountIdInput}
-              onChange={(event) => setGameAccountIdInput(event.target.value)}
-              placeholder="game account id"
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm outline-none placeholder:text-slate-500"
-            />
-            <input
-              value={tokenInput}
-              onChange={(event) => setTokenInput(event.target.value)}
-              placeholder="link token"
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm outline-none placeholder:text-slate-500"
-            />
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                onClick={async () => {
-                  setStoredGameAccountId(gameAccountIdInput.trim());
-                  setStoredGameLinkToken(tokenInput.trim());
-                  await refreshBundle(tokenInput.trim(), gameAccountIdInput.trim());
-                }}
-                className="rounded-2xl border border-emerald-300/20 bg-emerald-500/15 px-4 py-2"
-              >
-                링크 적용
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  clearStoredGameAccountId();
-                  clearStoredGameLinkToken();
-                  setGameAccountIdInput("");
-                  setTokenInput("");
-                  await refreshBundle("", "");
-                }}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2"
-              >
-                해제
-              </button>
-            </div>
-            <div className="mt-3 text-xs text-slate-400">
-              {loadingLink
-                ? "파생 지표를 불러오는 중입니다."
-                : bundle?.accountLink
-                  ? `연결 상태: ${bundle.accountLink.linkStatus} · 게임 계정 ${bundle.accountLink.gameAccountId}`
-                  : "현재는 로컬 플레이 전용 상태입니다."}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-            <div className="mb-2 flex items-center gap-2 font-medium">
-              <Sparkles className="h-4 w-4 text-sky-300" />
-              파생 보너스
-            </div>
-            {bundle?.profile ? (
-              <div className="space-y-2 text-slate-300">
-                <div>활동 등급: {bundle.profile.activityTier}</div>
-                <div>수면 등급: {bundle.profile.sleepTier}</div>
-                <div>회복 등급: {bundle.profile.recoveryTier}</div>
-                <div>주간 이동 점수: {bundle.profile.weeklyMovementScore}</div>
-                <div>공명 포인트: {bundle.profile.resonancePoints}</div>
-              </div>
-            ) : (
-              <div className="text-slate-400">링크하지 않아도 게임은 그대로 플레이할 수 있습니다.</div>
-            )}
-            <div className="mt-3 text-xs text-slate-500">
-              모바일 설정: {fifthDawnMobileShell.preferredOrientation} / {fifthDawnMobileShell.productKey}
-            </div>
-          </div>
+    <>
+      <div className="fixed left-3 right-3 top-3 z-[100] rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-50 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur md:left-6 md:right-auto md:w-[420px]">
+        <div className="text-xs uppercase tracking-[0.3em] text-emerald-200/70">Fifth Dawn Status</div>
+        <div className="mt-2 font-medium">앱은 실행 중입니다</div>
+        <div className="mt-1 text-emerald-50/90">{bootState}</div>
+        <div className="mt-2 text-xs text-emerald-100/80">
+          이 카드가 보이면 검은 화면이 아니라 앱 셸은 정상적으로 켜진 상태입니다.
         </div>
-      }
-    >
-      <LifeSimArena />
-    </FullscreenGameHost>
+      </div>
+
+      <FullscreenGameHost
+        title={fifthDawnMobileShell.appName}
+        subtitle={subtitle}
+        sidebar={
+          <div className="space-y-4 text-sm text-slate-200">
+            <div>
+              <div className="text-xs uppercase tracking-[0.25em] text-amber-200/70">Lore</div>
+              <h2 className="mt-2 text-lg font-semibold">Longest Dawn Slice</h2>
+              <p className="mt-2 text-slate-300">
+                오래된 공명층이 마을 아래에서 아직 완전히 꺼지지 않았습니다. 농장과 정착지를 복구하고, 지표의 깊은 기록과
+                그림자 행정의 흔적을 추적해 정화 통로를 넓혀 다음 거점으로 나아갑니다.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="mb-2 flex items-center gap-2 font-medium">
+                <Link2 className="h-4 w-4 text-emerald-300" />
+                Fifth Dawn Link
+              </div>
+              <p className="text-slate-300">
+                건강 앱에서 만든 파생 지표만 연동합니다. 원본 건강 데이터는 게임으로 직접 들어오지 않습니다.
+              </p>
+              <input
+                value={gameAccountIdInput}
+                onChange={(event) => setGameAccountIdInput(event.target.value)}
+                placeholder="game account id"
+                className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm outline-none placeholder:text-slate-500"
+              />
+              <input
+                value={tokenInput}
+                onChange={(event) => setTokenInput(event.target.value)}
+                placeholder="link token"
+                className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm outline-none placeholder:text-slate-500"
+              />
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setStoredGameAccountId(gameAccountIdInput.trim());
+                    setStoredGameLinkToken(tokenInput.trim());
+                    await refreshBundle(tokenInput.trim(), gameAccountIdInput.trim());
+                    setBootState("링크 정보를 갱신했습니다.");
+                  }}
+                  className="rounded-2xl border border-emerald-300/20 bg-emerald-500/15 px-4 py-2"
+                >
+                  링크 적용
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    clearStoredGameAccountId();
+                    clearStoredGameLinkToken();
+                    setGameAccountIdInput("");
+                    setTokenInput("");
+                    await refreshBundle("", "");
+                    setBootState("링크 정보를 해제했습니다.");
+                  }}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2"
+                >
+                  해제
+                </button>
+              </div>
+              <div className="mt-3 text-xs text-slate-400">
+                {loadingLink
+                  ? "파생 지표를 불러오는 중입니다."
+                  : bundle?.accountLink
+                    ? `연결 상태: ${bundle.accountLink.linkStatus} · 게임 계정 ${bundle.accountLink.gameAccountId}`
+                    : "현재는 로컬 플레이 상태입니다."}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="mb-2 flex items-center gap-2 font-medium">
+                <Sparkles className="h-4 w-4 text-sky-300" />
+                파생 보너스
+              </div>
+              {bundle?.profile ? (
+                <div className="space-y-2 text-slate-300">
+                  <div>활동 등급: {bundle.profile.activityTier}</div>
+                  <div>수면 등급: {bundle.profile.sleepTier}</div>
+                  <div>회복 등급: {bundle.profile.recoveryTier}</div>
+                  <div>주간 이동 점수: {bundle.profile.weeklyMovementScore}</div>
+                  <div>공명 포인트: {bundle.profile.resonancePoints}</div>
+                </div>
+              ) : (
+                <div className="text-slate-400">링크하지 않아도 게임은 그대로 플레이할 수 있습니다.</div>
+              )}
+              <div className="mt-3 text-xs text-slate-500">
+                모바일 설정: {fifthDawnMobileShell.preferredOrientation} / {fifthDawnMobileShell.productKey}
+              </div>
+            </div>
+          </div>
+        }
+      >
+        <GameRuntimeBoundary>
+          <LifeSimArena />
+        </GameRuntimeBoundary>
+      </FullscreenGameHost>
+    </>
   );
 }
