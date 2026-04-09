@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BedDouble,
   Droplets,
@@ -368,7 +368,7 @@ export function LifeSimArena({ onExit }: Props) {
     return (
       <div className="flex h-full min-h-[60vh] items-center justify-center">
         <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-black/30 p-8 text-center text-white/90">
-          <div className="text-xs uppercase tracking-[0.35em] text-emerald-200/70">Fifth Dawn Boot</div>
+          <div className="text-xs uppercase tracking-[0.35em] text-emerald-200/70">Fifth Dawn</div>
           <h2 className="mt-3 text-2xl font-semibold">라이프심 월드를 준비하고 있습니다</h2>
           <p className="mt-3 text-sm text-slate-300">{status}</p>
           <div className="mt-6 text-xs text-slate-500">오프라인 상태여도 즉시 기본 농장으로 진입합니다.</div>
@@ -387,7 +387,7 @@ export function LifeSimArena({ onExit }: Props) {
     <div className="grid h-full min-h-[720px] gap-4 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
       <section className="min-h-0 space-y-4 overflow-y-auto rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
         <div>
-          <div className="text-xs uppercase tracking-[0.25em] text-emerald-200/70">Player State</div>
+          <div className="text-xs uppercase tracking-[0.25em] text-emerald-200/70">Player</div>
           <h2 className="mt-2 text-xl font-semibold">현재 상태</h2>
         </div>
 
@@ -548,7 +548,7 @@ export function LifeSimArena({ onExit }: Props) {
 
       <section className="min-h-0 space-y-4 overflow-y-auto rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
         <div>
-          <div className="text-xs uppercase tracking-[0.25em] text-sky-200/70">Field Guide</div>
+          <div className="text-xs uppercase tracking-[0.25em] text-sky-200/70">Guide</div>
           <h2 className="mt-2 text-xl font-semibold">현장 가이드</h2>
           <p className="mt-2 text-sm text-slate-300">
             밭을 가꾸고 광산 자원을 모아 시설을 복구하세요. 마을 주민과 대화하면 깊은 기록과 정화 계획이 조금씩 드러납니다.

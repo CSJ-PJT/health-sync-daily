@@ -33,9 +33,9 @@ function terrainColor(terrain: SettlementTerrain) {
 }
 
 const upgradeHint: Record<SettlementState["level"], string> = {
-  1: "정원과 기본 배치를 다지는 초기 거주 단계입니다.",
-  2: "등불, 바닥, 휴식 계열이 열리는 중간 단계입니다.",
-  3: "비콘과 감시 타워까지 갖춘 고도 정착지 단계입니다.",
+  1: "정원과 기본 거주 공간을 다지는 초기 정착 단계입니다.",
+  2: "정화 시설과 생산 구역이 열리는 중간 정착 단계입니다.",
+  3: "비콘과 감시 구조까지 갖춘 고도 정착 단계입니다.",
 };
 
 export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove, onUpgrade }: Props) {
@@ -75,7 +75,7 @@ export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove, onUp
         <div className="font-medium text-white">{state.title}</div>
         <div className="mt-1">{upgradeHint[state.level]}</div>
         <div className="mt-2 text-[11px] text-slate-400">
-          복구 구조물 {state.restoredStructures.length}개 · 방문 {state.visits} · 좋아요 {state.likes}
+          복구 구조물 {state.restoredStructures.length}개 · 방문 {state.visits}회 · 좋아요 {state.likes}
         </div>
       </div>
 
@@ -107,7 +107,7 @@ export function SettlementBuilderPanel({ state, onPaint, onPlace, onRemove, onUp
         >
           <span className="inline-flex items-center gap-2">
             <Trash2 className="h-4 w-4" />
-            지우기
+            제거
           </span>
         </button>
       </div>
