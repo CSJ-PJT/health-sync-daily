@@ -12,6 +12,8 @@ The current web/Capacitor client remains a prototype/reference.
 - `../docs/deep-stake-current-systems.md`
 - `../docs/deep-stake-unity-migration.md`
 - `../docs/deep-stake-vertical-slice.md`
+- `../docs/deep-stake-first-unity-slice.md`
+- `../docs/deep-stake-health-link-contract.md`
 - `../docs/deep-stake-unity-tasklist.md`
 
 ## Current shared contracts
@@ -19,6 +21,7 @@ The current web/Capacitor client remains a prototype/reference.
 The first portable contract reference now lives in:
 - `../packages/shared-types/src/deepStake.ts`
 - `./contracts/README.md`
+- `./DeepStakeUnity/Assets/Scripts/README.md`
 
 It defines Unity-ready reference types for:
 - player state
