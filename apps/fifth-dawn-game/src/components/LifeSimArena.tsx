@@ -137,6 +137,7 @@ export function LifeSimArena({ onExit }: Props) {
   const [showSettings, setShowSettings] = useState(false);
   const [pendingRebind, setPendingRebind] = useState<LifeSimInputAction | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [canvasReady, setCanvasReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -172,6 +173,7 @@ export function LifeSimArena({ onExit }: Props) {
   useEffect(() => {
     if (!state || !canvasRef.current) return;
     renderLifeSimScene(canvasRef.current, state);
+    setCanvasReady(true);
   }, [state]);
 
   useEffect(() => {
@@ -498,8 +500,27 @@ export function LifeSimArena({ onExit }: Props) {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto rounded-[1.4rem] border border-white/10 bg-black/30 p-2">
-          <canvas ref={canvasRef} className="mx-auto max-w-full rounded-xl bg-black/20 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]" />
+        <div className="relative min-h-[420px] flex-1 overflow-auto rounded-[1.4rem] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(80,145,255,0.18),_transparent_35%),linear-gradient(180deg,rgba(5,12,22,0.96)_0%,rgba(9,18,32,0.98)_100%)] p-2 md:min-h-[520px]">
+          <div className="pointer-events-none absolute left-4 top-4 z-10 rounded-2xl border border-white/10 bg-black/45 px-4 py-3 text-left text-xs text-slate-100 backdrop-blur">
+            <div className="font-medium text-emerald-200">월드 표시 영역</div>
+            <div className="mt-1 text-slate-300">가운데 지형과 흰색 플레이어 블록이 보이면 정상입니다.</div>
+          </div>
+          {!canvasReady ? (
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
+              <div className="rounded-2xl border border-sky-300/20 bg-sky-500/10 px-5 py-4 text-center text-sm text-sky-50">
+                월드를 그리는 중입니다. 잠시만 기다려 주세요.
+              </div>
+            </div>
+          ) : null}
+          <canvas
+            ref={canvasRef}
+            width={720}
+            height={540}
+            className="relative z-[1] mx-auto block max-w-full rounded-xl bg-slate-900 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+          />
+          <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-10 rounded-2xl border border-white/10 bg-black/45 px-4 py-3 text-xs text-slate-200 backdrop-blur">
+            이동 버튼이나 키를 누르면 중앙의 플레이어가 움직입니다. 밭, 광산, 마을, 북부 개척지는 모두 이 중앙 캔버스에서 표시됩니다.
+          </div>
         </div>
 
         <div className="grid gap-3 lg:grid-cols-[1fr_auto]">

@@ -68,6 +68,9 @@ export function renderLifeSimScene(canvas: HTMLCanvasElement, state: LifeSimStat
   canvas.height = map.height * TILE_SIZE;
   canvas.style.width = `${Math.round(canvas.width * scale)}px`;
   canvas.style.height = `${Math.round(canvas.height * scale)}px`;
+  canvas.style.maxWidth = "100%";
+  canvas.style.display = "block";
+  canvas.style.imageRendering = "pixelated";
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -105,23 +108,23 @@ export function renderLifeSimScene(canvas: HTMLCanvasElement, state: LifeSimStat
   if (state.player.facing === "left") ctx.fillRect(state.player.x * TILE_SIZE + 4, state.player.y * TILE_SIZE + 14, 6, 6);
   if (state.player.facing === "right") ctx.fillRect(state.player.x * TILE_SIZE + TILE_SIZE - 10, state.player.y * TILE_SIZE + 14, 6, 6);
 
-  ctx.fillStyle = "rgba(15,23,42,0.72)";
-  ctx.fillRect(10, 10, 360, 74);
+  ctx.fillStyle = "rgba(15,23,42,0.78)";
+  ctx.fillRect(10, 10, 370, 82);
   ctx.fillStyle = "#f8fafc";
   ctx.font = "13px sans-serif";
   ctx.fillText(`${t(map.name)} · ${state.time.day}일차`, 20, 30);
   const hour = Math.floor(state.time.minutes / 60);
   const minute = state.time.minutes % 60;
   ctx.fillText(`시간 ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} · 기력 ${state.player.energy}/${state.player.maxEnergy}`, 20, 50);
-  ctx.fillText(`E 대화 · Space 행동 · Q 수면`, 20, 68);
+  ctx.fillText(`이동 WASD/방향키 · 행동 Space · 대화 E · 수면 Q`, 20, 70);
 
   if (state.settings.showPerformanceOverlay) {
-    ctx.fillStyle = "rgba(15,23,42,0.72)";
-    ctx.fillRect(canvas.width - 190, 10, 180, 78);
+    ctx.fillStyle = "rgba(15,23,42,0.78)";
+    ctx.fillRect(canvas.width - 210, 10, 200, 86);
     ctx.fillStyle = "#cbd5e1";
-    ctx.fillText(`맵 크기 ${map.width}x${map.height}`, canvas.width - 180, 30);
-    ctx.fillText(`자원 노드 ${state.resourceNodes.length}`, canvas.width - 180, 48);
-    ctx.fillText(`이벤트 로그 ${state.eventLog.length}`, canvas.width - 180, 66);
-    ctx.fillText(`핫바 ${state.player.selectedHotbarIndex + 1}`, canvas.width - 180, 84);
+    ctx.fillText(`맵 크기 ${map.width}x${map.height}`, canvas.width - 200, 30);
+    ctx.fillText(`자원 노드 ${state.resourceNodes.length}`, canvas.width - 200, 48);
+    ctx.fillText(`이벤트 로그 ${state.eventLog.length}`, canvas.width - 200, 66);
+    ctx.fillText(`핫바 슬롯 ${state.player.selectedHotbarIndex + 1}`, canvas.width - 200, 84);
   }
 }
