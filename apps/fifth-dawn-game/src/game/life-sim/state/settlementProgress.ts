@@ -24,27 +24,27 @@ export function getSettlementTierLabel(level: SettlementState["level"]) {
 
 export function getSettlementUnlockedHighlights(state: SettlementState) {
   if (state.level === 1) {
-    return ["정원 화단", "기본 벤치", "거주 중심지"];
+    return ["정원 구역", "기본 배치", "거주 중심지"];
   }
   if (state.level === 2) {
-    return ["등불", "바닥 패널", "러닝 게이트"];
+    return ["등불", "바닥 장식", "휴식 공간"];
   }
-  return ["비콘", "감시 타워", "외곽 방벽"];
+  return ["비콘", "감시 타워", "고급 방벽"];
 }
 
 export function getSettlementFacilities(state: SettlementState) {
-  const facilities = ["거주 중심지", "작은 작업대"];
+  const facilities = ["거주 중심지", "작업 공간"];
 
   if (state.level >= 2) {
-    facilities.push("정화 공방", "러닝 게이트", "등불 네트워크");
+    facilities.push("정화 공방", "휴식 공간", "등불 스토크");
   }
 
   if (state.level >= 3) {
-    facilities.push("공명 비콘", "감시 타워", "외곽 방벽");
+    facilities.push("공명 비콘", "감시 타워", "고급 방벽");
   }
 
   if (state.restoredStructures.includes("purity-lantern")) {
-    facilities.push("정화 회로");
+    facilities.push("정화 통로");
   }
 
   if (state.restoredStructures.includes("north-bridge")) {
@@ -60,13 +60,13 @@ export function getSettlementFacilities(state: SettlementState) {
 
 export function getNextSettlementGoal(state: SettlementState) {
   if (state.level === 1) {
-    return "정화 공방과 러닝 게이트가 열릴 때까지 공명을 모으세요.";
+    return "정화 공방과 휴식 공간이 열릴 때까지 공명을 모아 보세요.";
   }
   if (state.level === 2) {
-    return "공명 비콘과 외곽 방벽이 열리는 최종 단계로 향하세요.";
+    return "공명 비콘과 고급 방벽이 열리는 최종 단계로 올라가세요.";
   }
   if (!state.restoredStructures.includes("north-outpost")) {
-    return "북부 전초기지를 열어 외곽 정착지 기반을 확장하세요.";
+    return "북부 전초기지를 이어 고급 정착지 기반을 확장하세요.";
   }
-  return "정착지 기반이 안정화되었습니다. 다음 거주 구역 설계를 준비하세요.";
+  return "정착지 기반이 안정되었습니다. 다음 거주 구역 단계를 준비하세요.";
 }

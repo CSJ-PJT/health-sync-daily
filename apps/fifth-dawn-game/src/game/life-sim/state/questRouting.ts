@@ -11,11 +11,11 @@ function objectiveTextByQuest(state: LifeSimState, questId: LifeSimQuestId): Loc
     case "mine-recon":
       return state.storyFlags.enteredMine
         ? { ko: "광산 정찰을 마쳤습니다.", en: "Mine recon completed." }
-        : { ko: "마을 동쪽 통로를 따라 정화 광산에 들어가 보세요.", en: "Enter the Purifier Ruins through the eastern route." };
+        : { ko: "마을 동쪽 통로를 따라 정화 광산으로 들어가 보세요.", en: "Enter the Purifier Ruins through the eastern route." };
     case "repair-lantern":
       return state.storyFlags.repairedLantern
         ? { ko: "정화 등불 복구를 마쳤습니다.", en: "Purity lantern repaired." }
-        : { ko: "광산 자원을 모아 정화 등불을 제작한 뒤 정비공에게 가져가세요.", en: "Craft a purity lantern and bring it to the mechanic." };
+        : { ko: "광산 자원을 모아 정화 등불을 제작하고 정비공에게 가져가세요.", en: "Craft a purity lantern and bring it to the mechanic." };
     case "restore-bridge":
       return state.storyFlags.restoredBridge
         ? { ko: "북쪽 다리 복구를 마쳤습니다. 북부 개척지로 진입해 보세요.", en: "The northern bridge is restored. Enter the Northern Reach." }
@@ -41,7 +41,7 @@ export function getActiveQuestSummary(state: LifeSimState) {
     return {
       title: t({ ko: "현재 퀘스트 모두 완료", en: "Current quests complete" }),
       objective: t({
-        ko: "다음 갱신에서 이어질 긴 새벽의 다음 장을 기다리세요.",
+        ko: "다음 갱신에서 이어질 가장 긴 새벽의 다음 장을 기다려 주세요.",
         en: "Wait for the next chapter of the Longest Dawn.",
       }),
     };
