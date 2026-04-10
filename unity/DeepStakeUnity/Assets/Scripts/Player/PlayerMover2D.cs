@@ -9,7 +9,7 @@ namespace DeepStake.Player
     {
         [SerializeField] private float moveSpeed = 4f;
 
-        private Rigidbody2D rigidBody = null!;
+        private Rigidbody2D rigidBody;
         private Vector2 input;
 
         private void Awake()
@@ -36,6 +36,11 @@ namespace DeepStake.Player
 
         private void FixedUpdate()
         {
+            if (rigidBody == null)
+            {
+                return;
+            }
+
             rigidBody.linearVelocity = input * moveSpeed;
 
             if (DeepStakeGameState.Instance == null)

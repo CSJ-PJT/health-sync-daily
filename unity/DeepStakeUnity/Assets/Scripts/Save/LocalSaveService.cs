@@ -27,7 +27,8 @@ namespace DeepStake.Save
             }
 
             var json = File.ReadAllText(path);
-            return JsonUtility.FromJson<DeepStakeSaveData>(json) ?? CreateDefault();
+            var parsed = JsonUtility.FromJson<DeepStakeSaveData>(json);
+            return parsed != null ? parsed : CreateDefault();
         }
 
         public static void Save(DeepStakeSaveData data)

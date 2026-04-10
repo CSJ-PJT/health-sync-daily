@@ -54,8 +54,8 @@ namespace DeepStake.EditorTools
             AssignObjectField(controller, "headlineText", headline.GetComponent<Text>());
             AssignObjectField(controller, "statusText", status.GetComponent<Text>());
 
-            UnityEventTools.RemovePersistentListeners(startButton.onClick);
-            UnityEventTools.RemovePersistentListeners(continueButton.onClick);
+            ClearPersistentListeners(startButton);
+            ClearPersistentListeners(continueButton);
             UnityEventTools.AddPersistentListener(startButton.onClick, controller.StartLocalPlay);
             UnityEventTools.AddPersistentListener(continueButton.onClick, controller.ContinueLatest);
 
@@ -237,6 +237,14 @@ namespace DeepStake.EditorTools
 
             property.objectReferenceValue = value;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void ClearPersistentListeners(Button button)
+        {
+            for (var i = button.onClick.GetPersistentEventCount() - 1; i >= 0; i--)
+            {
+                UnityEventTools.RemovePersistentListener(button.onClick, i);
+            }
         }
     }
 }

@@ -6,7 +6,7 @@ namespace DeepStake.UI
 {
     public sealed class HudStatusView : MonoBehaviour
     {
-        [SerializeField] private Text statusText = null!;
+        [SerializeField] private Text statusText;
 
         private void OnEnable()
         {

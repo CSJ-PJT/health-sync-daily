@@ -14,7 +14,7 @@ namespace DeepStake.Core
         public DeepStakeSaveData CurrentSave => currentSave;
         public string StatusMessage => statusMessage;
 
-        public event Action? StateChanged;
+        public event Action StateChanged;
 
         private void Awake()
         {
@@ -32,13 +32,19 @@ namespace DeepStake.Core
         {
             currentSave = saveData;
             statusMessage = nextStatus;
-            StateChanged?.Invoke();
+            if (StateChanged != null)
+            {
+                StateChanged.Invoke();
+            }
         }
 
         public void UpdateStatus(string nextStatus)
         {
             statusMessage = nextStatus;
-            StateChanged?.Invoke();
+            if (StateChanged != null)
+            {
+                StateChanged.Invoke();
+            }
         }
     }
 }

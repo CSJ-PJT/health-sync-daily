@@ -8,14 +8,14 @@ namespace DeepStake.World
 {
     public sealed class WorldPrototypeController : MonoBehaviour
     {
-        [SerializeField] private TextAsset worldPrototypeJson = null!;
-        [SerializeField] private Transform playerTransform = null!;
-        [SerializeField] private Transform npcTransform = null!;
-        [SerializeField] private Transform interactableTransform = null!;
-        [SerializeField] private Transform settlementTransform = null!;
-        [SerializeField] private InteractableStub primaryInteractable = null!;
-        [SerializeField] private Quests.QuestStubNpc questNpc = null!;
-        [SerializeField] private Settlement.SettlementPlacementStub settlementPlacement = null!;
+        [SerializeField] private TextAsset worldPrototypeJson;
+        [SerializeField] private Transform playerTransform;
+        [SerializeField] private Transform npcTransform;
+        [SerializeField] private Transform interactableTransform;
+        [SerializeField] private Transform settlementTransform;
+        [SerializeField] private InteractableStub primaryInteractable;
+        [SerializeField] private Quests.QuestStubNpc questNpc;
+        [SerializeField] private Settlement.SettlementPlacementStub settlementPlacement;
 
         private WorldPrototypeDefinition definition = new();
 

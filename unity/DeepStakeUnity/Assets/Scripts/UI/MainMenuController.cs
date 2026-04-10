@@ -9,8 +9,8 @@ namespace DeepStake.UI
     public sealed class MainMenuController : MonoBehaviour
     {
         [SerializeField] private string worldSceneName = "WorldPrototype";
-        [SerializeField] private Text headlineText = null!;
-        [SerializeField] private Text statusText = null!;
+        [SerializeField] private Text headlineText;
+        [SerializeField] private Text statusText;
 
         private void Start()
         {

@@ -48,7 +48,8 @@ namespace DeepStake.World
                 return new WorldPrototypeDefinition();
             }
 
-            return JsonUtility.FromJson<WorldPrototypeDefinition>(asset.text) ?? new WorldPrototypeDefinition();
+            var parsed = JsonUtility.FromJson<WorldPrototypeDefinition>(asset.text);
+            return parsed != null ? parsed : new WorldPrototypeDefinition();
         }
     }
 }
