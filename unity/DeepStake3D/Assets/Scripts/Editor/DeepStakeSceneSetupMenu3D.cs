@@ -25,6 +25,15 @@ namespace DeepStake.EditorTools
         [MenuItem("Tools/Deep Stake 3D/Build Quarter-View Prototype Scenes")]
         public static void BuildQuarterViewPrototypeScenes()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                EditorUtility.DisplayDialog(
+                    "Deep Stake 3D",
+                    "Scene generation is disabled during Play Mode. Exit Play Mode and run the setup again.",
+                    "OK");
+                return;
+            }
+
             CreateBootScene();
             CreateMainMenuScene();
             CreateWorldPrototype3DScene();
@@ -35,9 +44,24 @@ namespace DeepStake.EditorTools
                 "OK");
         }
 
+        [MenuItem("Tools/Deep Stake 3D/Build Quarter-View Prototype Scenes", true)]
+        public static bool ValidateBuildQuarterViewPrototypeScenes()
+        {
+            return !EditorApplication.isPlayingOrWillChangePlaymode;
+        }
+
         [MenuItem("Tools/Deep Stake 3D/Create WorldPrototype3D Scene")]
         public static void CreateWorldPrototype3DScene()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                EditorUtility.DisplayDialog(
+                    "Deep Stake 3D",
+                    "WorldPrototype3D scene creation is disabled during Play Mode. Exit Play Mode and run it again.",
+                    "OK");
+                return;
+            }
+
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             var directionalLight = new GameObject("Directional Light");
