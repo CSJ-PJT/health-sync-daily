@@ -4,6 +4,8 @@
 
 The health app stays on the current stack.
 The standalone game moves toward Unity as the production client.
+`DeepStake3D` is now the active production Unity project.
+`DeepStakeUnity` is legacy/reference only.
 The current web/Capacitor Fifth Dawn client remains as:
 - prototype
 - behavior reference
@@ -43,7 +45,8 @@ The current web/Capacitor Fifth Dawn client remains as:
 
 ## Recommended Unity architecture
 
-- Unity project: `DeepStakeUnity`
+- Active Unity project: `DeepStake3D`
+- Legacy reference project: `DeepStakeUnity`
 - data-driven gameplay layer
 - JSON/ScriptableObject content for maps, items, quests, factions, shop products
 - save/load using the shared save contract as reference

@@ -40,13 +40,18 @@ The production direction is now:
 
 ## Recommendation
 
-Continue inside the current `unity/DeepStakeUnity` project.
+Continue inside the current `unity/DeepStake3D` project.
 
 Reason:
 - contracts, save schema, and boot scaffolding already exist
 - Android/mobile settings already exist
 - changing project entirely would create avoidable migration debt
 - the renderer path can change inside the project without discarding current foundations
+
+## Legacy note
+
+- `unity/DeepStake3D` = active production path
+- `unity/DeepStakeUnity` = legacy/reference only
 
 ## First production-minded 3D slice
 

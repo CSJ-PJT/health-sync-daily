@@ -1,10 +1,11 @@
-# DeepStakeUnity Handoff
+# Deep Stake Unity Handoff
 
 This folder is the Unity migration handoff root.
 
 ## Purpose
 
-The production standalone game is moving toward Unity.
+`DeepStake3D` is the active Unity production client.
+`DeepStakeUnity` is legacy/reference only.
 The current web/Capacitor client remains a prototype/reference.
 
 ## Read first
@@ -13,6 +14,9 @@ The current web/Capacitor client remains a prototype/reference.
 - `../docs/deep-stake-unity-migration.md`
 - `../docs/deep-stake-vertical-slice.md`
 - `../docs/deep-stake-first-unity-slice.md`
+- `../docs/deep-stake-quarter-view-migration.md`
+- `../docs/deep-stake-first-quarter-view-slice.md`
+- `../docs/deep-stake-deepstake3d-editor-hookup.md`
 - `../docs/deep-stake-health-link-contract.md`
 - `../docs/deep-stake-unity-tasklist.md`
 
@@ -21,7 +25,7 @@ The current web/Capacitor client remains a prototype/reference.
 The first portable contract reference now lives in:
 - `../packages/shared-types/src/deepStake.ts`
 - `./contracts/README.md`
-- `./DeepStakeUnity/Assets/Scripts/README.md`
+- `./DeepStake3D/Assets/Scripts/README.md`
 
 It defines Unity-ready reference types for:
 - player state
@@ -34,18 +38,18 @@ It defines Unity-ready reference types for:
 
 ## Manual Unity Editor tasks
 
-- use `DeepStakeUnity` as the production project root
-- decide JSON vs ScriptableObject content pipeline
-- create the first farm scene
-- map movement input
-- build local save/load path
-- wire the first NPC interaction
-- wire one settlement placement flow
+- use `DeepStake3D` as the only active project root
+- import the ported 3D scaffold and let Unity generate/update `.meta` files
+- run `Tools > Deep Stake 3D > Build Quarter-View Prototype Scenes`
+- verify `Boot`, `MainMenu`, and `WorldPrototype3D`
+- validate local save/load and quarter-view controller flow
+- treat `DeepStakeUnity` as behavior reference only
 
 ## Repository hygiene
 
 - keep Unity source folders under version control
 - do not commit `Library`, `Temp`, `Logs`, or `UserSettings`
-- if multiple nested `DeepStakeUnity` folders exist, choose one canonical root and remove the duplicate manually
+- `DeepStake3D` is canonical
+- do not continue active implementation in `DeepStakeUnity`
 
 No fake Unity editor output is generated here on purpose.
