@@ -16,6 +16,8 @@ The current web/Capacitor client remains a prototype/reference.
 - `../docs/deep-stake-first-unity-slice.md`
 - `../docs/deep-stake-quarter-view-migration.md`
 - `../docs/deep-stake-first-quarter-view-slice.md`
+- `../docs/deep-stake-factions.md`
+- `../docs/deep-stake-world-baseline.md`
 - `../docs/deep-stake-deepstake3d-editor-hookup.md`
 - `../docs/deep-stake-health-link-contract.md`
 - `../docs/deep-stake-unity-tasklist.md`

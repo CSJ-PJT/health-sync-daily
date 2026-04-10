@@ -26,7 +26,7 @@ namespace DeepStake.Boot
             var saveData = LocalSaveService.LoadOrCreate();
             saveData.BootMode = forceLocalMode ? "local" : saveData.BootMode;
             saveData.LastStatus = forceLocalMode
-                ? "Cloud link optional. Running in local quarter-view mode."
+                ? "Cloud link optional. Running in local quarter-view recovery mode."
                 : "Boot complete.";
 
             DeepStakeGameState.Instance.ReplaceSave(saveData, saveData.LastStatus);

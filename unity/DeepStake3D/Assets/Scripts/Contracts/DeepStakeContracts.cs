@@ -87,6 +87,36 @@ namespace DeepStake.Contracts
     }
 
     [Serializable]
+    public sealed class DeepStakeFactionAffinityState
+    {
+        public string FactionId = string.Empty;
+        public int Value;
+    }
+
+    [Serializable]
+    public sealed class DeepStakeFactionProfileState
+    {
+        public string FactionId = string.Empty;
+        public string DisplayName = string.Empty;
+        public string PublicFace = string.Empty;
+        public string HiddenAgenda = string.Empty;
+        public string UnlockStage = "three-d-world";
+        public string PressureDomain = "land";
+    }
+
+    [Serializable]
+    public sealed class DeepStakeWorldPressureState
+    {
+        public string DominantFactionId = "continuum-directorate";
+        public int LocalDebtPressure = 20;
+        public int LandSeizurePressure = 15;
+        public int SupplyChainPressure = 18;
+        public int MediaFogPressure = 12;
+        public int ResonanceSuppression = 20;
+        public int SettlementInfluencePressure = 16;
+    }
+
+    [Serializable]
     public sealed class DeepStakeHealthBonusState
     {
         public int StartEnergyBonus;
@@ -97,7 +127,7 @@ namespace DeepStake.Contracts
     [Serializable]
     public sealed class DeepStakeSaveData
     {
-        public int SchemaVersion = 1;
+        public int SchemaVersion = 2;
         public string Slot = "slot-01";
         public string BootMode = "local";
         public int Day = 1;
@@ -106,8 +136,13 @@ namespace DeepStake.Contracts
         public DeepStakeSettlementState Settlement = new();
         public DeepStakeStoryFlagsState StoryFlags = new();
         public DeepStakeAlignmentState Alignment = new();
+        public List<DeepStakeFactionAffinityState> FactionAffinities = new();
+        public List<DeepStakeFactionProfileState> FactionProfiles = new();
+        public DeepStakeWorldPressureState WorldPressure = new();
         public List<DeepStakeQuestState> Quests = new();
         public DeepStakeHealthBonusState HealthBonuses = new();
+        public string CurrentZoneId = "recovery-field";
+        public string CurrentZoneLabel = "Recovery Field";
         public string LastStatus = "Ready";
     }
 }

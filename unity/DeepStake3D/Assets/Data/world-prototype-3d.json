@@ -1,36 +1,84 @@
 {
   "sceneId": "world-prototype-3d",
   "bootMode": "local",
-  "startMap": "farm",
+  "startMap": "recovery-field",
+  "zoneId": "recovery-field",
+  "zoneLabel": "Recovery Field",
+  "zoneSummary": "A farm edge on the outskirts of a fictional modern township. Utility roads, archives, and supply lines still function, but hidden resonance pressure is building beneath ordinary life.",
   "playerSpawn": {
-    "x": 0.0,
-    "z": 0.0
+    "x": -1.5,
+    "z": -2.0
   },
   "cameraOffset": {
     "x": 7.5,
-    "y": 8.5,
-    "z": -7.5
+    "y": 8.0,
+    "z": -7.0
   },
   "npcStubs": [
     {
       "id": "archivist",
-      "displayName": "Archivist",
-      "x": 3.0,
-      "z": 2.0,
-      "questId": "first-harvest"
+      "displayName": "Archivist Sena",
+      "x": 4.0,
+      "z": 1.5,
+      "questId": "first-harvest",
+      "dialogue": "The township still looks ordinary from the road, but the field is carrying pressure from deeper networks. Anchor one recovery beacon and we can prove the ground will answer."
     }
   ],
   "interactables": [
     {
       "id": "farm-sign",
-      "label": "Farm Sign",
-      "x": -3.0,
-      "z": 2.0,
-      "message": "Restore the field. The settlement will answer when the first cycle is healed."
+      "label": "Field Notice Board",
+      "x": -4.0,
+      "z": 2.5,
+      "message": "Recovery Zone 01. Restore the field edge, log the first resonance response, and keep civilian routes calm."
     }
   ],
-  "settlementPlacementOrigin": {
-    "x": 4.0,
-    "z": -2.0
+  "landmarks": [
+    {
+      "id": "field-a",
+      "kind": "field",
+      "label": "Recovery Plot A",
+      "x": -1.0,
+      "z": 2.5,
+      "width": 6.0,
+      "depth": 5.0,
+      "height": 0.2
+    },
+    {
+      "id": "service-road",
+      "kind": "road",
+      "label": "Service Road",
+      "x": 1.5,
+      "z": -3.5,
+      "width": 12.0,
+      "depth": 2.0,
+      "height": 0.1
+    },
+    {
+      "id": "archive-yard",
+      "kind": "archive",
+      "label": "Archive Outpost",
+      "x": 5.0,
+      "z": 2.0,
+      "width": 3.5,
+      "depth": 3.0,
+      "height": 2.4
+    },
+    {
+      "id": "placement-zone",
+      "kind": "placement-zone",
+      "label": "Beacon Frame",
+      "x": 4.5,
+      "z": -0.5,
+      "width": 2.0,
+      "depth": 2.0,
+      "height": 0.1
+    }
+  ],
+  "placementZone": {
+    "objectType": "recovery-beacon",
+    "label": "Recovery Beacon",
+    "x": 4.5,
+    "z": -0.5
   }
 }

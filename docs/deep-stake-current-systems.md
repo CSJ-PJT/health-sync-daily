@@ -11,6 +11,7 @@ What currently exists in the prototype:
 - safe health-link profile consumption
 - settlement/building systems converged from FitCraft
 - Deep Stake alignment/resonance/ascension foundations
+- faction affinity and world-pressure direction
 - mock commerce catalog foundation
 - Android/Capacitor shell sufficient for prototype testing
 
@@ -23,6 +24,7 @@ These are product-level systems and should survive the Unity migration:
 - relationship progression
 - settlement/buildable object model
 - Deep Stake alignment, resonance, faction affinity, ascension flags
+- world-pressure and settlement influence pressure
 - safe health-link contract
 - save/load schema
 - local/offline mode rules

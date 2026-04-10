@@ -9,13 +9,13 @@
   - start local play
   - continue latest local save
 - `WorldPrototype3D`
-  - primitive ground plane
-  - player capsule
-  - Archivist cube/NPC marker
-  - sign/interactable
-  - settlement beacon placement point
+  - recovery field / farm edge layout
+  - player marker with quarter-view movement
+  - archive observer NPC area
+  - field notice board / interactable landmark
+  - settlement beacon placement zone
   - quarter-view camera
-  - HUD status
+  - HUD status and prompt feedback
 
 ## Controls
 
@@ -34,6 +34,7 @@
 - one NPC quest stub works
 - one settlement placement stub works
 - save file is written and can be reloaded
+- quarter-view zone reads as a fictional modern recovery site
 
 ## Temporary prototype choices allowed
 

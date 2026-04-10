@@ -17,6 +17,12 @@
    - talk with `Q`
    - place beacon with `B`
    - save with `F5`
+   - reload with `F9`
+9. Verify that the recovery field reads as:
+   - farm edge
+   - archive outpost
+   - field notice board
+   - beacon placement zone
 
 ## Save path
 

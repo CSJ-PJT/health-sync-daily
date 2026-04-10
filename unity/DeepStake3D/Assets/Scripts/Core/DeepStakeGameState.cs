@@ -10,9 +10,13 @@ namespace DeepStake.Core
 
         [SerializeField] private DeepStakeSaveData currentSave = new();
         [SerializeField] private string statusMessage = "Booting local slice";
+        [SerializeField] private string interactionPrompt = "Move with WASD. Approach a marker to interact.";
+        [SerializeField] private string zoneLabel = "Recovery Field";
 
         public DeepStakeSaveData CurrentSave => currentSave;
         public string StatusMessage => statusMessage;
+        public string InteractionPrompt => interactionPrompt;
+        public string ZoneLabel => zoneLabel;
 
         public event Action StateChanged;
 
@@ -32,6 +36,7 @@ namespace DeepStake.Core
         {
             currentSave = saveData;
             statusMessage = nextStatus;
+            zoneLabel = string.IsNullOrWhiteSpace(saveData.CurrentZoneLabel) ? zoneLabel : saveData.CurrentZoneLabel;
             if (StateChanged != null)
             {
                 StateChanged.Invoke();
@@ -41,6 +46,26 @@ namespace DeepStake.Core
         public void UpdateStatus(string nextStatus)
         {
             statusMessage = nextStatus;
+            if (StateChanged != null)
+            {
+                StateChanged.Invoke();
+            }
+        }
+
+        public void UpdatePrompt(string nextPrompt)
+        {
+            interactionPrompt = nextPrompt;
+            if (StateChanged != null)
+            {
+                StateChanged.Invoke();
+            }
+        }
+
+        public void SetZone(string nextZoneId, string nextZoneLabel)
+        {
+            currentSave.CurrentZoneId = nextZoneId;
+            currentSave.CurrentZoneLabel = nextZoneLabel;
+            zoneLabel = nextZoneLabel;
             if (StateChanged != null)
             {
                 StateChanged.Invoke();

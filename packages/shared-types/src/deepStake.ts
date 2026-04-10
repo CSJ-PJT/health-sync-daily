@@ -28,6 +28,7 @@ export type DeepStakeQuestId =
 export type DeepStakeQuestStatus = "available" | "completed";
 
 export type DeepStakeFactionId =
+  | "continuum-directorate"
   | "luminous-companions"
   | "serpent-court"
   | "deep-archive"
@@ -152,6 +153,25 @@ export type DeepStakeAlignmentContract = {
 
 export type DeepStakeFactionAffinitiesContract = Record<DeepStakeFactionId, number>;
 
+export type DeepStakeFactionProfileContract = {
+  id: DeepStakeFactionId;
+  displayName: string;
+  publicFace: string;
+  hiddenAgenda: string;
+  unlockStage: DeepStakeAscensionStage;
+  pressureDomain: "land" | "debt" | "logistics" | "media" | "information" | "dimensional";
+};
+
+export type DeepStakeWorldPressureContract = {
+  dominantFactionId: DeepStakeFactionId;
+  localDebtPressure: number;
+  landSeizurePressure: number;
+  supplyChainPressure: number;
+  mediaFogPressure: number;
+  resonanceSuppression: number;
+  settlementInfluencePressure: number;
+};
+
 export type DeepStakeSupportSignalContract = {
   id: string;
   type: "blessing-pulse" | "encouragement-signal" | "protective-wave" | "shadow-whisper";
@@ -181,6 +201,7 @@ export type DeepStakeWorldHintContract = {
 export type DeepStakeAlignmentProfileContract = {
   alignment: DeepStakeAlignmentContract;
   factionAffinities: DeepStakeFactionAffinitiesContract;
+  factionProfiles: DeepStakeFactionProfileContract[];
   chosenPaths: DeepStakeChoiceId[];
   resonanceBand: DeepStakeBandId;
   supportSignals: DeepStakeSupportSignalContract[];
@@ -267,6 +288,7 @@ export type DeepStakeSaveContract = {
     resourceNodes: DeepStakeResourceNodeContract[];
     hazards: DeepStakeHazardContract[];
     storyFlags: DeepStakeStoryFlagsContract;
+    pressure: DeepStakeWorldPressureContract;
   };
   relationships: Record<DeepStakeNpcId, DeepStakeRelationshipContract>;
   quests: DeepStakeQuestContract[];

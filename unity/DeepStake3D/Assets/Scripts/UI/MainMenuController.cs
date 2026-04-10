@@ -42,7 +42,7 @@ namespace DeepStake.UI
         {
             if (headlineText != null)
             {
-                headlineText.text = "Deep Stake";
+                headlineText.text = "Deep Stake\nQuarter-View Recovery Slice";
             }
 
             if (statusText == null)
@@ -58,9 +58,12 @@ namespace DeepStake.UI
 
             var save = DeepStakeGameState.Instance.CurrentSave;
             statusText.text =
-                $"Mode: {save.BootMode}\n" +
-                $"Day: {save.Day}\n" +
-                $"Last status: {DeepStakeGameState.Instance.StatusMessage}";
+                $"Mode  {save.BootMode}\n" +
+                $"Zone  {save.CurrentZoneLabel}\n" +
+                $"Day  {save.Day}\n" +
+                $"Continue  latest local slot\n" +
+                $"Controls  WASD move · E inspect · Q talk · B place · F5 save · F9 reload\n" +
+                $"Status  {DeepStakeGameState.Instance.StatusMessage}";
         }
     }
 }

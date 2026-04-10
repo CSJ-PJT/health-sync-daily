@@ -56,10 +56,12 @@ namespace DeepStake.EditorTools
             var controllerObject = new GameObject("WorldPrototype3DController");
             var worldController = controllerObject.AddComponent<WorldPrototype3DController>();
 
+            var zoneRoot = new GameObject("ZoneRoot");
+
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground";
             ground.transform.position = Vector3.zero;
-            ground.transform.localScale = new Vector3(2.5f, 1f, 2.5f);
+            ground.transform.localScale = new Vector3(3f, 1f, 3f);
 
             var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             player.name = "Player3D";
@@ -81,12 +83,12 @@ namespace DeepStake.EditorTools
 
             var placementMarker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             placementMarker.name = "PlacementMarker3D";
-            placementMarker.transform.position = new Vector3(4f, 0.2f, -2f);
-            placementMarker.transform.localScale = new Vector3(0.7f, 0.15f, 0.7f);
+            placementMarker.transform.position = new Vector3(4.5f, 0.05f, -0.5f);
+            placementMarker.transform.localScale = new Vector3(1.1f, 0.05f, 1.1f);
 
             var placedBeacon = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             placedBeacon.name = "PlacedBeacon3D";
-            placedBeacon.transform.position = new Vector3(4f, 0.5f, -2f);
+            placedBeacon.transform.position = new Vector3(4.5f, 0.6f, -0.5f);
             placedBeacon.transform.localScale = new Vector3(0.5f, 1.2f, 0.5f);
             placedBeacon.SetActive(false);
 
@@ -101,10 +103,12 @@ namespace DeepStake.EditorTools
             AssignObjectField(hud, "statusText", hudText.GetComponent<Text>());
 
             AssignObjectField(worldController, "worldPrototypeJson", AssetDatabase.LoadAssetAtPath<TextAsset>(WorldJson3DPath));
+            AssignObjectField(worldController, "zoneRoot", zoneRoot.transform);
             AssignObjectField(worldController, "playerTransform", player.transform);
             AssignObjectField(worldController, "npcTransform", npc.transform);
             AssignObjectField(worldController, "interactableTransform", sign.transform);
             AssignObjectField(worldController, "placementMarkerTransform", placementMarker.transform);
+            AssignObjectField(worldController, "placementPreviewRoot", placedBeacon.transform);
             AssignObjectField(worldController, "primaryInteractable", interactable);
             AssignObjectField(worldController, "questNpc", questNpc);
             AssignObjectField(worldController, "settlementPlacement", settlementPlacement);
@@ -174,7 +178,7 @@ namespace DeepStake.EditorTools
             rect.sizeDelta = size;
             rect.anchoredPosition = anchoredPosition;
             var text = textObject.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = fontSize;
             text.alignment = TextAnchor.MiddleCenter;
             text.color = Color.white;
