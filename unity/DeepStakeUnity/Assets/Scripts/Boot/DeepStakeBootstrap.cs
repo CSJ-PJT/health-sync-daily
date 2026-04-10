@@ -7,8 +7,10 @@ namespace DeepStake.Boot
 {
     public sealed class DeepStakeBootstrap : MonoBehaviour
     {
+        [SerializeField] private string mainMenuSceneName = "MainMenu";
         [SerializeField] private string worldSceneName = "WorldPrototype";
         [SerializeField] private bool forceLocalMode = true;
+        [SerializeField] private bool loadWorldDirectly = false;
 
         private void Awake()
         {
@@ -28,7 +30,7 @@ namespace DeepStake.Boot
                 : "Boot complete.";
 
             DeepStakeGameState.Instance.ReplaceSave(saveData, saveData.LastStatus);
-            SceneManager.LoadScene(worldSceneName);
+            SceneManager.LoadScene(loadWorldDirectly ? worldSceneName : mainMenuSceneName);
         }
     }
 }

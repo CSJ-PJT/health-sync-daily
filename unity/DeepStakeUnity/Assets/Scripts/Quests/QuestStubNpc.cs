@@ -10,6 +10,13 @@ namespace DeepStake.Quests
             "Restore the field, and the archive will open its first answer.";
         [SerializeField] private string questId = "first-harvest";
 
+        public void Configure(string nextNpcId, string nextQuestId, string nextDialogue)
+        {
+            npcId = nextNpcId;
+            questId = nextQuestId;
+            dialogue = nextDialogue;
+        }
+
         public void Talk()
         {
             if (DeepStakeGameState.Instance == null)

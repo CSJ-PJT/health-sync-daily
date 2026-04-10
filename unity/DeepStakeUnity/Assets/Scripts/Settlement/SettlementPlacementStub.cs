@@ -11,6 +11,12 @@ namespace DeepStake.Settlement
         [SerializeField] private string objectType = "beacon";
         [SerializeField] private Vector2Int placementCell = new(3, -1);
 
+        public void Configure(string nextObjectType, Vector2Int nextPlacementCell)
+        {
+            objectType = nextObjectType;
+            placementCell = nextPlacementCell;
+        }
+
         public void Place()
         {
             if (DeepStakeGameState.Instance == null)
