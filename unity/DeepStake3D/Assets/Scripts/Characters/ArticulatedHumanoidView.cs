@@ -1291,10 +1291,10 @@ namespace DeepStake.Characters
                 return;
             }
 
-            importedAnimator = importedModelRoot.GetComponentInChildren<Animator>();
+            importedAnimator = importedModelVisual.GetComponentInChildren<Animator>();
             if (importedAnimator == null)
             {
-                importedAnimator = importedModelRoot.gameObject.AddComponent<Animator>();
+                importedAnimator = importedModelVisual.gameObject.AddComponent<Animator>();
             }
 
             importedAnimator.applyRootMotion = false;
@@ -1318,6 +1318,8 @@ namespace DeepStake.Characters
                 importedAnimator.runtimeAnimatorController = controller;
                 importedUsesRuntimeController = true;
                 importedAvatar = importedAnimator.avatar;
+                importedAnimator.Rebind();
+                importedAnimator.Update(0f);
                 var controllerClips = controller.animationClips;
                 for (var clipIndex = 0; clipIndex < controllerClips.Length; clipIndex++)
                 {
