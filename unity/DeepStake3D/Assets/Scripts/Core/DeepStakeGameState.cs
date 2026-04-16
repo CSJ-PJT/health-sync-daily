@@ -11,12 +11,20 @@ namespace DeepStake.Core
         [SerializeField] private DeepStakeSaveData currentSave = new();
         [SerializeField] private string statusMessage = "Booting local slice";
         [SerializeField] private string interactionPrompt = "Move with WASD. Approach a marker to interact.";
-        [SerializeField] private string zoneLabel = "Recovery Field";
+        [SerializeField] private string zoneLabel = "Longest Dawn | Recovery Field";
+        [SerializeField] private string inputDebugMessage = "No action sampled yet.";
+        [SerializeField] private string nearbyTargetLabel = "None";
+        [SerializeField] private string toastMessage = string.Empty;
+        [SerializeField] private bool journalVisible;
 
         public DeepStakeSaveData CurrentSave => currentSave;
         public string StatusMessage => statusMessage;
         public string InteractionPrompt => interactionPrompt;
         public string ZoneLabel => zoneLabel;
+        public string InputDebugMessage => inputDebugMessage;
+        public string NearbyTargetLabel => nearbyTargetLabel;
+        public string ToastMessage => toastMessage;
+        public bool JournalVisible => journalVisible;
 
         public event Action StateChanged;
 
@@ -46,6 +54,7 @@ namespace DeepStake.Core
         public void UpdateStatus(string nextStatus)
         {
             statusMessage = nextStatus;
+            toastMessage = nextStatus;
             if (StateChanged != null)
             {
                 StateChanged.Invoke();
@@ -66,6 +75,34 @@ namespace DeepStake.Core
             currentSave.CurrentZoneId = nextZoneId;
             currentSave.CurrentZoneLabel = nextZoneLabel;
             zoneLabel = nextZoneLabel;
+            if (StateChanged != null)
+            {
+                StateChanged.Invoke();
+            }
+        }
+
+        public void UpdateInputDebug(string nextMessage, string nextNearbyTarget)
+        {
+            inputDebugMessage = nextMessage;
+            nearbyTargetLabel = nextNearbyTarget;
+            if (StateChanged != null)
+            {
+                StateChanged.Invoke();
+            }
+        }
+
+        public void ClearToast()
+        {
+            toastMessage = string.Empty;
+            if (StateChanged != null)
+            {
+                StateChanged.Invoke();
+            }
+        }
+
+        public void ToggleJournal()
+        {
+            journalVisible = !journalVisible;
             if (StateChanged != null)
             {
                 StateChanged.Invoke();

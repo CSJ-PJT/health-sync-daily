@@ -216,6 +216,10 @@ export type DeepStakeAlignmentProfileContract = {
 export type DeepStakeStoryFlagsContract = {
   metArchivist: boolean;
   metMechanic: boolean;
+  readFieldNoticeBoard: boolean;
+  reviewedSupplyCrate: boolean;
+  learnedDirectoratePressure: boolean;
+  placedRecoveryBeacon: boolean;
   enteredMine: boolean;
   harvestedFirstCrop: boolean;
   repairedLantern: boolean;
@@ -278,6 +282,7 @@ export type DeepStakeSaveContract = {
   schemaVersion: 1;
   slot: string;
   bootMode: DeepStakeBootMode;
+  activePressureHint?: string;
   player: DeepStakePlayerContract;
   time: {
     day: number;

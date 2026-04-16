@@ -41,7 +41,7 @@ namespace DeepStake.Save
         {
             var data = new DeepStakeSaveData();
             data.CurrentZoneId = "recovery-field";
-            data.CurrentZoneLabel = "Recovery Field";
+            data.CurrentZoneLabel = "Longest Dawn | Recovery Field";
             data.Player.MapId = "recovery-field";
             data.FactionAffinities.Add(new DeepStakeFactionAffinityState
             {
@@ -71,7 +71,7 @@ namespace DeepStake.Save
             data.Player.Hotbar.Add("watering-can");
             data.Player.Hotbar.Add("turnip-seeds");
             data.Player.Inventory.Add(new DeepStakeInventoryEntry { ItemId = "turnip-seeds", Amount = 5 });
-            data.Quests.Add(new DeepStakeQuestState { QuestId = "first-harvest", Status = "available" });
+            data.Quests.Add(new DeepStakeQuestState { QuestId = "first-harvest", Status = "inspect-notice" });
             data.Alignment.ResonanceStability = 10;
             data.Alignment.Attunement = 5;
             data.WorldPressure.DominantFactionId = "continuum-directorate";
@@ -81,7 +81,9 @@ namespace DeepStake.Save
             data.WorldPressure.MediaFogPressure = 14;
             data.WorldPressure.ResonanceSuppression = 22;
             data.WorldPressure.SettlementInfluencePressure = 19;
+            data.ActivePressureHint = "Continuum Directorate filings are beginning to reappear in local debt and land records.";
             data.LastStatus = "Local recovery field ready";
+            data.Settlement.RestoredStructures.Add("field-edge-access");
             return data;
         }
     }

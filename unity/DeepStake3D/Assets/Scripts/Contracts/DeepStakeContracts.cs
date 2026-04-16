@@ -62,7 +62,14 @@ namespace DeepStake.Contracts
     public sealed class DeepStakeStoryFlagsState
     {
         public bool MetArchivist;
+        public bool MetFieldHand;
         public bool MetMechanic;
+        public bool ReadFieldNoticeBoard;
+        public bool ReviewedSupplyCrate;
+        public bool ReviewedObserverRecord;
+        public bool LearnedDirectoratePressure;
+        public bool PlacedRecoveryBeacon;
+        public bool DefeatedFirstMonster;
         public bool EnteredMine;
         public bool HarvestedFirstCrop;
         public bool RepairedLantern;
@@ -142,7 +149,8 @@ namespace DeepStake.Contracts
         public List<DeepStakeQuestState> Quests = new();
         public DeepStakeHealthBonusState HealthBonuses = new();
         public string CurrentZoneId = "recovery-field";
-        public string CurrentZoneLabel = "Recovery Field";
+        public string CurrentZoneLabel = "Longest Dawn | Recovery Field";
+        public string ActivePressureHint = string.Empty;
         public string LastStatus = "Ready";
     }
 }

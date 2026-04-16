@@ -34,9 +34,11 @@ namespace DeepStake.World
     {
         public string id = string.Empty;
         public string label = string.Empty;
+        public string promptLabel = "Inspect";
         public float x;
         public float z;
         public string message = string.Empty;
+        public string questState = string.Empty;
     }
 
     [Serializable]
@@ -45,6 +47,7 @@ namespace DeepStake.World
         public string id = string.Empty;
         public string kind = "crate";
         public string label = string.Empty;
+        public string accent = string.Empty;
         public float x;
         public float z;
         public float width = 1f;
@@ -57,6 +60,10 @@ namespace DeepStake.World
     {
         public string objectType = "beacon";
         public string label = "Recovery Beacon";
+        public string promptLabel = "Place";
+        public string requiredFlag = string.Empty;
+        public string restoredStructureId = string.Empty;
+        public string unlockMessage = string.Empty;
         public float x;
         public float z;
     }
@@ -71,12 +78,15 @@ namespace DeepStake.World
         public string zoneLabel = "Recovery Field";
         public string zoneSummary =
             "A farm edge and service road where ordinary modern life has started to fray under hidden pressure.";
+        public string pressureHint =
+            "Continuum Directorate filings are beginning to reappear in local debt and land records.";
         public WorldPrototype3DPoint playerSpawn = new WorldPrototype3DPoint();
         public WorldPrototype3DCameraOffset cameraOffset = new WorldPrototype3DCameraOffset();
         public WorldPrototype3DNpcStub[] npcStubs = Array.Empty<WorldPrototype3DNpcStub>();
         public WorldPrototype3DInteractableStub[] interactables = Array.Empty<WorldPrototype3DInteractableStub>();
         public WorldPrototype3DLandmark[] landmarks = Array.Empty<WorldPrototype3DLandmark>();
         public WorldPrototype3DPlacementZone placementZone = new WorldPrototype3DPlacementZone();
+        public WorldPrototype3DPlacementZone[] placementZones = Array.Empty<WorldPrototype3DPlacementZone>();
 
         public static WorldPrototype3DDefinition FromJson(TextAsset asset)
         {
@@ -86,6 +96,10 @@ namespace DeepStake.World
             }
 
             var parsed = JsonUtility.FromJson<WorldPrototype3DDefinition>(asset.text);
+            if (parsed != null && (parsed.placementZones == null || parsed.placementZones.Length == 0))
+            {
+                parsed.placementZones = new[] { parsed.placementZone };
+            }
             return parsed != null ? parsed : new WorldPrototype3DDefinition();
         }
     }
