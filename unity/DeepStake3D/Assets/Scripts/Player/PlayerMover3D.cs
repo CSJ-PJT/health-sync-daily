@@ -10,6 +10,7 @@ namespace DeepStake.Player
     public sealed class PlayerMover3D : MonoBehaviour
     {
         [SerializeField] private float moveSpeed = 5.5f;
+        [SerializeField] private float runSpeed = 8.1f;
         [SerializeField] private float acceleration = 14f;
         [SerializeField] private float deceleration = 18f;
         [SerializeField] private float turnSpeed = 12f;
@@ -22,6 +23,7 @@ namespace DeepStake.Player
         private ArticulatedHumanoidView humanoidView;
         private Vector3 actionFacingDirection = Vector3.zero;
         private float actionFacingTimer;
+        private float actionFacingStrength;
 
         private void Awake()
         {
@@ -48,7 +50,9 @@ namespace DeepStake.Player
             }
             input = input.normalized;
 
-            var desiredMove = new Vector3(input.x, 0f, input.y) * moveSpeed;
+            var isRunning = input.sqrMagnitude > 0.62f && DeepStakeInputBridge.SprintHeld;
+            var currentMaxSpeed = isRunning ? runSpeed : moveSpeed;
+            var desiredMove = new Vector3(input.x, 0f, input.y) * currentMaxSpeed;
             var maxDelta = (desiredMove.sqrMagnitude > planarVelocity.sqrMagnitude ? acceleration : deceleration) * Time.deltaTime;
             planarVelocity = Vector3.MoveTowards(planarVelocity, desiredMove, maxDelta);
 
@@ -71,17 +75,19 @@ namespace DeepStake.Player
             var facing = new Vector3(planarVelocity.x, 0f, planarVelocity.z);
             if (actionFacingTimer > 0.01f && actionFacingDirection.sqrMagnitude > 0.01f)
             {
-                facing = Vector3.Slerp(facing.sqrMagnitude > 0.02f ? facing.normalized : transform.forward, actionFacingDirection, 0.72f);
+                var baseFacing = facing.sqrMagnitude > 0.02f ? facing.normalized : transform.forward;
+                facing = Vector3.Slerp(baseFacing, actionFacingDirection, actionFacingStrength);
             }
             if (facing.sqrMagnitude > 0.02f)
             {
                 var desiredRotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
-                transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, turnSpeed * Time.deltaTime);
+                var rotationSpeed = actionFacingTimer > 0.01f ? turnSpeed * 1.65f : turnSpeed;
+                transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationSpeed * Time.deltaTime);
             }
 
             if (humanoidView != null)
             {
-                humanoidView.SetMotion(planarVelocity, moveSpeed);
+                humanoidView.SetMotion(planarVelocity, currentMaxSpeed, isRunning);
             }
 
             if (DeepStakeGameState.Instance != null)
@@ -112,10 +118,52 @@ namespace DeepStake.Player
             if (focus.sqrMagnitude > 0.02f)
             {
                 actionFacingDirection = focus.normalized;
-                actionFacingTimer = action == ArticulatedHumanoidAction.Place ? 0.42f : 0.3f;
+                actionFacingStrength = GetActionFacingStrength(action);
+                actionFacingTimer = GetActionFacingDuration(action);
+
+                var desiredRotation = Quaternion.LookRotation(actionFacingDirection, Vector3.up);
+                transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, GetActionFacingSnap(action));
             }
 
             humanoidView.PlayAction(action, worldTarget);
+        }
+
+        private static float GetActionFacingDuration(ArticulatedHumanoidAction action)
+        {
+            return action switch
+            {
+                ArticulatedHumanoidAction.Attack => 0.68f,
+                ArticulatedHumanoidAction.Place => 0.58f,
+                ArticulatedHumanoidAction.Talk => 0.5f,
+                ArticulatedHumanoidAction.Inspect => 0.46f,
+                ArticulatedHumanoidAction.Hit => 0.38f,
+                ArticulatedHumanoidAction.Death => 0.9f,
+                _ => 0.42f
+            };
+        }
+
+        private static float GetActionFacingStrength(ArticulatedHumanoidAction action)
+        {
+            return action switch
+            {
+                ArticulatedHumanoidAction.Attack => 0.97f,
+                ArticulatedHumanoidAction.Place => 0.94f,
+                ArticulatedHumanoidAction.Talk => 0.9f,
+                ArticulatedHumanoidAction.Inspect => 0.88f,
+                _ => 0.82f
+            };
+        }
+
+        private static float GetActionFacingSnap(ArticulatedHumanoidAction action)
+        {
+            return action switch
+            {
+                ArticulatedHumanoidAction.Attack => 0.5f,
+                ArticulatedHumanoidAction.Place => 0.42f,
+                ArticulatedHumanoidAction.Talk => 0.34f,
+                ArticulatedHumanoidAction.Inspect => 0.3f,
+                _ => 0.25f
+            };
         }
     }
 }

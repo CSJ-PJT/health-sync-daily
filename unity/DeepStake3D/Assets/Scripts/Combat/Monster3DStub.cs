@@ -10,16 +10,21 @@ namespace DeepStake.Combat
         [SerializeField] private float awarenessRange = 8f;
         [SerializeField] private float attackRange = 1.65f;
         [SerializeField] private float moveSpeed = 2.6f;
+        [SerializeField] private float runSpeed = 4.2f;
         [SerializeField] private float turnSpeed = 8f;
         [SerializeField] private float attackCooldown = 1.2f;
+        [SerializeField] private float deathDespawnDelay = 1.35f;
+        [SerializeField] private int attackDamage = 25;
         [SerializeField] private int maxHealth = 4;
 
         private CharacterController controller;
         private ArticulatedHumanoidView humanoidView;
         private Transform player;
         private float attackTimer;
+        private float deathTimer;
         private int currentHealth;
         private bool defeated;
+        private ArticulatedHumanoidView playerHumanoidView;
 
         public bool IsDefeated => defeated;
 
@@ -36,15 +41,17 @@ namespace DeepStake.Combat
             currentHealth = maxHealth;
         }
 
-        public void Configure(Transform playerTransform)
+        public void Configure(Transform playerTransform, ArticulatedHumanoidView playerView = null)
         {
             player = playerTransform;
+            playerHumanoidView = playerView;
         }
 
         public void ResetState(bool alreadyDefeated)
         {
             defeated = alreadyDefeated;
             currentHealth = maxHealth;
+            deathTimer = 0f;
             gameObject.SetActive(!alreadyDefeated);
         }
 
@@ -55,6 +62,15 @@ namespace DeepStake.Combat
                 if (humanoidView != null)
                 {
                     humanoidView.SetMotion(Vector3.zero, moveSpeed);
+                }
+
+                if (defeated && gameObject.activeSelf)
+                {
+                    deathTimer += Time.deltaTime;
+                    if (deathTimer >= deathDespawnDelay)
+                    {
+                        gameObject.SetActive(false);
+                    }
                 }
                 return;
             }
@@ -86,9 +102,10 @@ namespace DeepStake.Combat
 
             if (distance > attackRange)
             {
-                var motion = toPlayer.normalized * moveSpeed;
+                var currentSpeed = distance > attackRange * 2.1f ? runSpeed : moveSpeed;
+                var motion = toPlayer.normalized * currentSpeed;
                 controller.Move(motion * Time.deltaTime);
-                humanoidView.SetMotion(motion, moveSpeed);
+                humanoidView.SetMotion(motion, currentSpeed, currentSpeed > moveSpeed + 0.25f);
                 return;
             }
 
@@ -100,8 +117,17 @@ namespace DeepStake.Combat
                 if (DeepStakeGameState.Instance != null)
                 {
                     var save = DeepStakeGameState.Instance.CurrentSave;
-                    save.Player.Energy = Mathf.Max(0, save.Player.Energy - 6);
-                    DeepStakeGameState.Instance.UpdateStatus("The husk lashes out. Hold ground and strike back.");
+                    save.Player.Energy = Mathf.Max(0, save.Player.Energy - attackDamage);
+                    if (save.Player.Energy <= 0)
+                    {
+                        playerHumanoidView?.PlayAction(ArticulatedHumanoidAction.Death, transform.position);
+                        DeepStakeGameState.Instance.UpdateStatus("You go down. Reset and hold the line again.");
+                    }
+                    else
+                    {
+                        playerHumanoidView?.PlayAction(ArticulatedHumanoidAction.Hit, transform.position);
+                        DeepStakeGameState.Instance.UpdateStatus("The husk lashes out. Hold ground and strike back.");
+                    }
                 }
             }
         }
@@ -138,13 +164,13 @@ namespace DeepStake.Combat
             }
 
             defeated = true;
+            deathTimer = 0f;
+            humanoidView.PlayAction(ArticulatedHumanoidAction.Death, attackerPosition);
             if (DeepStakeGameState.Instance != null)
             {
                 DeepStakeGameState.Instance.CurrentSave.StoryFlags.DefeatedFirstMonster = true;
                 DeepStakeGameState.Instance.UpdateStatus("The first husk drops. Longest Dawn holds for now.");
             }
-
-            gameObject.SetActive(false);
         }
     }
 }

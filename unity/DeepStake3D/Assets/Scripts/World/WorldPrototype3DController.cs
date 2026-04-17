@@ -268,15 +268,24 @@ namespace DeepStake.World
 
             if (attackPressed)
             {
-                if (monster != null && monster.CanBeHitFrom(playerTransform.position, 2.1f))
+                if (monster != null && !monster.IsDefeated)
                 {
-                    monster.ReceiveHit(playerTransform.position);
                     PlayPlayerAction(ArticulatedHumanoidAction.Attack, monster.transform.position);
-                    SetInputDebug("Attack fired from " + DeepStakeInputBridge.InputModeLabel + ".", "Husk");
+                    if (monster.CanBeHitFrom(playerTransform.position, 3.0f))
+                    {
+                        monster.ReceiveHit(playerTransform.position);
+                        SetInputDebug("Attack hit from " + DeepStakeInputBridge.InputModeLabel + ".", "Husk");
+                    }
+                    else
+                    {
+                        PublishBlockedAction("Too far to hit.", GetNearbyLabel());
+                        SetInputDebug("Attack missed from " + DeepStakeInputBridge.InputModeLabel + ".", "Husk");
+                    }
                 }
                 else
                 {
-                    PublishBlockedAction("Move closer to strike.", GetNearbyLabel());
+                    PlayPlayerAction(ArticulatedHumanoidAction.Attack, playerTransform.position + playerTransform.forward);
+                    PublishBlockedAction("No target in reach.", GetNearbyLabel());
                 }
             }
 
@@ -340,7 +349,7 @@ namespace DeepStake.World
             {
                 prompt = GetNearestPlacement().GetPrompt();
             }
-            else if (monster != null && !monster.IsDefeated && monster.CanBeHitFrom(playerTransform.position, 2.1f))
+            else if (monster != null && !monster.IsDefeated && monster.CanBeHitFrom(playerTransform.position, 3.0f))
             {
                 prompt = Application.isMobilePlatform || forceMobileControlsInEditor ? "Tap Attack." : "F Attack  Hold the line.";
             }
@@ -853,7 +862,7 @@ namespace DeepStake.World
                 return;
             }
 
-            monster.Configure(playerTransform);
+            monster.Configure(playerTransform, playerTransform != null ? playerTransform.GetComponent<ArticulatedHumanoidView>() : null);
             monster.ResetState(save != null && save.StoryFlags.DefeatedFirstMonster);
         }
 

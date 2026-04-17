@@ -10,6 +10,7 @@ namespace DeepStake.Input
         private static bool talkPressed;
         private static bool placePressed;
         private static bool attackPressed;
+        private static bool sprintHeld;
         private static bool savePressed;
         private static bool reloadPressed;
         private static bool journalPressed;
@@ -17,6 +18,7 @@ namespace DeepStake.Input
 
         public static Vector2 MobileMoveInput => mobileMoveInput;
         public static string InputModeLabel => inputModeLabel;
+        public static bool SprintHeld => sprintHeld;
 
         public static void PollHardware()
         {
@@ -24,6 +26,8 @@ namespace DeepStake.Input
             var keyboard = Keyboard.current;
             if (keyboard != null)
             {
+                sprintHeld = keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
+
                 if (keyboard.eKey.wasPressedThisFrame)
                 {
                     interactPressed = true;
@@ -58,6 +62,10 @@ namespace DeepStake.Input
                 {
                     journalPressed = true;
                 }
+            }
+            else
+            {
+                sprintHeld = false;
             }
         }
 
