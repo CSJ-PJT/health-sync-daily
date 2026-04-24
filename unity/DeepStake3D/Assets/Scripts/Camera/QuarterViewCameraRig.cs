@@ -8,16 +8,16 @@ namespace DeepStake.CameraRig
     public sealed class QuarterViewCameraRig : MonoBehaviour
     {
         [SerializeField] private Transform target;
-        [SerializeField] private Vector3 offset = new Vector3(6.7f, 7.4f, -6.7f);
-        [SerializeField] private float smoothTime = 0.12f;
-        [SerializeField] private float lookHeight = 1.35f;
+        [SerializeField] private Vector3 offset = new Vector3(5.6f, 5.95f, -5.6f);
+        [SerializeField] private float smoothTime = 0.1f;
+        [SerializeField] private float lookHeight = 1.16f;
         [SerializeField] private float snapDistance = 18f;
-        [SerializeField] private float mobileZoomFactor = 0.62f;
+        [SerializeField] private float mobileZoomFactor = 0.46f;
         [SerializeField] private float mobileMinZoomFactor = 0.18f;
-        [SerializeField] private float mobileMaxZoomFactor = 1.18f;
+        [SerializeField] private float mobileMaxZoomFactor = 1.04f;
         [SerializeField] private float mobilePinchSensitivity = 0.018f;
         [SerializeField] private float mobileOrbitSensitivity = 0.08f;
-        [SerializeField] private float editorMouseWheelSensitivity = 0.32f;
+        [SerializeField] private float editorMouseWheelSensitivity = 0.38f;
         [SerializeField] private float editorOrbitSensitivity = 90f;
 
         private Vector3 velocity;
@@ -30,14 +30,14 @@ namespace DeepStake.CameraRig
             if (cameraComponent != null)
             {
                 cameraComponent.clearFlags = CameraClearFlags.SolidColor;
-                cameraComponent.backgroundColor = new Color(0.63f, 0.7f, 0.75f);
-                cameraComponent.fieldOfView = Mathf.Clamp(cameraComponent.fieldOfView, 54f, 62f);
+                cameraComponent.backgroundColor = new Color(0.66f, 0.71f, 0.72f);
+                cameraComponent.fieldOfView = Mathf.Clamp(cameraComponent.fieldOfView, 49f, 56f);
             }
 
-            RenderSettings.ambientLight = new Color(0.53f, 0.54f, 0.51f);
+            RenderSettings.ambientLight = new Color(0.48f, 0.47f, 0.44f);
             RenderSettings.fog = true;
-            RenderSettings.fogColor = new Color(0.68f, 0.71f, 0.72f);
-            RenderSettings.fogDensity = 0.0034f;
+            RenderSettings.fogColor = new Color(0.68f, 0.7f, 0.69f);
+            RenderSettings.fogDensity = 0.0022f;
         }
 
         public void Configure(Transform nextTarget, Vector3 nextOffset)
@@ -55,8 +55,8 @@ namespace DeepStake.CameraRig
                 planar = new Vector3(1f, 0f, -1f);
             }
 
-            var clampedDistance = Mathf.Clamp(planar.magnitude, 5.55f, 7.0f);
-            var readableHeight = Mathf.Clamp(requestedOffset.y, 4.75f, 6.2f);
+            var clampedDistance = Mathf.Clamp(planar.magnitude, 4.95f, 5.95f);
+            var readableHeight = Mathf.Clamp(requestedOffset.y, 4.2f, 5.2f);
             var normalized = planar.normalized * clampedDistance;
             return new Vector3(normalized.x, readableHeight, normalized.z);
         }
@@ -99,8 +99,8 @@ namespace DeepStake.CameraRig
 
                 var orbitRotation = Quaternion.Euler(0f, orbitYaw, 0f);
                 fixedQuarterDirection = orbitRotation * fixedQuarterDirection.normalized;
-                var closeOffset = fixedQuarterDirection * 3.25f + Vector3.up * 2.12f;
-                var farOffset = orbitRotation * new Vector3(offset.x * mobileMaxZoomFactor, offset.y + 0.7f, offset.z * mobileMaxZoomFactor);
+                var closeOffset = fixedQuarterDirection * 2.9f + Vector3.up * 1.8f;
+                var farOffset = orbitRotation * new Vector3(offset.x * mobileMaxZoomFactor, offset.y + 0.35f, offset.z * mobileMaxZoomFactor);
                 effectiveOffset = Vector3.Lerp(closeOffset, farOffset, zoomT);
             }
 
@@ -112,7 +112,7 @@ namespace DeepStake.CameraRig
 
             transform.position = Vector3.SmoothDamp(transform.position, desired, ref velocity, smoothTime);
             var effectiveLookHeight = supportsZoom
-                ? Mathf.Lerp(1.02f, lookHeight + 0.05f, Mathf.InverseLerp(mobileMinZoomFactor, mobileMaxZoomFactor, mobileZoomFactor))
+                ? Mathf.Lerp(0.94f, lookHeight + 0.02f, Mathf.InverseLerp(mobileMinZoomFactor, mobileMaxZoomFactor, mobileZoomFactor))
                 : lookHeight;
             transform.LookAt(target.position + Vector3.up * effectiveLookHeight);
         }

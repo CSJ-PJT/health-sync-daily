@@ -34,19 +34,7 @@ namespace DeepStake.UI
                 return;
             }
 
-            if (Application.isMobilePlatform)
-            {
-                statusText.text = string.Empty;
-                return;
-            }
-
-            var save = DeepStakeGameState.Instance.CurrentSave;
-            statusText.text =
-                DeepStakeGameState.Instance.ZoneLabel +
-                " | Day " + save.Day +
-                " | Energy " + save.Player.Energy + "\n" +
-                "Nearby " + DeepStakeGameState.Instance.NearbyTargetLabel + "\n" +
-                "Status " + DeepStakeGameState.Instance.StatusMessage;
+            statusText.text = string.Empty;
         }
 
         private static string GetQuestSummary(Contracts.DeepStakeSaveData save)

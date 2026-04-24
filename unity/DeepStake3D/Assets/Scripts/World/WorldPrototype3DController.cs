@@ -10,6 +10,8 @@ using DeepStake.Quests;
 using DeepStake.Save;
 using DeepStake.Settlement;
 using DeepStake.UI;
+using System.Collections;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -98,6 +100,7 @@ namespace DeepStake.World
 
             EnsureMobileControls();
             EnsureGuidanceOverlay();
+            HideLegacyHudStatus();
 
             if (DeepStakeGameState.Instance != null)
             {
@@ -231,6 +234,7 @@ namespace DeepStake.World
             }
 
             Debug.Log("[DeepStakeDev] WorldPrototype3D ready. zone=" + definition.zoneId + " player=" + (playerTransform != null));
+            TryScheduleLocalScreenshotCapture();
         }
 
         private void Update()
@@ -485,6 +489,15 @@ namespace DeepStake.World
             overlayObject.transform.SetAsLastSibling();
             var overlay = overlayObject.AddComponent<GuidanceOverlayView>();
             overlay.Configure(canvas);
+        }
+
+        private void HideLegacyHudStatus()
+        {
+            var legacyHud = FindFirstObjectByType<HudStatusView>();
+            if (legacyHud != null)
+            {
+                legacyHud.gameObject.SetActive(false);
+            }
         }
 
         private void ResolveSceneReferences()
@@ -1272,6 +1285,120 @@ namespace DeepStake.World
             {
                 playerMover.PlayAction(action, worldTarget);
             }
+        }
+
+        private void TryScheduleLocalScreenshotCapture()
+        {
+            if (!DeepStakeDevLaunchOptions.CaptureLocalScreenshot)
+            {
+                return;
+            }
+
+            StartCoroutine(CaptureLocalScreenshotAfterFrameDelay());
+        }
+
+        private IEnumerator CaptureLocalScreenshotAfterFrameDelay()
+        {
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            yield return new WaitForSeconds(0.4f);
+
+            var screenshotPath = ResolveLocalScreenshotPath();
+            if (string.IsNullOrWhiteSpace(screenshotPath))
+            {
+                Debug.LogWarning("[DeepStakeDev] Local screenshot capture skipped because no valid output path was resolved.");
+                yield break;
+            }
+
+            var screenshotDirectory = Path.GetDirectoryName(screenshotPath);
+            if (!string.IsNullOrWhiteSpace(screenshotDirectory))
+            {
+                Directory.CreateDirectory(screenshotDirectory);
+            }
+
+            ScreenCapture.CaptureScreenshot(screenshotPath, 1);
+            Debug.Log("[DeepStakeDev] Local screenshot capture queued: " + screenshotPath);
+
+            if (DeepStakeDevLaunchOptions.QuitAfterScreenshot)
+            {
+                yield return new WaitForSeconds(1.1f);
+                Debug.Log("[DeepStakeDev] Quitting after screenshot capture.");
+                Application.Quit();
+            }
+        }
+
+        private string ResolveLocalScreenshotPath()
+        {
+            var outputRoot = DeepStakeDevLaunchOptions.ScreenshotDirectory;
+            if (string.IsNullOrWhiteSpace(outputRoot))
+            {
+                outputRoot = ResolveDefaultScreenshotDirectory();
+            }
+
+            if (string.IsNullOrWhiteSpace(outputRoot))
+            {
+                return string.Empty;
+            }
+
+            var treatAsFilePath = outputRoot.EndsWith(".png", System.StringComparison.OrdinalIgnoreCase);
+            if (!Path.IsPathRooted(outputRoot))
+            {
+                outputRoot = Path.GetFullPath(Path.Combine(ResolveProjectRootOrFallback(), outputRoot));
+            }
+
+            if (treatAsFilePath)
+            {
+                return outputRoot;
+            }
+
+            var timestamp = System.DateTime.Now.ToString("yyyyMMdd-HHmmss");
+            var verificationTag = DeepStakeDevLaunchOptions.VerificationTag;
+            if (string.IsNullOrWhiteSpace(verificationTag))
+            {
+                verificationTag = Application.isEditor ? "editor" : "runtime";
+            }
+
+            verificationTag = SanitizeFileNameFragment(verificationTag);
+            return Path.Combine(outputRoot, "local-" + verificationTag + "-" + timestamp + ".png");
+        }
+
+        private static string ResolveDefaultScreenshotDirectory()
+        {
+            if (Application.isEditor)
+            {
+                return Path.Combine(ResolveProjectRootOrFallback(), "Pictures", "Screenshot");
+            }
+
+            return Path.Combine(Application.persistentDataPath, "Screenshots");
+        }
+
+        private static string ResolveProjectRootOrFallback()
+        {
+            var assetsDirectory = Application.dataPath;
+            if (string.IsNullOrWhiteSpace(assetsDirectory))
+            {
+                return Directory.GetCurrentDirectory();
+            }
+
+            var parent = Directory.GetParent(assetsDirectory);
+            return parent != null ? parent.FullName : Directory.GetCurrentDirectory();
+        }
+
+        private static string SanitizeFileNameFragment(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return "untagged";
+            }
+
+            var invalidCharacters = Path.GetInvalidFileNameChars();
+            var sanitized = value;
+            for (var index = 0; index < invalidCharacters.Length; index++)
+            {
+                sanitized = sanitized.Replace(invalidCharacters[index], '-');
+            }
+
+            return sanitized.Replace(' ', '-');
         }
     }
 }

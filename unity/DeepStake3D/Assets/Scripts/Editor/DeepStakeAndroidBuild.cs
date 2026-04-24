@@ -12,6 +12,7 @@ namespace DeepStake.EditorTools
     {
         private const string AndroidPackageName = "com.roboheart.deepstake";
         private const string DebugApkName = "DeepStake-debug.apk";
+        private const string WindowsExeName = "DeepStake-local-dev.exe";
         private static readonly string[] ScenePaths =
         {
             "Assets/Scenes/Boot.unity",
@@ -54,6 +55,32 @@ namespace DeepStake.EditorTools
             }
         }
 
+        public static void BuildWindowsDevelopmentCli()
+        {
+            try
+            {
+                Debug.Log("[DeepStakeBuild] Starting Windows development CLI build.");
+                var report = BuildWindowsDevelopmentInternal(WindowsExeName);
+                if (report.summary.result != BuildResult.Succeeded)
+                {
+                    Debug.LogError("[DeepStakeBuild] Windows development CLI build failed: " + report.summary.result);
+                    EditorApplication.Exit(1);
+                    return;
+                }
+
+                Debug.Log("[DeepStakeBuild] Windows development CLI build succeeded. exe=" +
+                          Path.GetFullPath(Path.Combine("Builds", "Windows", WindowsExeName)) +
+                          " sizeBytes=" + report.summary.totalSize +
+                          " durationSeconds=" + report.summary.totalTime.TotalSeconds);
+                EditorApplication.Exit(0);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[DeepStakeBuild] Windows development CLI build threw: " + exception);
+                EditorApplication.Exit(1);
+            }
+        }
+
         private static BuildReport BuildAndroidDebugInternal(string apkName)
         {
             var buildRoot = Path.GetFullPath(Path.Combine("Builds", "Android"));
@@ -81,6 +108,27 @@ namespace DeepStake.EditorTools
             };
 
             Debug.Log("[DeepStakeBuild] Building package=" + AndroidPackageName + " output=" + outputPath);
+            return BuildPipeline.BuildPlayer(options);
+        }
+
+        private static BuildReport BuildWindowsDevelopmentInternal(string exeName)
+        {
+            var buildRoot = Path.GetFullPath(Path.Combine("Builds", "Windows"));
+            Directory.CreateDirectory(buildRoot);
+            var outputPath = Path.Combine(buildRoot, exeName);
+
+            ValidateScenes();
+            SwitchToWindowsIfNeeded();
+
+            var options = new BuildPlayerOptions
+            {
+                scenes = ScenePaths,
+                locationPathName = outputPath,
+                target = BuildTarget.StandaloneWindows64,
+                options = BuildOptions.Development | BuildOptions.CompressWithLz4
+            };
+
+            Debug.Log("[DeepStakeBuild] Building Windows development player output=" + outputPath);
             return BuildPipeline.BuildPlayer(options);
         }
 
@@ -161,6 +209,14 @@ namespace DeepStake.EditorTools
             if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
             {
                 EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
+            }
+        }
+
+        private static void SwitchToWindowsIfNeeded()
+        {
+            if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.StandaloneWindows64)
+            {
+                EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64);
             }
         }
 

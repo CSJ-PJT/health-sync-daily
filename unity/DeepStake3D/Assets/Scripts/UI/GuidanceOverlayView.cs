@@ -63,8 +63,8 @@ namespace DeepStake.UI
 
             var save = DeepStakeGameState.Instance.CurrentSave;
             zoneChipText.text = save.CurrentZoneLabel;
-            pressureChipText.text = (Application.isMobilePlatform ? "Hint  " : "Pressure Hint  ") + GetPressureHintText(save.ActivePressureHint);
-            missionBarText.text = (Application.isMobilePlatform ? string.Empty : "Current Objective  ") + QuestCatalog.GetPrimaryMissionObjective(save);
+            pressureChipText.text = GetPressureHintText(save.ActivePressureHint);
+            missionBarText.text = QuestCatalog.GetPrimaryMissionObjective(save);
             actionCardText.text = BuildActionCardText(save);
             journalRoot.SetActive(DeepStakeGameState.Instance.JournalVisible);
             journalText.text = BuildJournalText(save);
@@ -83,14 +83,14 @@ namespace DeepStake.UI
             var zoneChip = CreatePanel("ZoneChip", mobile ? new Vector2(250f, 44f) : new Vector2(380f, 46f), new Vector2(14f, -14f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Color(0.12f, 0.18f, 0.14f, mobile ? 0.76f : 0.88f));
             zoneChipText = CreateText(zoneChip.transform, "ZoneChipText", mobile ? 16 : 22, TextAnchor.MiddleLeft);
 
-            var missionBar = CreatePanel("MissionBar", mobile ? new Vector2(600f, 54f) : new Vector2(860f, 60f), new Vector2(0f, -14f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Color(0.04f, 0.08f, 0.12f, mobile ? 0.78f : 0.9f));
-            missionBarText = CreateText(missionBar.transform, "MissionBarText", mobile ? 18 : 24, TextAnchor.MiddleCenter);
+            var missionBar = CreatePanel("MissionBar", mobile ? new Vector2(520f, 54f) : new Vector2(760f, 58f), new Vector2(0f, -14f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Color(0.04f, 0.08f, 0.12f, mobile ? 0.76f : 0.88f));
+            missionBarText = CreateText(missionBar.transform, "MissionBarText", mobile ? 18 : 22, TextAnchor.MiddleCenter);
 
-            var pressureChip = CreatePanel("PressureChip", mobile ? new Vector2(330f, 54f) : new Vector2(620f, 64f), new Vector2(-16f, -14f), new Vector2(1f, 1f), new Vector2(1f, 1f), new Color(0.16f, 0.11f, 0.08f, mobile ? 0.78f : 0.9f));
-            pressureChipText = CreateText(pressureChip.transform, "PressureChipText", mobile ? 13 : 18, TextAnchor.MiddleLeft);
+            var pressureChip = CreatePanel("PressureChip", mobile ? new Vector2(340f, 54f) : new Vector2(480f, 58f), new Vector2(-16f, -14f), new Vector2(1f, 1f), new Vector2(1f, 1f), new Color(0.16f, 0.11f, 0.08f, mobile ? 0.74f : 0.84f));
+            pressureChipText = CreateText(pressureChip.transform, "PressureChipText", mobile ? 15 : 20, TextAnchor.MiddleLeft);
 
-            var actionCard = CreatePanel("ActionCard", mobile ? new Vector2(420f, 42f) : new Vector2(920f, 102f), mobile ? new Vector2(0f, 42f) : new Vector2(0f, 112f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Color(0.04f, 0.08f, 0.12f, mobile ? 0.62f : 0.88f));
-            actionCardText = CreateText(actionCard.transform, "ActionCardText", mobile ? 14 : 21, TextAnchor.MiddleCenter);
+            var actionCard = CreatePanel("ActionCard", mobile ? new Vector2(420f, 42f) : new Vector2(700f, 56f), mobile ? new Vector2(0f, 42f) : new Vector2(0f, 78f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Color(0.04f, 0.08f, 0.12f, mobile ? 0.62f : 0.84f));
+            actionCardText = CreateText(actionCard.transform, "ActionCardText", mobile ? 14 : 20, TextAnchor.MiddleCenter);
 
             toastRoot = CreatePanel("ToastPanel", mobile ? new Vector2(500f, 80f) : new Vector2(620f, 72f), new Vector2(-30f, -28f), new Vector2(1f, 1f), new Vector2(1f, 1f), new Color(0.12f, 0.18f, 0.22f, 0.92f)).gameObject;
             toastText = CreateText(toastRoot.transform, "ToastText", mobile ? 20 : 22, TextAnchor.MiddleCenter);
@@ -135,13 +135,62 @@ namespace DeepStake.UI
             }
 
             var save = DeepStakeGameState.Instance.CurrentSave;
-            UpdateMarker(signMarkerText, worldController.PrimaryInteractable != null ? worldController.PrimaryInteractable.transform : null, Application.isMobilePlatform ? "Sign" : "Notice", !save.StoryFlags.ReadFieldNoticeBoard);
-            UpdateMarker(supplyMarkerText, worldController.SecondaryInteractable != null ? worldController.SecondaryInteractable.transform : null, Application.isMobilePlatform ? "Crate" : "Supply", !save.StoryFlags.ReviewedSupplyCrate);
-            UpdateMarker(observerMarkerText, worldController.TertiaryInteractable != null ? worldController.TertiaryInteractable.transform : null, "Record", save.StoryFlags.MetFieldHand && !save.StoryFlags.ReviewedObserverRecord);
-            UpdateMarker(npcMarkerText, worldController.QuestNpc != null ? worldController.QuestNpc.transform : null, Application.isMobilePlatform ? "Sena" : "Archivist", save.StoryFlags.ReadFieldNoticeBoard && !save.StoryFlags.PlacedRecoveryBeacon);
-            UpdateMarker(workerMarkerText, worldController.SecondaryQuestNpc != null ? worldController.SecondaryQuestNpc.transform : null, "Mara", save.StoryFlags.PlacedRecoveryBeacon && !save.StoryFlags.MetFieldHand);
-            UpdateMarker(beaconMarkerText, worldController.PrimaryPlacement != null ? worldController.PrimaryPlacement.transform : null, "Beacon", save.StoryFlags.ReviewedSupplyCrate && !save.StoryFlags.PlacedRecoveryBeacon);
-            UpdateMarker(relayMarkerText, worldController.SecondaryPlacement != null ? worldController.SecondaryPlacement.transform : null, "Relay", save.StoryFlags.ReviewedSupplyCrate && !HasSettlementObject(save, "supply-relay"));
+            HideMarker(signMarkerText);
+            HideMarker(supplyMarkerText);
+            HideMarker(observerMarkerText);
+            HideMarker(npcMarkerText);
+            HideMarker(workerMarkerText);
+            HideMarker(beaconMarkerText);
+            HideMarker(relayMarkerText);
+
+            if (!save.StoryFlags.ReadFieldNoticeBoard)
+            {
+                UpdateMarker(signMarkerText, worldController.PrimaryInteractable != null ? worldController.PrimaryInteractable.transform : null, Application.isMobilePlatform ? "Sign" : "Notice", true);
+                return;
+            }
+
+            if (!save.StoryFlags.MetArchivist)
+            {
+                UpdateMarker(npcMarkerText, worldController.QuestNpc != null ? worldController.QuestNpc.transform : null, Application.isMobilePlatform ? "Sena" : "Archivist", true);
+                return;
+            }
+
+            if (!save.StoryFlags.ReviewedSupplyCrate)
+            {
+                UpdateMarker(supplyMarkerText, worldController.SecondaryInteractable != null ? worldController.SecondaryInteractable.transform : null, Application.isMobilePlatform ? "Crate" : "Supply", true);
+                return;
+            }
+
+            if (!save.StoryFlags.PlacedRecoveryBeacon)
+            {
+                UpdateMarker(beaconMarkerText, worldController.PrimaryPlacement != null ? worldController.PrimaryPlacement.transform : null, "Beacon", true);
+                return;
+            }
+
+            if (!save.StoryFlags.MetFieldHand)
+            {
+                UpdateMarker(workerMarkerText, worldController.SecondaryQuestNpc != null ? worldController.SecondaryQuestNpc.transform : null, "Mara", true);
+                return;
+            }
+
+            if (!save.StoryFlags.ReviewedObserverRecord)
+            {
+                UpdateMarker(observerMarkerText, worldController.TertiaryInteractable != null ? worldController.TertiaryInteractable.transform : null, "Record", true);
+                return;
+            }
+
+            if (!HasSettlementObject(save, "supply-relay"))
+            {
+                UpdateMarker(relayMarkerText, worldController.SecondaryPlacement != null ? worldController.SecondaryPlacement.transform : null, "Relay", true);
+            }
+        }
+
+        private static void HideMarker(Text marker)
+        {
+            if (marker != null)
+            {
+                marker.gameObject.SetActive(false);
+            }
         }
 
         private void UpdateMarker(Text marker, Transform target, string label, bool visible)
@@ -170,23 +219,31 @@ namespace DeepStake.UI
         private string BuildActionCardText(DeepStake.Contracts.DeepStakeSaveData save)
         {
             var nearby = DeepStakeGameState.Instance.NearbyTargetLabel;
-            var controls = Application.isMobilePlatform
-                ? "Touch  Move | Run | Inspect | Talk"
-                : "Keys  WASD Move  Shift Run  E Inspect  Q Talk  B Place  F5 Save  F9 Load";
+            var prompt = ShortPrompt(DeepStakeGameState.Instance.InteractionPrompt);
             if (Application.isMobilePlatform)
             {
-                var prompt = ShortPrompt(DeepStakeGameState.Instance.InteractionPrompt);
                 if (!string.IsNullOrWhiteSpace(prompt) && !prompt.StartsWith("Move", System.StringComparison.OrdinalIgnoreCase))
                 {
                     return prompt;
                 }
 
-                return nearby == "None" ? controls : nearby;
+                return nearby == "None" ? "Touch move  Hold Run" : nearby;
             }
 
-            return "Nearby  " + nearby + "\n" +
-                   DeepStakeGameState.Instance.InteractionPrompt + "\n" +
-                   controls;
+            if (!string.IsNullOrWhiteSpace(prompt) &&
+                !prompt.StartsWith("WASD", System.StringComparison.OrdinalIgnoreCase) &&
+                !prompt.StartsWith("Move", System.StringComparison.OrdinalIgnoreCase) &&
+                !prompt.StartsWith("Touch controls", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return prompt;
+            }
+
+            if (nearby != "None")
+            {
+                return "Nearby  " + nearby;
+            }
+
+            return "WASD Move  Shift Run";
         }
 
         private string BuildJournalText(DeepStake.Contracts.DeepStakeSaveData save)
@@ -231,18 +288,18 @@ namespace DeepStake.UI
 
         private static string GetPressureHintText(string hint)
         {
-            if (!Application.isMobilePlatform || string.IsNullOrWhiteSpace(hint))
+            if (string.IsNullOrWhiteSpace(hint))
             {
-                return hint;
+                return Application.isMobilePlatform ? "Pressure trace active." : "Pressure trace active across local records.";
             }
 
             var periodIndex = hint.IndexOf('.');
             if (periodIndex > 0)
             {
-                return hint.Substring(0, periodIndex + 1);
+                hint = hint.Substring(0, periodIndex + 1);
             }
 
-            return hint.Length > 72 ? hint.Substring(0, 72) + "..." : hint;
+            return hint.Length > 88 ? hint.Substring(0, 88) + "..." : hint;
         }
 
         private static string ShortPrompt(string prompt)
@@ -252,12 +309,12 @@ namespace DeepStake.UI
                 return string.Empty;
             }
 
-            if (prompt.Length <= 42)
+            if (prompt.Length <= 56)
             {
                 return prompt;
             }
 
-            return prompt.Substring(0, 42) + "...";
+            return prompt.Substring(0, 56) + "...";
         }
 
         private RectTransform CreatePanel(string name, Vector2 size, Vector2 anchoredPosition, Vector2 anchorMin, Vector2 anchorMax, Color color)
@@ -305,8 +362,8 @@ namespace DeepStake.UI
             text.fontSize = Application.isMobilePlatform ? 20 : 18;
             text.alignment = TextAnchor.MiddleCenter;
             text.color = Application.isMobilePlatform
-                ? new Color(1f, 0.95f, 0.72f, 1f)
-                : new Color(1f, 0.92f, 0.62f, 1f);
+                ? new Color(0.93f, 0.85f, 0.64f, 1f)
+                : new Color(0.9f, 0.82f, 0.6f, 1f);
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
             text.verticalOverflow = VerticalWrapMode.Overflow;
             var outline = markerObject.AddComponent<Outline>();
