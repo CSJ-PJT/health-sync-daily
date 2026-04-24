@@ -1,4 +1,5 @@
 using DeepStake.CameraRig;
+using DeepStake.Boot;
 using DeepStake.Characters;
 using DeepStake.Combat;
 using DeepStake.Core;
@@ -49,7 +50,7 @@ namespace DeepStake.World
         private WorldPrototype3DDefinition definition = new WorldPrototype3DDefinition();
         private string lastPrompt = string.Empty;
         private string lastInputDebug = string.Empty;
-        private const float AwarenessRange = 8f;
+        private const float AwarenessRange = 4.5f;
         private PlayerMover3D playerMover;
 
         public Transform PlayerTransform => playerTransform;
@@ -64,6 +65,7 @@ namespace DeepStake.World
 
         private void Start()
         {
+            Debug.Log("[DeepStakeDev] WorldPrototype3D start requested.");
             definition = WorldPrototype3DDefinition.FromJson(worldPrototypeJson);
             if (questCatalogJson == null)
             {
@@ -71,9 +73,29 @@ namespace DeepStake.World
             }
             QuestCatalog.Load(questCatalogJson);
             ResolveSceneReferences();
-            EnsureInteractiveSceneObjects();
+            try
+            {
+                EnsureInteractiveSceneObjects();
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError("[DeepStakeDev] EnsureInteractiveSceneObjects failed: " + exception);
+            }
             UiRuntimeBootstrap.EnsureEventSystem();
-            BuildZoneLandmarks();
+            try
+            {
+                BuildZoneLandmarks();
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError("[DeepStakeDev] BuildZoneLandmarks failed: " + exception);
+            }
+
+            if (DeepStakeDevLaunchOptions.ForceMobileControlsInEditor)
+            {
+                forceMobileControlsInEditor = true;
+            }
+
             EnsureMobileControls();
             EnsureGuidanceOverlay();
 
@@ -104,6 +126,11 @@ namespace DeepStake.World
             {
                 npcTransform.position = new Vector3(definition.npcStubs[0].x, 0.5f, definition.npcStubs[0].z);
                 WorldPrototypeVisualPass.EnsureArchivistProxy(npcTransform);
+                var archivistView = npcTransform.GetComponent<ArticulatedHumanoidView>();
+                if (archivistView != null)
+                {
+                    archivistView.ForceIdleMotion();
+                }
                 if (questNpc != null)
                 {
                     questNpc.Configure(
@@ -202,6 +229,8 @@ namespace DeepStake.World
                 DeepStakeGameState.Instance.UpdatePrompt(
                     "Read the notice board, speak with Archivist Sena, inspect the supply crates, then anchor the beacon.");
             }
+
+            Debug.Log("[DeepStakeDev] WorldPrototype3D ready. zone=" + definition.zoneId + " player=" + (playerTransform != null));
         }
 
         private void Update()
@@ -330,8 +359,8 @@ namespace DeepStake.World
 
             var nearbyLabel = GetNearbyLabel();
             var prompt = Application.isMobilePlatform || forceMobileControlsInEditor
-                ? "Touch controls ready."
-                : "WASD Move  E Inspect  Q Talk  B Place  F Attack";
+                ? "Touch controls ready. Hold Run to sprint."
+                : "WASD Move  Shift Run  E Inspect  Q Talk  B Place  F Attack";
             var activeInteractable = GetActiveInteractable();
             if (activeInteractable != null && activeInteractable.CanInteract(playerTransform))
             {
@@ -714,7 +743,7 @@ namespace DeepStake.World
                 if (monsterObject == null)
                 {
                     monsterObject = new GameObject("FirstHusk3D");
-                    monsterObject.transform.position = new Vector3(5.1f, 0.5f, -1.4f);
+                    monsterObject.transform.position = new Vector3(10.8f, 0.5f, -7.2f);
                     if (zoneRoot != null)
                     {
                         monsterObject.transform.SetParent(zoneRoot, true);
@@ -842,6 +871,11 @@ namespace DeepStake.World
             if (npcTransform != null)
             {
                 WorldPrototypeVisualPass.EnsureArchivistProxy(npcTransform);
+                var archivistView = npcTransform.GetComponent<ArticulatedHumanoidView>();
+                if (archivistView != null)
+                {
+                    archivistView.ForceIdleMotion();
+                }
             }
 
             if (secondaryNpcTransform != null)
@@ -852,6 +886,7 @@ namespace DeepStake.World
                     fieldHandView = secondaryNpcTransform.gameObject.AddComponent<ArticulatedHumanoidView>();
                 }
                 fieldHandView.Configure(ArticulatedHumanoidRole.FieldWorker);
+                fieldHandView.ForceIdleMotion();
             }
         }
 
@@ -860,6 +895,17 @@ namespace DeepStake.World
             if (monster == null)
             {
                 return;
+            }
+
+            if (monsterTransform != null && playerTransform != null && !(save != null && save.StoryFlags.DefeatedFirstMonster))
+            {
+                monsterTransform.position = new Vector3(10.8f, 0.5f, -7.2f);
+                var playerFlat = new Vector3(playerTransform.position.x, 0f, playerTransform.position.z);
+                var monsterFlat = new Vector3(monsterTransform.position.x, 0f, monsterTransform.position.z);
+                if (Vector3.Distance(playerFlat, monsterFlat) < 6.25f)
+                {
+                    monsterTransform.position = new Vector3(12.2f, 0.5f, -8.4f);
+                }
             }
 
             monster.Configure(playerTransform, playerTransform != null ? playerTransform.GetComponent<ArticulatedHumanoidView>() : null);

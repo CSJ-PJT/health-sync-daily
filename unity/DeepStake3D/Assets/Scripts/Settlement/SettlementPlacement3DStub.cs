@@ -16,7 +16,7 @@ namespace DeepStake.Settlement
         [SerializeField] [TextArea] private string unlockMessage = string.Empty;
         [SerializeField] private Vector3 placementPosition = new Vector3(4f, 0.5f, -2f);
         [SerializeField] private Transform placedRoot;
-        [SerializeField] private float placementRange = 5.5f;
+        [SerializeField] private float placementRange = 2.6f;
 
         public void Configure(string nextObjectType, Vector3 nextPlacementPosition)
         {
@@ -79,15 +79,32 @@ namespace DeepStake.Settlement
         {
             if (!IsUnlocked())
             {
-                return "B Locked  " + placementLabel;
+                return "B Locked  " + GetShortLabel();
             }
 
-            return "B " + promptVerb + "  " + placementLabel;
+            return "B " + promptVerb + "  " + GetShortLabel();
         }
 
         public string GetLabel()
         {
             return placementLabel;
+        }
+
+        public string GetShortLabel()
+        {
+            var type = objectType.ToLowerInvariant();
+            var label = placementLabel.ToLowerInvariant();
+            if (type.Contains("beacon") || label.Contains("beacon"))
+            {
+                return "Beacon";
+            }
+
+            if (type.Contains("relay") || label.Contains("relay"))
+            {
+                return "Relay";
+            }
+
+            return placementLabel.Length > 14 ? placementLabel.Substring(0, 14) : placementLabel;
         }
 
         public string GetBlockedReason()

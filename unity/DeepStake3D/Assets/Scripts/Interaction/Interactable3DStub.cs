@@ -11,7 +11,7 @@ namespace DeepStake.Interaction
         [SerializeField] [TextArea] private string interactMessage =
             "The field waits for the first cycle of restoration.";
         [SerializeField] private string questState = string.Empty;
-        [SerializeField] private float interactionRange = 5.5f;
+        [SerializeField] private float interactionRange = 2.35f;
 
         public void Configure(string nextId, string nextLabel, string nextMessage)
         {
@@ -55,12 +55,32 @@ namespace DeepStake.Interaction
 
         public string GetPrompt()
         {
-            return "E " + promptVerb + "  " + interactLabel;
+            return "E " + promptVerb + "  " + GetShortLabel();
         }
 
         public string GetLabel()
         {
             return interactLabel;
+        }
+
+        public string GetShortLabel()
+        {
+            if (interactId == "farm-sign")
+            {
+                return "Sign";
+            }
+
+            if (interactId == "supply-cache")
+            {
+                return "Crate";
+            }
+
+            if (interactId == "observer-record")
+            {
+                return "Record";
+            }
+
+            return interactLabel.Length > 14 ? interactLabel.Substring(0, 14) : interactLabel;
         }
 
         public void Trigger()

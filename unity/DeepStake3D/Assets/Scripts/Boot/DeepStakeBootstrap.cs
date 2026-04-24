@@ -23,6 +23,17 @@ namespace DeepStake.Boot
 
         private void Start()
         {
+            if (DeepStakeDevLaunchOptions.AutorunLocalPlay)
+            {
+                var devSave = LocalSaveService.CreateDefault();
+                devSave.BootMode = "local-dev-autorun";
+                devSave.LastStatus = "Dev autorun active. Entering playable field directly.";
+                DeepStakeGameState.Instance.ReplaceSave(devSave, devSave.LastStatus);
+                Debug.Log("[DeepStakeDev] Boot autorun -> " + worldSceneName + " tag=" + DeepStakeDevLaunchOptions.VerificationTag);
+                SceneManager.LoadScene(worldSceneName);
+                return;
+            }
+
             var saveData = LocalSaveService.LoadOrCreate();
             saveData.BootMode = forceLocalMode ? "local" : saveData.BootMode;
             saveData.LastStatus = forceLocalMode
@@ -30,6 +41,7 @@ namespace DeepStake.Boot
                 : "Boot complete.";
 
             DeepStakeGameState.Instance.ReplaceSave(saveData, saveData.LastStatus);
+            Debug.Log("[DeepStakeDev] Boot normal flow -> " + (loadWorldDirectly ? worldSceneName : mainMenuSceneName));
             SceneManager.LoadScene(loadWorldDirectly ? worldSceneName : mainMenuSceneName);
         }
     }

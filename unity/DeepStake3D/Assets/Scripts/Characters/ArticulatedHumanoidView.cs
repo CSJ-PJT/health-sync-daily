@@ -26,7 +26,10 @@ namespace DeepStake.Characters
     public sealed class ArticulatedHumanoidView : MonoBehaviour
     {
         private const string VisualRootName = "__HumanoidVisual";
-        private const string VisualVersionName = "__VisualVersion_94";
+        private const string VisualVersionName = "__VisualVersion_110";
+        private static readonly bool UseImportedCharacterModels = true;
+        private static readonly bool UseImportedPoseOverrides = false;
+        private static readonly bool UseLegacyOverbuiltDetails = false;
         private const bool UseImportedClipPlayback = true;
         private const string ImportedModelRootName = "__ImportedCharacterModel";
         private const string ImportedModelVisualName = "__ImportedCharacterVisual";
@@ -46,6 +49,7 @@ namespace DeepStake.Characters
         private Transform visualRoot;
         private Transform importedModelRoot;
         private Transform importedModelVisual;
+        private Quaternion importedModelBaseRotation = Quaternion.identity;
         private Animator importedAnimator;
         private Transform importedHipsBone;
         private Transform importedSpineBone;
@@ -105,6 +109,7 @@ namespace DeepStake.Characters
             public Color BodyColor;
             public Color AccentColor;
             public Color HairColor;
+            public Color EyeColor;
             public Color TrouserColor;
             public Color OuterwearColor;
             public Color GearColor;
@@ -148,10 +153,57 @@ namespace DeepStake.Characters
             }
 
             var targetMove = maxSpeed > 0.01f ? Mathf.Clamp01(speed / maxSpeed) : 0f;
-            moveAmount = Mathf.MoveTowards(moveAmount, targetMove, Time.deltaTime * 4.8f);
+            var blendRate = targetMove <= 0f ? 16f : 5.8f;
+            moveAmount = Mathf.MoveTowards(moveAmount, targetMove, Time.deltaTime * blendRate);
+            if (targetMove <= 0f && moveAmount < 0.035f)
+            {
+                moveAmount = 0f;
+            }
+
             moveBlend = Mathf.SmoothStep(0f, 1f, moveAmount);
-            moveCycle += Time.deltaTime * Mathf.Lerp(1.2f, 6.4f, moveAmount);
             isRunning = running && speed > 0.35f;
+            if (moveAmount > 0f)
+            {
+                var cycleRate = isRunning ? Mathf.Lerp(2.3f, 4.4f, moveAmount) : Mathf.Lerp(0.55f, 2.45f, moveAmount);
+                moveCycle += Time.deltaTime * cycleRate;
+            }
+        }
+
+        public void ForceIdleMotion()
+        {
+            moveAmount = 0f;
+            moveBlend = 0f;
+            isRunning = false;
+            importedCurrentStateName = string.Empty;
+            if (importedAnimator != null && importedAnimator.layerCount > 0 && HasControllerState(ControllerIdleState))
+            {
+                importedAnimator.Play(Animator.StringToHash(ControllerIdleState), 0, 0f);
+                importedAnimator.speed = 1f;
+                importedCurrentStateName = ControllerIdleState;
+            }
+        }
+
+        public void HoldStationaryIdle()
+        {
+            moveAmount = 0f;
+            moveBlend = 0f;
+            isRunning = false;
+            if (currentAction != ArticulatedHumanoidAction.None)
+            {
+                return;
+            }
+
+            if (importedAnimator != null && importedAnimator.layerCount > 0 && HasControllerState(ControllerIdleState))
+            {
+                var idleHash = Animator.StringToHash(ControllerIdleState);
+                if (importedCurrentStateName != ControllerIdleState)
+                {
+                    importedAnimator.Play(idleHash, 0, 0f);
+                    importedCurrentStateName = ControllerIdleState;
+                }
+
+                importedAnimator.speed = 0f;
+            }
         }
 
         public void SetAttentionTarget(Vector3 worldPosition, float weight)
@@ -246,15 +298,24 @@ namespace DeepStake.Characters
             var rootObject = existing != null ? existing.gameObject : new GameObject(VisualRootName);
             rootObject.name = VisualRootName;
             rootObject.transform.SetParent(transform, false);
-            rootObject.transform.localPosition = new Vector3(0f, -0.92f, 0f);
+            rootObject.transform.localPosition = ResolveVisualRootOffset(role);
             rootObject.transform.localScale = role == ArticulatedHumanoidRole.Player
-                ? new Vector3(1.42f, 1.42f, 1.42f)
+                ? Vector3.one
                 : role == ArticulatedHumanoidRole.Archivist
-                    ? new Vector3(1.4f, 1.4f, 1.4f)
-                    : new Vector3(1.41f, 1.41f, 1.41f);
+                    ? Vector3.one
+                    : role == ArticulatedHumanoidRole.FieldWorker
+                        ? Vector3.one
+                        : Vector3.one;
             visualRoot = rootObject.transform;
 
             BuildHumanoidRig();
+        }
+
+        private static Vector3 ResolveVisualRootOffset(ArticulatedHumanoidRole targetRole)
+        {
+            return targetRole == ArticulatedHumanoidRole.Monster
+                ? new Vector3(0f, -0.92f, 0f)
+                : new Vector3(0f, -0.56f, 0f);
         }
 
         private bool NeedsRebuild()
@@ -286,6 +347,7 @@ namespace DeepStake.Characters
             visualRoot = null;
             importedModelRoot = null;
             importedModelVisual = null;
+            importedModelBaseRotation = Quaternion.identity;
             importedAnimator = null;
             importedAvatar = null;
             importedWalkClip = null;
@@ -335,19 +397,24 @@ namespace DeepStake.Characters
 
             var style = GetStyle(role);
 
-            if (TryBuildImportedModel(style))
+            if (UseImportedCharacterModels && TryBuildImportedModel(style))
             {
                 return;
             }
 
             BuildSimplifiedHumanoid(style);
+            if (!UseLegacyOverbuiltDetails)
+            {
+                return;
+            }
+
             CreatePiece(head, "HairTempleL", PrimitiveType.Sphere, new Vector3(-0.16f, 0.1f, 0.12f), new Vector3(0.08f, 0.1f, 0.06f), style.HairColor * 0.94f);
             CreatePiece(head, "HairTempleR", PrimitiveType.Sphere, new Vector3(0.16f, 0.1f, 0.12f), new Vector3(0.08f, 0.1f, 0.06f), style.HairColor * 0.94f);
             CreatePiece(head, "EarLeft", PrimitiveType.Sphere, new Vector3(-0.22f, -0.01f, 0.01f), new Vector3(0.06f, 0.11f, 0.05f), style.SkinColor * 0.98f);
             CreatePiece(head, "EarRight", PrimitiveType.Sphere, new Vector3(0.22f, -0.01f, 0.01f), new Vector3(0.06f, 0.11f, 0.05f), style.SkinColor * 0.98f);
             CreatePiece(head, "JawShadow", PrimitiveType.Capsule, new Vector3(0f, -0.18f, 0.13f), new Vector3(0.11f, 0.02f, 0.03f), style.HairColor * 0.38f);
-            CreatePiece(head, "EyeLeft", PrimitiveType.Sphere, new Vector3(-0.08f, 0.0f, 0.25f), style.EyeScale, new Color(0.18f, 0.16f, 0.15f));
-            CreatePiece(head, "EyeRight", PrimitiveType.Sphere, new Vector3(0.08f, 0.0f, 0.25f), style.EyeScale, new Color(0.18f, 0.16f, 0.15f));
+            CreatePiece(head, "EyeLeft", PrimitiveType.Sphere, new Vector3(-0.08f, 0.0f, 0.25f), style.EyeScale, style.EyeColor);
+            CreatePiece(head, "EyeRight", PrimitiveType.Sphere, new Vector3(0.08f, 0.0f, 0.25f), style.EyeScale, style.EyeColor);
             CreatePiece(head, "EyeDotLeft", PrimitiveType.Sphere, new Vector3(-0.08f, 0.0f, 0.265f), new Vector3(style.EyeScale.x * 0.42f, style.EyeScale.y * 0.7f, 0.01f), new Color(0.08f, 0.07f, 0.07f));
             CreatePiece(head, "EyeDotRight", PrimitiveType.Sphere, new Vector3(0.08f, 0.0f, 0.265f), new Vector3(style.EyeScale.x * 0.42f, style.EyeScale.y * 0.7f, 0.01f), new Color(0.08f, 0.07f, 0.07f));
             CreatePiece(head, "BrowLeft", PrimitiveType.Capsule, new Vector3(-0.08f, 0.08f, 0.24f), new Vector3(0.05f, 0.03f, 0.02f), style.HairColor * 0.8f);
@@ -699,8 +766,8 @@ namespace DeepStake.Characters
             CreatePiece(head, "NapeHair", PrimitiveType.Capsule, new Vector3(0f, -0.075f, -0.12f), new Vector3(0.095f, 0.075f, 0.034f), style.HairColor * 0.92f);
             CreatePiece(head, "BrowLeft", PrimitiveType.Capsule, new Vector3(-0.055f, 0.06f, 0.17f), new Vector3(0.034f, 0.01f, 0.01f), style.HairColor * 0.9f);
             CreatePiece(head, "BrowRight", PrimitiveType.Capsule, new Vector3(0.055f, 0.06f, 0.17f), new Vector3(0.034f, 0.01f, 0.01f), style.HairColor * 0.9f);
-            CreatePiece(head, "EyeLeft", PrimitiveType.Sphere, new Vector3(-0.05f, 0.012f, 0.175f), new Vector3(0.018f, 0.013f, 0.01f), new Color(0.11f, 0.1f, 0.1f));
-            CreatePiece(head, "EyeRight", PrimitiveType.Sphere, new Vector3(0.05f, 0.012f, 0.175f), new Vector3(0.018f, 0.013f, 0.01f), new Color(0.11f, 0.1f, 0.1f));
+            CreatePiece(head, "EyeLeft", PrimitiveType.Sphere, new Vector3(-0.05f, 0.012f, 0.175f), new Vector3(0.018f, 0.013f, 0.01f), style.EyeColor);
+            CreatePiece(head, "EyeRight", PrimitiveType.Sphere, new Vector3(0.05f, 0.012f, 0.175f), new Vector3(0.018f, 0.013f, 0.01f), style.EyeColor);
             CreatePiece(head, "Nose", PrimitiveType.Capsule, new Vector3(0f, -0.015f, 0.17f), new Vector3(0.013f, 0.03f, 0.01f), style.SkinColor * 0.94f);
             CreatePiece(head, "Mouth", PrimitiveType.Capsule, new Vector3(0f, -0.08f, 0.15f), new Vector3(0.024f, 0.007f, 0.01f), new Color(0.23f, 0.18f, 0.17f));
             CreatePiece(head, "Chin", PrimitiveType.Sphere, new Vector3(0f, -0.115f, 0.085f), new Vector3(0.07f, 0.044f, 0.044f), style.SkinColor * 0.96f);
@@ -859,6 +926,7 @@ namespace DeepStake.Characters
                     : nextRole == ArticulatedHumanoidRole.Archivist
                         ? new Color(0.62f, 0.37f, 0.20f)
                         : new Color(0.46f, 0.29f, 0.18f),
+                EyeColor = new Color(0.10f, 0.09f, 0.08f),
                 TrouserColor = nextRole == ArticulatedHumanoidRole.Player
                     ? new Color(0.11f, 0.12f, 0.13f)
                     : nextRole == ArticulatedHumanoidRole.Archivist
@@ -913,6 +981,7 @@ namespace DeepStake.Characters
                 style.BodyColor = new Color(0.16f, 0.12f, 0.14f);
                 style.AccentColor = new Color(0.69f, 0.19f, 0.18f);
                 style.HairColor = new Color(0.09f, 0.07f, 0.08f);
+                style.EyeColor = new Color(0.78f, 0.19f, 0.16f);
                 style.TrouserColor = new Color(0.13f, 0.11f, 0.12f);
                 style.OuterwearColor = new Color(0.18f, 0.13f, 0.16f);
                 style.GearColor = new Color(0.28f, 0.19f, 0.2f);
@@ -923,6 +992,20 @@ namespace DeepStake.Characters
                 style.WaistScale = new Vector3(0.26f, 0.22f, 0.22f);
                 style.ShoulderWidth = 0.27f;
                 style.HipWidth = 0.2f;
+            }
+            else if (nextRole == ArticulatedHumanoidRole.Player)
+            {
+                var customization = CharacterCustomizationStore.Load();
+                var clothes = CharacterCustomizationStore.ResolveClothesColor(customization);
+                var shoes = CharacterCustomizationStore.ResolveShoesColor(customization);
+
+                style.SkinColor = CharacterCustomizationStore.ResolveFaceColor(customization);
+                style.EyeColor = CharacterCustomizationStore.ResolveEyeColor(customization);
+                style.HairColor = CharacterCustomizationStore.ResolveHairColor(customization);
+                style.BodyColor = Color.Lerp(clothes, new Color(0.06f, 0.065f, 0.07f), 0.25f);
+                style.OuterwearColor = clothes;
+                style.TrouserColor = Color.Lerp(clothes, shoes, 0.55f);
+                style.GearColor = shoes;
             }
             return style;
         }
@@ -977,7 +1060,7 @@ namespace DeepStake.Characters
 
         private Quaternion GetImportedModelBaseRotation()
         {
-            return Quaternion.identity;
+            return importedModelBaseRotation;
         }
 
         private void AutoOrientImportedModel(Renderer[] renderers)
@@ -1015,7 +1098,8 @@ namespace DeepStake.Characters
                 }
             }
 
-            importedModelVisual.localRotation = bestRotation;
+            importedModelBaseRotation = bestRotation;
+            importedModelVisual.localRotation = importedModelBaseRotation;
         }
 
         private static string GetRoleTextureFolderPath(string resourcePath)
@@ -1054,7 +1138,7 @@ namespace DeepStake.Characters
             importedModelVisual.localScale = Vector3.one * scale;
 
             var scaledBounds = CalculateRendererBounds(renderers);
-            var targetGroundY = transform.position.y;
+            var targetGroundY = 0.02f;
             var bottomOffset = scaledBounds.min.y - targetGroundY;
             importedModelVisual.position -= new Vector3(0f, bottomOffset, 0f);
         }
@@ -1131,6 +1215,7 @@ namespace DeepStake.Characters
 
                     if (albedo != null)
                     {
+                        var tint = ResolveImportedTextureTint(source != null ? source.name : string.Empty, materialIndex, style);
                         if (material.HasProperty("_BaseMap"))
                         {
                             material.SetTexture("_BaseMap", albedo);
@@ -1141,11 +1226,11 @@ namespace DeepStake.Characters
                         }
                         if (material.HasProperty("_BaseColor"))
                         {
-                            material.SetColor("_BaseColor", Color.white);
+                            material.SetColor("_BaseColor", tint);
                         }
                         if (material.HasProperty("_Color"))
                         {
-                            material.color = Color.white;
+                            material.color = tint;
                         }
                     }
                     else
@@ -1206,6 +1291,43 @@ namespace DeepStake.Characters
             }
         }
 
+        private Color ResolveImportedTextureTint(string materialName, int materialIndex, HumanoidStyle style)
+        {
+            if (role != ArticulatedHumanoidRole.Player)
+            {
+                return Color.white;
+            }
+
+            var key = materialName == null ? string.Empty : materialName.ToLowerInvariant();
+            if (key.Contains("skin") || key.Contains("face") || key.Contains("head") || key.Contains("hand") || key.Contains("ear") || key.Contains("nose"))
+            {
+                return Color.Lerp(Color.white, style.SkinColor, 0.26f);
+            }
+            if (key.Contains("eye") || key.Contains("lash") || key.Contains("brow"))
+            {
+                return Color.Lerp(Color.white, style.EyeColor, 0.55f);
+            }
+            if (key.Contains("hair"))
+            {
+                return Color.Lerp(Color.white, style.HairColor, 0.42f);
+            }
+            if (key.Contains("shoe") || key.Contains("boot") || key.Contains("sole"))
+            {
+                return Color.Lerp(Color.white, style.GearColor, 0.48f);
+            }
+            if (key.Contains("coat") || key.Contains("jacket") || key.Contains("hood") || key.Contains("shirt") || key.Contains("cloth") || key.Contains("top"))
+            {
+                return Color.Lerp(Color.white, style.OuterwearColor, 0.34f);
+            }
+            if (key.Contains("pant") || key.Contains("trouser") || key.Contains("leg"))
+            {
+                return Color.Lerp(Color.white, style.TrouserColor, 0.34f);
+            }
+
+            // Avoid tinting single baked-texture models blindly. It preserves the user's painted textures.
+            return materialIndex == 0 ? Color.white : Color.Lerp(Color.white, ResolveImportedMaterialColor(materialName, materialIndex, style), 0.18f);
+        }
+
         private Color ResolveImportedMaterialColor(string materialName, int materialIndex, HumanoidStyle style)
         {
             var key = materialName == null ? string.Empty : materialName.ToLowerInvariant();
@@ -1223,7 +1345,7 @@ namespace DeepStake.Characters
             }
             if (key.Contains("eye") || key.Contains("lash") || key.Contains("brow"))
             {
-                return new Color(0.09f, 0.09f, 0.1f);
+                return style.EyeColor;
             }
             if (key.Contains("glass"))
             {
@@ -1696,8 +1818,8 @@ namespace DeepStake.Characters
             var counterSwing = Mathf.Sin(moveCycle * Mathf.PI * 2f + Mathf.PI);
             var idleBreath = Mathf.Sin(idleClock * 1.7f) * 0.8f;
             var roleIdleOffset = role == ArticulatedHumanoidRole.FieldWorker ? Mathf.Sin(idleClock * 1.15f + 0.8f) * 1.8f : 0f;
-            var bob = Mathf.Abs(swing) * walk * 0.06f;
-            var torsoPitch = -walk * 6f + idleBreath + roleIdleOffset * 0.25f;
+            var bob = Mathf.Abs(swing) * walk * 0.038f;
+            var torsoPitch = -walk * 3.5f + idleBreath + roleIdleOffset * 0.25f;
             var hipsYaw = role == ArticulatedHumanoidRole.FieldWorker ? Mathf.Sin(idleClock * 0.8f) * 3f : role == ArticulatedHumanoidRole.Archivist ? Mathf.Sin(idleClock * 0.42f + 0.7f) * 1.1f : 0f;
             var torsoRoll = role == ArticulatedHumanoidRole.FieldWorker ? Mathf.Sin(idleClock * 0.65f + 0.3f) * 2.5f : role == ArticulatedHumanoidRole.Archivist ? -1.6f + Mathf.Sin(idleClock * 0.55f) * 0.8f : 0f;
             var idleSway = Mathf.Sin(idleClock * 1.1f + (role == ArticulatedHumanoidRole.Player ? 0.4f : 1.1f)) * (1f - walk) * 2.4f;
@@ -1736,10 +1858,10 @@ namespace DeepStake.Characters
             }
             head.localRotation = Quaternion.Euler(baseHeadPitch + idleBreath * 0.5f, headYaw, 0f);
 
-            var armSwing = 24f * walk;
-            var legSwing = 26f * walk;
-            var armBend = 10f + walk * 8f;
-            var kneeBend = 16f + walk * 10f;
+            var armSwing = 17f * walk;
+            var legSwing = 18f * walk;
+            var armBend = 8f + walk * 5f;
+            var kneeBend = 10f + walk * 8f;
             var idleArmSettle = 6f + Mathf.Sin(idleClock * 1.2f) * 2f;
             var idleLegSettle = 2.5f + Mathf.Sin(idleClock * 0.9f + 0.6f) * 1.5f;
 
@@ -1783,10 +1905,12 @@ namespace DeepStake.Characters
 
             var walk = moveBlend;
             var swing = Mathf.Sin(moveCycle * Mathf.PI * 2f);
-            var bob = Mathf.Abs(swing) * walk * 0.032f;
+            var bob = Mathf.Abs(swing) * walk * 0.018f;
             var idle = Mathf.Sin(idleClock * 1.35f) * 0.9f;
-            var bodyPitch = idle * 0.08f;
-            var bodyRoll = Mathf.Sin(idleClock * 0.95f + (role == ArticulatedHumanoidRole.FieldWorker ? 0.7f : 0f)) * (1f - walk) * 0.55f;
+            var bodyPitch = UseImportedPoseOverrides ? -8f + idle * 0.08f : 0f;
+            var bodyRoll = UseImportedPoseOverrides
+                ? Mathf.Sin(idleClock * 0.95f + (role == ArticulatedHumanoidRole.FieldWorker ? 0.7f : 0f)) * (1f - walk) * 0.55f
+                : 0f;
             var importedActionBlend = actionDuration > 0f ? Mathf.Sin(Mathf.Clamp01(actionClock / actionDuration) * Mathf.PI) : 0f;
             var yaw = 0f;
 
@@ -1796,29 +1920,29 @@ namespace DeepStake.Characters
                 yaw = Mathf.Atan2(localAttention.x, localAttention.z) * Mathf.Rad2Deg * 0.5f * attentionWeight;
             }
 
-            if (currentAction == ArticulatedHumanoidAction.Inspect)
+            if (UseImportedPoseOverrides && currentAction == ArticulatedHumanoidAction.Inspect)
             {
                 bodyPitch -= 2.5f;
             }
-            else if (currentAction == ArticulatedHumanoidAction.Place)
+            else if (UseImportedPoseOverrides && currentAction == ArticulatedHumanoidAction.Place)
             {
                 bodyPitch -= 3.5f;
             }
-            else if (currentAction == ArticulatedHumanoidAction.Talk)
+            else if (UseImportedPoseOverrides && currentAction == ArticulatedHumanoidAction.Talk)
             {
                 bodyPitch += 2f;
             }
-            else if (currentAction == ArticulatedHumanoidAction.Attack)
+            else if (UseImportedPoseOverrides && currentAction == ArticulatedHumanoidAction.Attack)
             {
                 bodyPitch -= 5f;
                 bodyRoll += Mathf.Sin(actionClock * 18f) * 1.8f;
             }
-            else if (currentAction == ArticulatedHumanoidAction.Hit)
+            else if (UseImportedPoseOverrides && currentAction == ArticulatedHumanoidAction.Hit)
             {
                 bodyPitch += 5f;
                 bodyRoll -= 5f;
             }
-            else if (currentAction == ArticulatedHumanoidAction.Death)
+            else if (UseImportedPoseOverrides && currentAction == ArticulatedHumanoidAction.Death)
             {
                 bodyPitch -= 18f * importedActionBlend;
                 bodyRoll -= 14f * importedActionBlend;
@@ -1827,8 +1951,119 @@ namespace DeepStake.Characters
             importedModelRoot.localPosition = new Vector3(0f, bob, 0f);
             importedModelRoot.localRotation = Quaternion.Euler(0f, yaw, bodyRoll);
             importedModelVisual.localRotation = GetImportedModelBaseRotation() * Quaternion.Euler(bodyPitch, 0f, 0f);
-            ApplyImportedBoneFallback(walk, swing);
+            if (UseImportedPoseOverrides)
+            {
+                ApplyImportedBoneFallback(walk, swing);
+            }
+
             UpdateImportedAnimationPlayback(walk);
+            if (UseImportedPoseOverrides)
+            {
+                ApplyImportedReadablePostureCorrection(walk);
+                ApplyImportedHumanArmSettle(walk, swing);
+            }
+        }
+
+        private void ApplyImportedReadablePostureCorrection(float walk)
+        {
+            if (currentAction == ArticulatedHumanoidAction.Death)
+            {
+                return;
+            }
+
+            var correctionStrength = Mathf.Lerp(1f, 0.86f, walk);
+            var headLift = -20f;
+            var chestLift = -8f;
+            var spineLift = -5f;
+            if (role == ArticulatedHumanoidRole.FieldWorker)
+            {
+                correctionStrength += 0.04f;
+            }
+
+            correctionStrength = Mathf.Clamp01(correctionStrength);
+            StabilizeImportedUpperBodyBone(importedSpineBone, spineLift, correctionStrength * 0.36f);
+            StabilizeImportedUpperBodyBone(importedChestBone, chestLift, correctionStrength * 0.5f);
+            StabilizeImportedUpperBodyBone(importedHeadBone, headLift, Mathf.Clamp01(correctionStrength * 0.82f));
+        }
+
+        private static void StabilizeImportedUpperBodyBone(Transform bone, float pitchOffset, float strength)
+        {
+            if (bone == null)
+            {
+                return;
+            }
+
+            var euler = bone.localEulerAngles;
+            var pitch = NormalizeAngle(euler.x);
+            var yaw = NormalizeAngle(euler.y);
+            var roll = NormalizeAngle(euler.z);
+            pitch = Mathf.LerpAngle(pitch, pitch + pitchOffset, strength);
+            roll = Mathf.LerpAngle(roll, 0f, strength * 0.18f);
+            bone.localRotation = Quaternion.Euler(pitch, yaw, roll);
+        }
+
+        private void ApplyImportedHumanArmSettle(float walk, float swing)
+        {
+            if (role == ArticulatedHumanoidRole.Monster || currentAction == ArticulatedHumanoidAction.Death)
+            {
+                return;
+            }
+
+            var actionBlend = actionDuration > 0f ? Mathf.Sin(Mathf.Clamp01(actionClock / actionDuration) * Mathf.PI) : 0f;
+            var settle = currentAction == ArticulatedHumanoidAction.None ? 0.92f : 0.58f;
+            var walkSwing = walk * swing * 5f;
+            var rightLift = currentAction == ArticulatedHumanoidAction.Attack ? -28f * actionBlend : currentAction == ArticulatedHumanoidAction.Place ? -14f * actionBlend : 0f;
+            var leftLift = currentAction == ArticulatedHumanoidAction.Talk ? -10f * actionBlend : 0f;
+
+            SettleArmBone(importedRightUpperArmBone, 18f + walkSwing + rightLift, 3f, -18f, settle);
+            SettleArmBone(importedLeftUpperArmBone, 18f - walkSwing + leftLift, -3f, 18f, settle);
+            SettleArmBone(importedRightLowerArmBone, -18f + rightLift * 0.25f, 0f, -3f, settle * 0.82f);
+            SettleArmBone(importedLeftLowerArmBone, -18f + leftLift * 0.25f, 0f, 3f, settle * 0.82f);
+            AimBoneSegmentToward(importedRightUpperArmBone, importedRightLowerArmBone, transform.TransformDirection(new Vector3(0.22f, -1f, 0.08f)), settle * 0.72f);
+            AimBoneSegmentToward(importedLeftUpperArmBone, importedLeftLowerArmBone, transform.TransformDirection(new Vector3(-0.22f, -1f, 0.08f)), settle * 0.72f);
+        }
+
+        private static void SettleArmBone(Transform bone, float pitch, float yaw, float roll, float strength)
+        {
+            if (bone == null)
+            {
+                return;
+            }
+
+            var target = Quaternion.Euler(pitch, yaw, roll);
+            bone.localRotation = Quaternion.Slerp(bone.localRotation, target, Mathf.Clamp01(strength));
+        }
+
+        private static void AimBoneSegmentToward(Transform parentBone, Transform childBone, Vector3 targetDirection, float strength)
+        {
+            if (parentBone == null || childBone == null)
+            {
+                return;
+            }
+
+            var currentDirection = childBone.position - parentBone.position;
+            if (currentDirection.sqrMagnitude < 0.0001f || targetDirection.sqrMagnitude < 0.0001f)
+            {
+                return;
+            }
+
+            var correction = Quaternion.FromToRotation(currentDirection.normalized, targetDirection.normalized);
+            parentBone.rotation = Quaternion.Slerp(parentBone.rotation, correction * parentBone.rotation, Mathf.Clamp01(strength));
+        }
+
+        private static float NormalizeAngle(float angle)
+        {
+            angle %= 360f;
+            if (angle > 180f)
+            {
+                angle -= 360f;
+            }
+            else if (angle < -180f)
+            {
+                angle += 360f;
+            }
+
+            return angle;
         }
 
         private void ApplyImportedBoneFallback(float walk, float swing)
@@ -1838,13 +2073,13 @@ namespace DeepStake.Characters
                 return;
             }
 
-            var armSwing = 18f * walk;
-            var legSwing = 22f * walk;
-            var kneeSwing = 24f * walk;
+            var armSwing = 12f * walk;
+            var legSwing = 14f * walk;
+            var kneeSwing = 15f * walk;
             var idleArm = Mathf.Sin(idleClock * 1.6f) * 3f;
             var idleHead = Mathf.Sin(idleClock * 1.2f) * 1.2f;
             var importedActionBlend = actionDuration > 0f ? Mathf.Sin(Mathf.Clamp01(actionClock / actionDuration) * Mathf.PI) : 0f;
-            var spinePitch = -4f * walk + Mathf.Sin(idleClock * 1.4f) * 1.6f;
+            var spinePitch = -1.5f * walk + Mathf.Sin(idleClock * 1.4f) * 1.4f;
             var chestPitch = currentAction == ArticulatedHumanoidAction.Attack ? -8f : currentAction == ArticulatedHumanoidAction.Place ? -5f : currentAction == ArticulatedHumanoidAction.Talk ? 3f : currentAction == ArticulatedHumanoidAction.Death ? -22f * importedActionBlend : 0f;
             var rootSide = Mathf.Sin(moveCycle * Mathf.PI * 2f) * walk * 0.018f;
             var rootRoll = Mathf.Sin(moveCycle * Mathf.PI * 2f) * walk * 1.4f;
@@ -1946,7 +2181,7 @@ namespace DeepStake.Characters
                     return;
                 }
 
-                importedAnimator.speed = 1f;
+                importedAnimator.speed = ResolveImportedAnimatorSpeed(walk);
 
                 return;
             }
@@ -1998,7 +2233,7 @@ namespace DeepStake.Characters
                 return;
             }
 
-            importedWalkPlayable.SetSpeed(Mathf.Lerp(0.78f, 1.2f, walk));
+            importedWalkPlayable.SetSpeed(ResolveImportedLocomotionClipSpeed(walk));
             if (importedIdlePlayable.IsValid())
             {
                 importedIdlePlayable.SetSpeed(0d);
@@ -2010,6 +2245,33 @@ namespace DeepStake.Characters
             mixer.SetInputWeight(0, 1f);
             mixer.SetInputWeight(1, 0f);
             mixer.SetInputWeight(2, 0f);
+        }
+
+        private float ResolveImportedAnimatorSpeed(float walk)
+        {
+            if (currentAction != ArticulatedHumanoidAction.None)
+            {
+                return 1f;
+            }
+
+            if (walk < 0.08f)
+            {
+                return 1f;
+            }
+
+            return ResolveImportedLocomotionClipSpeed(walk);
+        }
+
+        private float ResolveImportedLocomotionClipSpeed(float walk)
+        {
+            if (walk < 0.08f)
+            {
+                return 1f;
+            }
+
+            return isRunning
+                ? Mathf.Lerp(1.12f, 1.48f, walk)
+                : Mathf.Lerp(0.92f, 1.18f, walk);
         }
 
         private void RefreshImportedActionClip(AnimationClip actionClip)

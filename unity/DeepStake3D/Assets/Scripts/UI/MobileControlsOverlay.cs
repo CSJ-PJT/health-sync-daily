@@ -129,18 +129,19 @@ namespace DeepStake.UI
 
         private void BuildActionButtons()
         {
-            var root = CreatePanel("ActionPad", new Vector2(420f, 220f), new Vector2(-20f, 120f), new Color(0f, 0f, 0f, 0.12f));
+            var root = CreatePanel("ActionPad", new Vector2(430f, 180f), new Vector2(-24f, 30f), new Color(0f, 0f, 0f, 0.045f));
             root.anchorMin = new Vector2(1f, 0f);
             root.anchorMax = new Vector2(1f, 0f);
             root.pivot = new Vector2(1f, 0f);
 
-            CreateActionButton(root, "Interact", "E", "Inspect", new Vector2(-350f, 130f), () => DeepStakeInputBridge.PressInteract());
-            CreateActionButton(root, "Talk", "Q", "Talk", new Vector2(-240f, 130f), () => DeepStakeInputBridge.PressTalk());
-            CreateActionButton(root, "Place", "B", "Place", new Vector2(-130f, 130f), () => DeepStakeInputBridge.PressPlace());
-            CreateActionButton(root, "Attack", "F", "Attack", new Vector2(-20f, 130f), () => DeepStakeInputBridge.PressAttack());
-            CreateActionButton(root, "Save", "F5", "Save", new Vector2(-285f, 40f), () => DeepStakeInputBridge.PressSave());
-            CreateActionButton(root, "Reload", "F9", "Load", new Vector2(-155f, 40f), () => DeepStakeInputBridge.PressReload());
-            CreateActionButton(root, "Journal", "J", "Journal", new Vector2(-350f, -50f), () => DeepStakeInputBridge.PressJournal());
+            CreateActionButton(root, "Interact", "E", "Inspect", new Vector2(-374f, 118f), () => DeepStakeInputBridge.PressInteract());
+            CreateActionButton(root, "Talk", "Q", "Talk", new Vector2(-288f, 118f), () => DeepStakeInputBridge.PressTalk());
+            CreateActionButton(root, "Place", "B", "Place", new Vector2(-202f, 118f), () => DeepStakeInputBridge.PressPlace());
+            CreateActionButton(root, "Attack", "F", "Attack", new Vector2(-116f, 118f), () => DeepStakeInputBridge.PressAttack());
+            CreateHoldButton(root, "Run", "Run", new Vector2(-30f, 118f));
+            CreateActionButton(root, "Save", "F5", "Save", new Vector2(-288f, 48f), () => DeepStakeInputBridge.PressSave());
+            CreateActionButton(root, "Reload", "F9", "Load", new Vector2(-202f, 48f), () => DeepStakeInputBridge.PressReload());
+            CreateActionButton(root, "Journal", "J", "Journal", new Vector2(-116f, 48f), () => DeepStakeInputBridge.PressJournal());
         }
 
         private void BuildTopHint()
@@ -169,14 +170,30 @@ namespace DeepStake.UI
             var buttonObject = new GameObject(name);
             buttonObject.transform.SetParent(parent, false);
             var rect = buttonObject.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(90f, 74f);
+            rect.sizeDelta = new Vector2(70f, 52f);
             rect.anchoredPosition = anchoredPosition;
             var image = buttonObject.AddComponent<Image>();
             image.color = new Color(0.18f, 0.25f, 0.34f, 0.96f);
             var button = buttonObject.AddComponent<Button>();
             button.onClick.AddListener(action);
 
-            CreateLabel(buttonObject.transform, shortLabel + "\n" + title, 18, TextAnchor.MiddleCenter);
+            CreateLabel(buttonObject.transform, shortLabel + "\n" + title, 13, TextAnchor.MiddleCenter);
+        }
+
+        private void CreateHoldButton(RectTransform parent, string name, string title, Vector2 anchoredPosition)
+        {
+            var buttonObject = new GameObject(name);
+            buttonObject.transform.SetParent(parent, false);
+            var rect = buttonObject.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(70f, 52f);
+            rect.anchoredPosition = anchoredPosition;
+            var image = buttonObject.AddComponent<Image>();
+            image.color = new Color(0.22f, 0.32f, 0.24f, 0.96f);
+            var holdButton = buttonObject.AddComponent<MobileHoldButton>();
+            holdButton.PointerDown = () => DeepStakeInputBridge.SetMobileSprintHeld(true);
+            holdButton.PointerUp = () => DeepStakeInputBridge.SetMobileSprintHeld(false);
+
+            CreateLabel(buttonObject.transform, title + "\nHold", 13, TextAnchor.MiddleCenter);
         }
 
         private static void CreateLabel(Transform parent, string textValue, int fontSize, TextAnchor alignment)

@@ -11,24 +11,24 @@
     "z": 1.2
   },
   "cameraOffset": {
-    "x": 7.5,
-    "y": 8.0,
-    "z": -7.0
+    "x": 4.85,
+    "y": 5.15,
+    "z": -4.65
   },
   "npcStubs": [
     {
       "id": "archivist",
       "displayName": "Archivist Sena",
-      "x": 1.8,
-      "z": 3.0,
+      "x": 2.65,
+      "z": 1.75,
       "questId": "first-harvest",
       "dialogue": "The township still looks ordinary from the road, but the field is carrying pressure from deeper networks. Anchor one recovery beacon and we can prove the ground will answer."
     },
     {
       "id": "field-hand",
       "displayName": "Mara Venn",
-      "x": -2.7,
-      "z": -0.9,
+      "x": -2.25,
+      "z": -2.05,
       "questId": "observer-followup",
       "dialogue": "The lane almost moves again. One steady record is enough to keep the next stack from disappearing."
     }

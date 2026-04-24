@@ -9,10 +9,10 @@ namespace DeepStake.Player
     [RequireComponent(typeof(CharacterController))]
     public sealed class PlayerMover3D : MonoBehaviour
     {
-        [SerializeField] private float moveSpeed = 5.5f;
-        [SerializeField] private float runSpeed = 8.1f;
-        [SerializeField] private float acceleration = 14f;
-        [SerializeField] private float deceleration = 18f;
+        [SerializeField] private float moveSpeed = 2.2f;
+        [SerializeField] private float runSpeed = 3.75f;
+        [SerializeField] private float acceleration = 6.4f;
+        [SerializeField] private float deceleration = 14.5f;
         [SerializeField] private float turnSpeed = 12f;
         [SerializeField] private float gravity = 20f;
 
@@ -55,6 +55,10 @@ namespace DeepStake.Player
             var desiredMove = new Vector3(input.x, 0f, input.y) * currentMaxSpeed;
             var maxDelta = (desiredMove.sqrMagnitude > planarVelocity.sqrMagnitude ? acceleration : deceleration) * Time.deltaTime;
             planarVelocity = Vector3.MoveTowards(planarVelocity, desiredMove, maxDelta);
+            if (input.sqrMagnitude <= 0.001f && planarVelocity.sqrMagnitude < 0.01f)
+            {
+                planarVelocity = Vector3.zero;
+            }
 
             if (controller != null)
             {

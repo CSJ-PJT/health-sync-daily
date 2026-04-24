@@ -7,14 +7,16 @@ namespace DeepStake.Combat
     [RequireComponent(typeof(CharacterController))]
     public sealed class Monster3DStub : MonoBehaviour
     {
-        [SerializeField] private float awarenessRange = 8f;
-        [SerializeField] private float attackRange = 1.65f;
-        [SerializeField] private float moveSpeed = 2.6f;
-        [SerializeField] private float runSpeed = 4.2f;
+        [SerializeField] private float awarenessRange = 5.4f;
+        [SerializeField] private float triggerRange = 2.8f;
+        [SerializeField] private float leashRange = 7.5f;
+        [SerializeField] private float attackRange = 1.45f;
+        [SerializeField] private float moveSpeed = 2.05f;
+        [SerializeField] private float runSpeed = 3.25f;
         [SerializeField] private float turnSpeed = 8f;
-        [SerializeField] private float attackCooldown = 1.2f;
+        [SerializeField] private float attackCooldown = 1.65f;
         [SerializeField] private float deathDespawnDelay = 1.35f;
-        [SerializeField] private int attackDamage = 25;
+        [SerializeField] private int attackDamage = 15;
         [SerializeField] private int maxHealth = 4;
 
         private CharacterController controller;
@@ -25,6 +27,8 @@ namespace DeepStake.Combat
         private int currentHealth;
         private bool defeated;
         private ArticulatedHumanoidView playerHumanoidView;
+        private Vector3 guardPosition;
+        private bool provoked;
 
         public bool IsDefeated => defeated;
 
@@ -52,6 +56,8 @@ namespace DeepStake.Combat
             defeated = alreadyDefeated;
             currentHealth = maxHealth;
             deathTimer = 0f;
+            provoked = false;
+            guardPosition = transform.position;
             gameObject.SetActive(!alreadyDefeated);
         }
 
@@ -83,6 +89,26 @@ namespace DeepStake.Combat
             var toPlayer = player.position - transform.position;
             toPlayer.y = 0f;
             var distance = toPlayer.magnitude;
+            var playerFromGuard = player.position - guardPosition;
+            playerFromGuard.y = 0f;
+            var playerGuardDistance = playerFromGuard.magnitude;
+
+            if (!provoked)
+            {
+                if (playerGuardDistance > triggerRange)
+                {
+                    humanoidView?.SetMotion(Vector3.zero, moveSpeed);
+                    return;
+                }
+
+                provoked = true;
+            }
+
+            if (playerGuardDistance > leashRange)
+            {
+                ReturnToGuardPost();
+                return;
+            }
 
             if (distance > awarenessRange)
             {
@@ -104,16 +130,19 @@ namespace DeepStake.Combat
             {
                 var currentSpeed = distance > attackRange * 2.1f ? runSpeed : moveSpeed;
                 var motion = toPlayer.normalized * currentSpeed;
-                controller.Move(motion * Time.deltaTime);
-                humanoidView.SetMotion(motion, currentSpeed, currentSpeed > moveSpeed + 0.25f);
+                if (controller != null)
+                {
+                    controller.Move(motion * Time.deltaTime);
+                }
+                humanoidView?.SetMotion(motion, currentSpeed, currentSpeed > moveSpeed + 0.25f);
                 return;
             }
 
-            humanoidView.SetMotion(Vector3.zero, moveSpeed);
+            humanoidView?.SetMotion(Vector3.zero, moveSpeed);
             if (attackTimer <= 0f)
             {
                 attackTimer = attackCooldown;
-                humanoidView.PlayAction(ArticulatedHumanoidAction.Attack, player.position);
+                humanoidView?.PlayAction(ArticulatedHumanoidAction.Attack, player.position);
                 if (DeepStakeGameState.Instance != null)
                 {
                     var save = DeepStakeGameState.Instance.CurrentSave;
@@ -130,6 +159,28 @@ namespace DeepStake.Combat
                     }
                 }
             }
+        }
+
+        private void ReturnToGuardPost()
+        {
+            var toGuard = guardPosition - transform.position;
+            toGuard.y = 0f;
+            if (toGuard.magnitude <= 0.12f)
+            {
+                provoked = false;
+                humanoidView?.SetMotion(Vector3.zero, moveSpeed);
+                return;
+            }
+
+            var direction = toGuard.normalized;
+            var desiredRotation = Quaternion.LookRotation(direction, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, turnSpeed * Time.deltaTime);
+            var motion = direction * moveSpeed;
+            if (controller != null)
+            {
+                controller.Move(motion * Time.deltaTime);
+            }
+            humanoidView?.SetMotion(motion, moveSpeed, false);
         }
 
         public bool CanBeHitFrom(Vector3 attackerPosition, float range)
@@ -152,7 +203,7 @@ namespace DeepStake.Combat
             }
 
             currentHealth = Mathf.Max(0, currentHealth - 1);
-            humanoidView.PlayAction(ArticulatedHumanoidAction.Hit, attackerPosition);
+            humanoidView?.PlayAction(ArticulatedHumanoidAction.Hit, attackerPosition);
 
             if (currentHealth > 0)
             {
@@ -165,7 +216,7 @@ namespace DeepStake.Combat
 
             defeated = true;
             deathTimer = 0f;
-            humanoidView.PlayAction(ArticulatedHumanoidAction.Death, attackerPosition);
+            humanoidView?.PlayAction(ArticulatedHumanoidAction.Death, attackerPosition);
             if (DeepStakeGameState.Instance != null)
             {
                 DeepStakeGameState.Instance.CurrentSave.StoryFlags.DefeatedFirstMonster = true;

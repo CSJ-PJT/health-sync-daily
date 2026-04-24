@@ -1,5 +1,6 @@
 using DeepStake.Characters;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DeepStake.World
 {
@@ -7,13 +8,62 @@ namespace DeepStake.World
     {
         private static Texture2D[] cachedTileTextures = System.Array.Empty<Texture2D>();
         private static Texture2D[] cachedWallTextures = System.Array.Empty<Texture2D>();
+        private static readonly System.Collections.Generic.Dictionary<string, Material> paletteMaterials = new System.Collections.Generic.Dictionary<string, Material>();
         private static bool environmentTexturesLoaded;
 
         private const string GeneratedVisualRootName = "__GeneratedZoneVisuals";
         private const string PropVisualRootName = "__PropVisual";
-        private const string PropVisualVersionName = "__PropVisualVersion_44";
+        private const string PropVisualVersionName = "__PropVisualVersion_51";
+        private static readonly bool UseDenseVillageClutter = false;
         private static readonly bool UseCleanBaseGround = true;
         private const string LegacyCuteProxyRootName = "__CutePlayerProxy";
+        private const string GroundDrySoilMaterialName = "DS_Ground_DrySoil";
+        private const string GroundDirtPathMaterialName = "DS_Ground_DirtPath";
+        private const string GroundRecoveringGrassMaterialName = "DS_Ground_RecoveringGrass";
+        private const string GroundGravelStorageMaterialName = "DS_Ground_GravelStorage";
+        private const string GroundCrackedPressureMaterialName = "DS_Ground_CrackedPressure";
+        private const string BuildingWornWoodMaterialName = "DS_Building_WornWood";
+        private const string BuildingMutedMetalMaterialName = "DS_Building_MutedMetal";
+        private const string BuildingRoofDarkMaterialName = "DS_Building_RoofDark";
+        private const string BuildingRoofWarmMaterialName = "DS_Building_RoofWarm";
+        private const string FoliageCanopyMaterialName = "DS_Foliage_Canopy";
+        private const string PropSupplyCrateMaterialName = "DS_Prop_SupplyCrate";
+        private const string BeaconRecoveryGlowMaterialName = "DS_Beacon_RecoveryGlow";
+
+        private enum PaletteTextureKind
+        {
+            None,
+            DrySoil,
+            DirtPath,
+            RecoveringGrass,
+            GravelStorage,
+            CrackedPressure,
+            WornWood,
+            MutedMetal,
+            RoofDark,
+            RoofWarm,
+            DoorWood,
+            WindowMuted
+        }
+
+        private readonly struct PaletteMaterialSpec
+        {
+            public PaletteMaterialSpec(string materialName, PaletteTextureKind textureKind, Color colorTint, Vector2 tiling, bool preferFlatShading = false)
+            {
+                MaterialName = materialName;
+                TextureKind = textureKind;
+                ColorTint = colorTint;
+                Tiling = tiling;
+                PreferFlatShading = preferFlatShading;
+            }
+
+            public string MaterialName { get; }
+            public PaletteTextureKind TextureKind { get; }
+            public Color ColorTint { get; }
+            public Vector2 Tiling { get; }
+            public bool PreferFlatShading { get; }
+        }
+
         public static void EnsureCutePlayerProxy(Transform playerTransform)
         {
             if (playerTransform == null)
@@ -384,25 +434,22 @@ namespace DeepStake.World
         private static void CreateVillageOpeningArea(Transform root)
         {
             CreateNaturalLight(root);
-            CreateVisualPiece(root, PrimitiveType.Cube, "ContinuousTerrainBase", new Vector3(-0.15f, -0.082f, 0.25f), new Vector3(34f, 0.07f, 27f), new Color(0.35f, 0.37f, 0.32f));
-            CreateVisualPiece(root, PrimitiveType.Cube, "OuterFieldTerrainBase", new Vector3(-5.5f, -0.076f, 4.8f), new Vector3(12f, 0.06f, 9.5f), new Color(0.37f, 0.39f, 0.3f));
-            CreateVisualPiece(root, PrimitiveType.Cube, "VillagePackedEarthBase", new Vector3(-0.25f, -0.052f, 0.05f), new Vector3(15.5f, 0.045f, 11.6f), new Color(0.42f, 0.4f, 0.34f));
-            CreateTilePatch(root, "OuterRecoveryGroundTile", new Vector3(-0.05f, -0.06f, 0.1f), 31, 24, 0.88f, new Color(0.36f, 0.38f, 0.34f));
-            CreateTilePatch(root, "VillageGroundTile", new Vector3(-0.2f, -0.035f, 0.2f), 17, 13, 0.84f, new Color(0.43f, 0.42f, 0.37f));
-            CreateTilePatch(root, "VillageMainRoadTile", new Vector3(0.05f, 0.006f, -2.05f), 12, 3, 0.8f, new Color(0.34f, 0.34f, 0.33f));
-            CreateTilePatch(root, "VillageCrossRoadTile", new Vector3(-0.8f, 0.008f, 0.45f), 3, 8, 0.74f, new Color(0.36f, 0.35f, 0.31f));
+            CreateVisualPiece(root, PrimitiveType.Cube, "ContinuousTerrainBase", new Vector3(-0.15f, -0.16f, 0.25f), new Vector3(44f, 0.06f, 36f), new Color(0.27f, 0.33f, 0.27f));
+            CreateVisualPiece(root, PrimitiveType.Cube, "OuterFieldTerrainBase", new Vector3(-5.8f, -0.118f, 5.1f), new Vector3(17f, 0.045f, 13f), new Color(0.31f, 0.38f, 0.27f));
+            CreateVisualPiece(root, PrimitiveType.Cube, "VillagePackedEarthBase", new Vector3(-0.25f, -0.09f, 0.05f), new Vector3(18f, 0.04f, 13.5f), new Color(0.36f, 0.34f, 0.28f));
+            CreateTilePatch(root, "OuterRecoveryGroundTile", new Vector3(-0.05f, 0.0f, 0.1f), 39, 32, 0.88f, new Color(0.34f, 0.39f, 0.32f));
+            CreateTilePatch(root, "VillageGroundTile", new Vector3(-0.2f, 0.018f, 0.2f), 21, 16, 0.84f, new Color(0.43f, 0.41f, 0.34f));
+            CreateTilePatch(root, "VillageMainRoadTile", new Vector3(0.05f, 0.04f, -2.05f), 12, 3, 0.8f, new Color(0.31f, 0.31f, 0.3f));
+            CreateTilePatch(root, "VillageCrossRoadTile", new Vector3(-0.8f, 0.042f, 0.45f), 3, 8, 0.74f, new Color(0.34f, 0.33f, 0.29f));
             CreateTilePatch(root, "ArchiveCourtTile", new Vector3(3.3f, 0.012f, 2.0f), 4, 3, 0.72f, new Color(0.46f, 0.44f, 0.38f));
             CreateTilePatch(root, "WorkerYardTile", new Vector3(-3.75f, 0.012f, -0.45f), 4, 3, 0.72f, new Color(0.45f, 0.4f, 0.32f));
             CreateTilePatch(root, "BeaconCourtTile", new Vector3(0.75f, 0.014f, -1.2f), 3, 3, 0.68f, new Color(0.49f, 0.44f, 0.32f));
 
-            CreateVillageBuilding(root, "ArchiveBuilding", new Vector3(3.85f, 0f, 3.0f), new Vector3(2.35f, 1.45f, 1.65f), new Color(0.37f, 0.4f, 0.4f), new Color(0.26f, 0.29f, 0.3f), true);
-            CreateVillageBuilding(root, "WorkerHouse", new Vector3(-4.45f, 0f, 0.2f), new Vector3(1.85f, 1.25f, 1.45f), new Color(0.42f, 0.36f, 0.28f), new Color(0.31f, 0.27f, 0.22f), false);
-            CreateVillageBuilding(root, "SupplyStorehouse", new Vector3(-2.2f, 0f, -3.25f), new Vector3(2.5f, 1.25f, 1.35f), new Color(0.39f, 0.35f, 0.28f), new Color(0.29f, 0.3f, 0.31f), false);
-            CreateVillageBuilding(root, "BeaconShed", new Vector3(2.05f, 0f, -3.05f), new Vector3(1.75f, 1.05f, 1.25f), new Color(0.38f, 0.39f, 0.35f), new Color(0.27f, 0.29f, 0.27f), false);
-            CreateVillageBuilding(root, "ClinicCottage", new Vector3(1.35f, 0f, 3.3f), new Vector3(1.65f, 1.1f, 1.35f), new Color(0.39f, 0.38f, 0.34f), new Color(0.31f, 0.28f, 0.25f), false);
-            CreateVillageBuilding(root, "ToolHut", new Vector3(-5.1f, 0f, -2.85f), new Vector3(1.25f, 0.95f, 1.05f), new Color(0.37f, 0.32f, 0.25f), new Color(0.25f, 0.27f, 0.25f), false);
-            CreateVillageBuilding(root, "NorthFarmhouse", new Vector3(-1.0f, 0f, 4.15f), new Vector3(2.1f, 1.2f, 1.35f), new Color(0.4f, 0.37f, 0.31f), new Color(0.3f, 0.27f, 0.23f), false);
-            CreateVillageBuilding(root, "EastStore", new Vector3(5.25f, 0f, 0.95f), new Vector3(1.55f, 1.05f, 1.25f), new Color(0.36f, 0.37f, 0.34f), new Color(0.25f, 0.28f, 0.27f), false);
+            CreateVillageBuilding(root, "ArchiveBuilding", new Vector3(4.35f, 0f, 3.25f), new Vector3(2.35f, 1.45f, 1.65f), new Color(0.37f, 0.4f, 0.4f), new Color(0.34f, 0.35f, 0.34f), true);
+            CreateVillageBuilding(root, "WorkerHouse", new Vector3(-4.9f, 0f, 0.45f), new Vector3(1.85f, 1.25f, 1.45f), new Color(0.42f, 0.36f, 0.28f), new Color(0.39f, 0.33f, 0.26f), false);
+            CreateVillageBuilding(root, "SupplyStorehouse", new Vector3(-2.65f, 0f, -3.95f), new Vector3(2.5f, 1.25f, 1.35f), new Color(0.39f, 0.35f, 0.28f), new Color(0.36f, 0.34f, 0.31f), false);
+            CreateVillageBuilding(root, "ClinicCottage", new Vector3(1.4f, 0f, 4.45f), new Vector3(1.65f, 1.1f, 1.35f), new Color(0.39f, 0.38f, 0.34f), new Color(0.4f, 0.35f, 0.29f), false);
+            CreateVillageBuilding(root, "NorthFarmhouse", new Vector3(-1.1f, 0f, 5.15f), new Vector3(2.1f, 1.2f, 1.35f), new Color(0.4f, 0.37f, 0.31f), new Color(0.39f, 0.34f, 0.27f), false);
 
             CreatePerimeterWall(root, "NorthVillageWall", new Vector3(-5.5f, 0f, 4.85f), new Vector3(5.85f, 0f, 4.85f), new Color(0.39f, 0.36f, 0.31f));
             CreatePerimeterWall(root, "WestVillageWall", new Vector3(-6.15f, 0f, -3.8f), new Vector3(-6.15f, 0f, 3.9f), new Color(0.37f, 0.34f, 0.3f));
@@ -411,67 +458,146 @@ namespace DeepStake.World
             CreateVillageGate(root, "SouthGate", new Vector3(0.5f, 0f, -4.72f), new Color(0.42f, 0.36f, 0.27f));
 
             CreateFieldRows(root, "RecoveryFieldRows", new Vector3(-4.65f, 0f, 2.35f), 7, new Color(0.43f, 0.39f, 0.27f));
-            CreateGrassBorder(root, "NorthGrass", new Vector3(-5.2f, 0f, 5.55f), 14, new Vector3(0.78f, 0f, 0.08f), new Color(0.31f, 0.39f, 0.27f));
-            CreateGrassBorder(root, "EastGrass", new Vector3(6.2f, 0f, -3.6f), 12, new Vector3(0.0f, 0f, 0.72f), new Color(0.32f, 0.39f, 0.28f));
-            CreateGrassBorder(root, "WestGrass", new Vector3(-6.75f, 0f, -3.1f), 11, new Vector3(0.0f, 0f, 0.7f), new Color(0.3f, 0.37f, 0.26f));
+            CreateGrassBorder(root, "NorthGrass", new Vector3(-5.2f, 0f, 5.55f), 8, new Vector3(0.95f, 0f, 0.08f), new Color(0.31f, 0.39f, 0.27f));
+            CreateGrassBorder(root, "EastGrass", new Vector3(6.2f, 0f, -3.6f), 7, new Vector3(0.0f, 0f, 0.92f), new Color(0.32f, 0.39f, 0.28f));
+            CreateGrassBorder(root, "WestGrass", new Vector3(-6.75f, 0f, -3.1f), 7, new Vector3(0.0f, 0f, 0.88f), new Color(0.3f, 0.37f, 0.26f));
             CreateRiverEdge(root, "EastRiver", new Vector3(8.05f, 0f, -4.5f), new Color(0.24f, 0.42f, 0.49f));
             CreateWindmill(root, "RecoveryWindmill", new Vector3(-5.45f, 0f, 3.95f), new Color(0.47f, 0.43f, 0.34f));
-            CreateMarketAwning(root, "SupplyAwning", new Vector3(-1.1f, 0f, -2.35f), new Color(0.25f, 0.32f, 0.34f));
-            CreateMarketAwning(root, "ArchiveAwning", new Vector3(2.8f, 0f, 1.55f), new Color(0.3f, 0.33f, 0.34f));
+            CreateMarketAwning(root, "SupplyAwning", new Vector3(-1.45f, 0f, -5.15f), new Color(0.25f, 0.32f, 0.34f));
+            CreateMarketAwning(root, "ArchiveAwning", new Vector3(3.95f, 0f, 1.1f), new Color(0.3f, 0.33f, 0.34f));
 
-            CreateSmallPropCluster(root, "WorkerBenchClean", new Vector3(-3.95f, 0f, -1.15f), new Color(0.4f, 0.34f, 0.26f));
-            CreateSmallPropCluster(root, "VillageCenterBench", new Vector3(0.05f, 0f, 0.72f), new Color(0.39f, 0.34f, 0.28f));
-            CreateCrateStack(root, "SupplyCratesClean", new Vector3(-1.2f, 0f, -3.05f), new Color(0.39f, 0.32f, 0.24f));
-            CreateCrateStack(root, "BeaconCratesClean", new Vector3(1.1f, 0f, -1.75f), new Color(0.4f, 0.35f, 0.27f));
-            CreateArchiveShelf(root, "ArchiveShelfClean", new Vector3(3.35f, 0f, 1.55f), new Color(0.36f, 0.33f, 0.28f));
-            CreatePathPost(root, "BeaconGuideClean", new Vector3(0.2f, 0f, -1.05f), new Color(0.62f, 0.55f, 0.35f));
-            CreatePathPost(root, "ArchiveGuideClean", new Vector3(2.35f, 0f, 1.25f), new Color(0.54f, 0.5f, 0.37f));
-            CreatePathPost(root, "WorkerGuideClean", new Vector3(-3.05f, 0f, -0.95f), new Color(0.54f, 0.48f, 0.33f));
-            CreateRealisticVillageDetails(root);
+            CreateSmallPropCluster(root, "WorkerBenchClean", new Vector3(-4.65f, 0f, -1.65f), new Color(0.4f, 0.34f, 0.26f));
+            CreateSmallPropCluster(root, "VillageCenterBench", new Vector3(-0.75f, 0f, 1.65f), new Color(0.39f, 0.34f, 0.28f));
+            CreateCrateStack(root, "SupplyCratesClean", new Vector3(-1.05f, 0f, -3.65f), new Color(0.39f, 0.32f, 0.24f));
+            CreateCrateStack(root, "BeaconCratesClean", new Vector3(1.65f, 0f, -2.65f), new Color(0.4f, 0.35f, 0.27f));
+            CreateArchiveShelf(root, "ArchiveShelfClean", new Vector3(4.05f, 0f, 1.75f), new Color(0.36f, 0.33f, 0.28f));
+            CreatePathPost(root, "BeaconGuideClean", new Vector3(0.7f, 0f, -1.65f), new Color(0.62f, 0.55f, 0.35f));
+            CreatePathPost(root, "ArchiveGuideClean", new Vector3(3.15f, 0f, 0.95f), new Color(0.54f, 0.5f, 0.37f));
+            CreatePathPost(root, "WorkerGuideClean", new Vector3(-3.55f, 0f, -0.95f), new Color(0.54f, 0.48f, 0.33f));
+            if (UseDenseVillageClutter)
+            {
+                CreateRealisticVillageDetails(root);
+            }
+
             CreateExpandedVillageDistricts(root);
+
+            if (UseDenseVillageClutter)
+            {
+                CreateFullMapNaturalFill(root);
+            }
         }
 
         private static void CreateTilePatch(Transform root, string label, Vector3 center, int columns, int rows, float tileSize, Color color)
         {
-            var startX = center.x - ((columns - 1) * tileSize * 0.5f);
-            var startZ = center.z - ((rows - 1) * tileSize * 0.5f);
-            for (var x = 0; x < columns; x++)
+            var visibleY = ResolveTilePatchY(label, center.y);
+            var tileHeight = ResolveTilePatchHeight(label);
+            var patch = CreateVisualPiece(
+                root,
+                PrimitiveType.Cube,
+                label + "_StablePatch",
+                new Vector3(center.x, visibleY, center.z),
+                new Vector3(columns * tileSize, tileHeight, rows * tileSize),
+                color);
+            StabilizeGroundRenderer(patch);
+        }
+
+        private static float ResolveTilePatchY(string label, float requestedY)
+        {
+            var lower = label.ToLowerInvariant();
+            if (lower.Contains("road") || lower.Contains("lane") || lower.Contains("path"))
             {
-                for (var z = 0; z < rows; z++)
-                {
-                    var offset = ((x + z) % 2 == 0) ? 1.02f : 0.94f;
-                    var tile = CreateVisualPiece(
-                        root,
-                        PrimitiveType.Cube,
-                        label + "_" + x + "_" + z,
-                        new Vector3(startX + x * tileSize, center.y, startZ + z * tileSize),
-                        new Vector3(tileSize * 1.015f, 0.028f, tileSize * 1.015f),
-                        color * offset);
-                    tile.transform.localRotation = Quaternion.Euler(0f, ((x + z) % 3 - 1) * 1.5f, 0f);
-                }
+                return Mathf.Max(requestedY, 0.075f);
             }
+
+            if (lower.Contains("court") || lower.Contains("yard") || lower.Contains("beacon") || lower.Contains("archive") || lower.Contains("worker"))
+            {
+                return Mathf.Max(requestedY, 0.058f);
+            }
+
+            if (lower.Contains("village"))
+            {
+                return Mathf.Max(requestedY, 0.036f);
+            }
+
+            return Mathf.Max(requestedY, 0.014f);
+        }
+
+        private static float ResolveTilePatchHeight(string label)
+        {
+            var lower = label.ToLowerInvariant();
+            if (lower.Contains("road") || lower.Contains("lane") || lower.Contains("path"))
+            {
+                return 0.028f;
+            }
+
+            if (lower.Contains("court") || lower.Contains("yard"))
+            {
+                return 0.024f;
+            }
+
+            return 0.02f;
         }
 
         private static void CreateVillageBuilding(Transform root, string label, Vector3 basePosition, Vector3 size, Color wallColor, Color roofColor, bool archiveDetails)
         {
-            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FloorTile", basePosition + new Vector3(0f, 0.035f, 0f), new Vector3(size.x + 0.25f, 0.07f, size.z + 0.25f), new Color(0.33f, 0.32f, 0.29f));
+            var lowerLabel = label.ToLowerInvariant();
+            var isUtilityBuilding = lowerLabel.Contains("store") || lowerLabel.Contains("shed") || lowerLabel.Contains("workshop") || lowerLabel.Contains("warehouse") || lowerLabel.Contains("barn") || lowerLabel.Contains("pump");
+            var isSmallOutbuilding = lowerLabel.Contains("hut") || lowerLabel.Contains("shed");
+            var footprintScale = isSmallOutbuilding ? 1.02f : isUtilityBuilding ? 1.08f : 1.12f;
+            size = new Vector3(size.x * footprintScale, size.y * 1.22f, size.z * footprintScale);
+            wallColor = Color.Lerp(wallColor, new Color(0.48f, 0.43f, 0.34f), archiveDetails ? 0.08f : 0.18f);
+            roofColor = Color.Lerp(roofColor, new Color(0.36f, 0.32f, 0.25f), 0.58f);
+
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FoundationPad", basePosition + new Vector3(0f, 0.04f, 0f), new Vector3(size.x + 0.55f, 0.08f, size.z + 0.55f), new Color(0.29f, 0.28f, 0.25f));
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FloorTile", basePosition + new Vector3(0f, 0.095f, 0f), new Vector3(size.x + 0.32f, 0.08f, size.z + 0.32f), new Color(0.35f, 0.33f, 0.29f));
             CreateVisualPiece(root, PrimitiveType.Cube, label + "_WallBack", basePosition + new Vector3(0f, size.y * 0.5f, size.z * 0.46f), new Vector3(size.x, size.y, 0.16f), wallColor);
             CreateVisualPiece(root, PrimitiveType.Cube, label + "_WallLeft", basePosition + new Vector3(-size.x * 0.46f, size.y * 0.5f, 0f), new Vector3(0.16f, size.y, size.z), wallColor * 0.94f);
             CreateVisualPiece(root, PrimitiveType.Cube, label + "_WallRight", basePosition + new Vector3(size.x * 0.46f, size.y * 0.5f, 0f), new Vector3(0.16f, size.y, size.z), wallColor * 0.98f);
             CreateVisualPiece(root, PrimitiveType.Cube, label + "_WallFrontLeft", basePosition + new Vector3(-size.x * 0.28f, size.y * 0.5f, -size.z * 0.46f), new Vector3(size.x * 0.38f, size.y, 0.14f), wallColor * 1.03f);
             CreateVisualPiece(root, PrimitiveType.Cube, label + "_WallFrontRight", basePosition + new Vector3(size.x * 0.28f, size.y * 0.5f, -size.z * 0.46f), new Vector3(size.x * 0.38f, size.y, 0.14f), wallColor * 1.03f);
 
-            var roofA = CreateVisualPiece(root, PrimitiveType.Cube, label + "_RoofA", basePosition + new Vector3(-size.x * 0.18f, size.y + 0.22f, 0f), new Vector3(size.x * 0.62f, 0.22f, size.z + 0.35f), roofColor);
-            roofA.transform.localRotation = Quaternion.Euler(0f, 0f, -12f);
-            var roofB = CreateVisualPiece(root, PrimitiveType.Cube, label + "_RoofB", basePosition + new Vector3(size.x * 0.18f, size.y + 0.22f, 0f), new Vector3(size.x * 0.62f, 0.22f, size.z + 0.35f), roofColor * 0.92f);
-            roofB.transform.localRotation = Quaternion.Euler(0f, 0f, 12f);
-            CreateVisualPiece(root, PrimitiveType.Cube, label + "_RoofRidge", basePosition + new Vector3(0f, size.y + 0.4f, 0f), new Vector3(0.16f, 0.14f, size.z + 0.42f), roofColor * 0.8f);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FrontGableFill", basePosition + new Vector3(0f, size.y + 0.1f, -size.z * 0.47f), new Vector3(size.x * 0.62f, 0.22f, 0.08f), wallColor * 1.06f);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_BackGableFill", basePosition + new Vector3(0f, size.y + 0.09f, size.z * 0.47f), new Vector3(size.x * 0.62f, 0.2f, 0.08f), wallColor * 0.95f);
+            var roofAngle = isUtilityBuilding ? 10.5f : 16f;
+            var roofDepth = UseDenseVillageClutter ? size.z + 0.2f : size.z + 0.06f;
+            var roofA = CreateVisualPiece(root, PrimitiveType.Cube, label + "_RoofA", basePosition + new Vector3(-size.x * 0.16f, size.y + 0.25f, 0f), new Vector3(size.x * 0.5f, 0.095f, roofDepth), roofColor);
+            roofA.transform.localRotation = Quaternion.Euler(0f, 0f, -roofAngle);
+            var roofB = CreateVisualPiece(root, PrimitiveType.Cube, label + "_RoofB", basePosition + new Vector3(size.x * 0.16f, size.y + 0.25f, 0f), new Vector3(size.x * 0.5f, 0.095f, roofDepth), roofColor * 0.92f);
+            roofB.transform.localRotation = Quaternion.Euler(0f, 0f, roofAngle);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_RoofRidge", basePosition + new Vector3(0f, size.y + 0.41f, 0f), new Vector3(0.08f, 0.085f, roofDepth + 0.04f), roofColor * 0.68f);
+            if (UseDenseVillageClutter)
+            {
+                CreateRoofSurfaceDetail(root, label, basePosition, size, roofColor, roofAngle);
+                CreateVisualPiece(root, PrimitiveType.Cube, label + "_FrontEave", basePosition + new Vector3(0f, size.y + 0.06f, -size.z * 0.58f), new Vector3(size.x + 0.16f, 0.055f, 0.1f), roofColor * 0.82f);
+                CreateVisualPiece(root, PrimitiveType.Cube, label + "_BackEave", basePosition + new Vector3(0f, size.y + 0.055f, size.z * 0.58f), new Vector3(size.x + 0.12f, 0.055f, 0.1f), roofColor * 0.78f);
+            }
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_Chimney", basePosition + new Vector3(size.x * 0.3f, size.y + 0.55f, size.z * 0.08f), new Vector3(0.16f, 0.38f, 0.16f), new Color(0.28f, 0.25f, 0.21f));
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_ChimneyCap", basePosition + new Vector3(size.x * 0.3f, size.y + 0.78f, size.z * 0.08f), new Vector3(0.24f, 0.06f, 0.22f), new Color(0.2f, 0.18f, 0.16f));
+            if (isUtilityBuilding)
+            {
+                if (UseDenseVillageClutter)
+                {
+                    CreateVisualPiece(root, PrimitiveType.Cube, label + "_SideLeanToRoof", basePosition + new Vector3(-size.x * 0.55f, 0.84f, size.z * 0.08f), new Vector3(0.3f, 0.05f, size.z * 0.42f), roofColor * 0.72f).transform.localRotation = Quaternion.Euler(0f, 0f, -5f);
+                    CreateVisualPiece(root, PrimitiveType.Cube, label + "_SideLeanToWall", basePosition + new Vector3(-size.x * 0.63f, 0.47f, size.z * 0.08f), new Vector3(0.12f, 0.62f, size.z * 0.55f), wallColor * 0.82f);
+                }
+            }
 
-            CreateVisualPiece(root, PrimitiveType.Cube, label + "_Door", basePosition + new Vector3(0f, 0.52f, -size.z * 0.535f), new Vector3(0.42f, 0.86f, 0.055f), new Color(0.25f, 0.2f, 0.15f));
-            CreateVisualPiece(root, PrimitiveType.Cube, label + "_DoorFrame", basePosition + new Vector3(0f, 0.98f, -size.z * 0.56f), new Vector3(0.55f, 0.09f, 0.06f), new Color(0.42f, 0.36f, 0.25f));
-            CreateVisualPiece(root, PrimitiveType.Cube, label + "_WindowL", basePosition + new Vector3(-size.x * 0.25f, 0.9f, -size.z * 0.555f), new Vector3(0.3f, 0.32f, 0.055f), new Color(0.45f, 0.57f, 0.58f));
-            CreateVisualPiece(root, PrimitiveType.Cube, label + "_WindowR", basePosition + new Vector3(size.x * 0.25f, 0.9f, -size.z * 0.555f), new Vector3(0.3f, 0.32f, 0.055f), new Color(0.45f, 0.57f, 0.58f));
-            CreateVisualPiece(root, PrimitiveType.Cube, label + "_Step", basePosition + new Vector3(0f, 0.09f, -size.z * 0.76f), new Vector3(0.8f, 0.12f, 0.35f), new Color(0.32f, 0.31f, 0.29f));
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_DoorwayShadow", basePosition + new Vector3(0f, 0.52f, -size.z * 0.565f), new Vector3(0.46f, 0.82f, 0.035f), new Color(0.09f, 0.085f, 0.075f));
+            var doorLeft = CreateVisualPiece(root, PrimitiveType.Cube, label + "_OpenDoorLeft", basePosition + new Vector3(-0.33f, 0.52f, -size.z * 0.59f), new Vector3(0.31f, 0.82f, 0.055f), new Color(0.25f, 0.2f, 0.15f));
+            doorLeft.transform.localRotation = Quaternion.Euler(0f, -58f, 0f);
+            var doorRight = CreateVisualPiece(root, PrimitiveType.Cube, label + "_OpenDoorRight", basePosition + new Vector3(0.33f, 0.52f, -size.z * 0.59f), new Vector3(0.31f, 0.82f, 0.055f), new Color(0.24f, 0.19f, 0.14f));
+            doorRight.transform.localRotation = Quaternion.Euler(0f, 58f, 0f);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_DoorFrameTop", basePosition + new Vector3(0f, 0.98f, -size.z * 0.56f), new Vector3(0.72f, 0.09f, 0.06f), new Color(0.42f, 0.36f, 0.25f));
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_DoorFrameLeft", basePosition + new Vector3(-0.34f, 0.53f, -size.z * 0.56f), new Vector3(0.08f, 0.86f, 0.06f), new Color(0.42f, 0.36f, 0.25f));
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_DoorFrameRight", basePosition + new Vector3(0.34f, 0.53f, -size.z * 0.56f), new Vector3(0.08f, 0.86f, 0.06f), new Color(0.42f, 0.36f, 0.25f));
+            CreateWindowFrame(root, label + "_WindowL", basePosition + new Vector3(-size.x * 0.25f, 0.9f, -size.z * 0.555f));
+            CreateWindowFrame(root, label + "_WindowR", basePosition + new Vector3(size.x * 0.25f, 0.9f, -size.z * 0.555f));
+            CreateWindowFrame(root, label + "_SideWindow", basePosition + new Vector3(size.x * 0.535f, 0.86f, size.z * 0.08f), true);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_PorchDeck", basePosition + new Vector3(0f, 0.13f, -size.z * 0.82f), new Vector3(1.05f, 0.12f, 0.46f), new Color(0.32f, 0.29f, 0.24f));
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_PorchRoof", basePosition + new Vector3(0f, 1.16f, -size.z * 0.78f), new Vector3(1.05f, 0.055f, 0.38f), roofColor * 0.82f).transform.localRotation = Quaternion.Euler(-3f, 0f, 0f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_PorchPostL", basePosition + new Vector3(-0.52f, 0.66f, -size.z * 0.93f), new Vector3(0.045f, 0.58f, 0.045f), new Color(0.35f, 0.29f, 0.2f));
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_PorchPostR", basePosition + new Vector3(0.52f, 0.66f, -size.z * 0.93f), new Vector3(0.045f, 0.58f, 0.045f), new Color(0.35f, 0.29f, 0.2f));
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_Step", basePosition + new Vector3(0f, 0.09f, -size.z * 1.02f), new Vector3(0.92f, 0.12f, 0.32f), new Color(0.32f, 0.31f, 0.29f));
             CreateCollisionBlocker(root, label + "_BackWallCollision", basePosition + new Vector3(0f, size.y * 0.5f, size.z * 0.46f), new Vector3(size.x, size.y, 0.24f));
             CreateCollisionBlocker(root, label + "_LeftWallCollision", basePosition + new Vector3(-size.x * 0.46f, size.y * 0.5f, 0f), new Vector3(0.24f, size.y, size.z));
             CreateCollisionBlocker(root, label + "_RightWallCollision", basePosition + new Vector3(size.x * 0.46f, size.y * 0.5f, 0f), new Vector3(0.24f, size.y, size.z));
@@ -486,6 +612,54 @@ namespace DeepStake.World
             CreateVisualPiece(root, PrimitiveType.Cube, label + "_NoticeBoard", basePosition + new Vector3(size.x * 0.52f, 1.02f, -0.2f), new Vector3(0.08f, 0.5f, 0.42f), new Color(0.48f, 0.42f, 0.29f));
             CreateVisualPiece(root, PrimitiveType.Cube, label + "_PaperMarkA", basePosition + new Vector3(size.x * 0.565f, 1.08f, -0.27f), new Vector3(0.035f, 0.17f, 0.12f), new Color(0.74f, 0.7f, 0.61f));
             CreateVisualPiece(root, PrimitiveType.Cube, label + "_PaperMarkB", basePosition + new Vector3(size.x * 0.565f, 0.92f, -0.06f), new Vector3(0.035f, 0.13f, 0.15f), new Color(0.67f, 0.64f, 0.56f));
+        }
+
+        private static void CreateWindowFrame(Transform root, string label, Vector3 center, bool sideWindow = false)
+        {
+            var glassColor = new Color(0.42f, 0.52f, 0.53f);
+            var frameColor = new Color(0.36f, 0.3f, 0.21f);
+            var paneScale = sideWindow ? new Vector3(0.055f, 0.32f, 0.3f) : new Vector3(0.32f, 0.32f, 0.055f);
+            var horizontalScale = sideWindow ? new Vector3(0.06f, 0.055f, 0.4f) : new Vector3(0.42f, 0.055f, 0.06f);
+            var verticalScale = sideWindow ? new Vector3(0.06f, 0.4f, 0.055f) : new Vector3(0.055f, 0.4f, 0.06f);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_Glass", center, paneScale, glassColor);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FrameTop", center + new Vector3(0f, 0.2f, 0f), horizontalScale, frameColor);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FrameBottom", center + new Vector3(0f, -0.2f, 0f), horizontalScale, frameColor);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FrameLeft", center + (sideWindow ? new Vector3(0f, 0f, -0.2f) : new Vector3(-0.2f, 0f, 0f)), verticalScale, frameColor);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FrameRight", center + (sideWindow ? new Vector3(0f, 0f, 0.2f) : new Vector3(0.2f, 0f, 0f)), verticalScale, frameColor);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_Cross", center, sideWindow ? new Vector3(0.065f, 0.035f, 0.32f) : new Vector3(0.32f, 0.035f, 0.065f), frameColor * 0.9f);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_Sill", center + new Vector3(0f, -0.24f, 0f), sideWindow ? new Vector3(0.08f, 0.04f, 0.44f) : new Vector3(0.46f, 0.04f, 0.08f), frameColor * 0.82f);
+        }
+
+        private static void CreateRoofSurfaceDetail(Transform root, string label, Vector3 basePosition, Vector3 size, Color roofColor, float roofAngle)
+        {
+            var stripColor = roofColor * 0.74f;
+            var capColor = roofColor * 1.08f;
+            for (var index = 0; index < 3; index++)
+            {
+                var z = Mathf.Lerp(-size.z * 0.32f, size.z * 0.32f, index / 2f);
+                var leftStrip = CreateVisualPiece(
+                    root,
+                    PrimitiveType.Cube,
+                    label + "_RoofLeftSeam_" + index,
+                    basePosition + new Vector3(-size.x * 0.17f, size.y + 0.315f, z),
+                    new Vector3(size.x * 0.42f, 0.018f, 0.035f),
+                    stripColor);
+                leftStrip.transform.localRotation = Quaternion.Euler(0f, 0f, -roofAngle);
+
+                var rightStrip = CreateVisualPiece(
+                    root,
+                    PrimitiveType.Cube,
+                    label + "_RoofRightSeam_" + index,
+                    basePosition + new Vector3(size.x * 0.17f, size.y + 0.315f, z),
+                    new Vector3(size.x * 0.42f, 0.018f, 0.035f),
+                    stripColor * 0.94f);
+                rightStrip.transform.localRotation = Quaternion.Euler(0f, 0f, roofAngle);
+            }
+
+            var frontCap = CreateVisualPiece(root, PrimitiveType.Cube, label + "_RoofFrontCap", basePosition + new Vector3(0f, size.y + 0.19f, -size.z * 0.59f), new Vector3(size.x * 0.86f, 0.035f, 0.045f), capColor);
+            frontCap.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+            var backCap = CreateVisualPiece(root, PrimitiveType.Cube, label + "_RoofBackCap", basePosition + new Vector3(0f, size.y + 0.185f, size.z * 0.59f), new Vector3(size.x * 0.82f, 0.035f, 0.045f), roofColor * 0.86f);
+            backCap.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
         }
 
         private static void CreatePerimeterWall(Transform root, string label, Vector3 from, Vector3 to, Color color)
@@ -558,18 +732,25 @@ namespace DeepStake.World
 
         private static void CreateRiverEdge(Transform root, string label, Vector3 startPosition, Color waterColor)
         {
-            for (var index = 0; index < 9; index++)
+            for (var index = 0; index < 18; index++)
             {
-                var position = startPosition + new Vector3(Mathf.Sin(index * 0.7f) * 0.16f, 0f, index * 0.82f);
-                var water = CreateVisualPiece(root, PrimitiveType.Cube, label + "_Water_" + index, position + new Vector3(0f, 0.012f, 0f), new Vector3(0.95f, 0.035f, 0.8f), waterColor * (0.95f + (index % 2) * 0.08f));
+                var position = startPosition + new Vector3(Mathf.Sin(index * 0.7f) * 0.16f, 0f, index * 0.86f);
+                var waterScale = UseDenseVillageClutter ? new Vector3(1.18f, 0.032f, 0.82f) : new Vector3(0.82f, 0.026f, 0.78f);
+                var resolvedWaterColor = UseDenseVillageClutter ? waterColor * (1.08f + (index % 2) * 0.07f) : Color.Lerp(waterColor, new Color(0.18f, 0.28f, 0.31f), 0.55f);
+                var water = CreateVisualPiece(root, PrimitiveType.Cube, label + "_Water_" + index, position + new Vector3(0f, 0.078f, 0f), waterScale, resolvedWaterColor);
                 water.transform.localRotation = Quaternion.Euler(0f, Mathf.Sin(index * 0.9f) * 4f, 0f);
-                CreateVisualPiece(root, PrimitiveType.Cube, label + "_BankInner_" + index, position + new Vector3(-0.56f, 0.06f, 0f), new Vector3(0.18f, 0.12f, 0.78f), new Color(0.36f, 0.38f, 0.29f));
-                CreateVisualPiece(root, PrimitiveType.Cube, label + "_BankOuter_" + index, position + new Vector3(0.56f, 0.05f, 0f), new Vector3(0.16f, 0.1f, 0.72f), new Color(0.31f, 0.36f, 0.3f));
+                if (UseDenseVillageClutter)
+                {
+                    CreateVisualPiece(root, PrimitiveType.Cube, label + "_WaterHighlight_" + index, position + new Vector3(-0.16f, 0.106f, -0.05f), new Vector3(0.34f, 0.01f, 0.44f), new Color(0.42f, 0.62f, 0.68f));
+                }
+
+                CreateVisualPiece(root, PrimitiveType.Cube, label + "_BankInner_" + index, position + new Vector3(-0.6f, 0.065f, 0f), new Vector3(0.18f, 0.11f, 0.82f), new Color(0.35f, 0.37f, 0.29f));
+                CreateVisualPiece(root, PrimitiveType.Cube, label + "_BankOuter_" + index, position + new Vector3(0.6f, 0.06f, 0f), new Vector3(0.18f, 0.1f, 0.78f), new Color(0.3f, 0.35f, 0.3f));
             }
 
-            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FootBridgeA", startPosition + new Vector3(-0.05f, 0.16f, 2.75f), new Vector3(1.65f, 0.08f, 0.32f), new Color(0.43f, 0.34f, 0.23f));
-            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FootBridgeB", startPosition + new Vector3(-0.05f, 0.22f, 2.75f), new Vector3(1.45f, 0.06f, 0.12f), new Color(0.52f, 0.42f, 0.28f));
-            CreateCollisionBlocker(root, label + "_OuterBankCollision", startPosition + new Vector3(0.74f, 0.4f, 3.25f), new Vector3(0.28f, 0.8f, 7.45f));
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FootBridgeA", startPosition + new Vector3(-0.05f, 0.18f, 2.75f), new Vector3(1.95f, 0.08f, 0.32f), new Color(0.43f, 0.34f, 0.23f));
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_FootBridgeB", startPosition + new Vector3(-0.05f, 0.24f, 2.75f), new Vector3(1.65f, 0.06f, 0.12f), new Color(0.52f, 0.42f, 0.28f));
+            CreateCollisionBlocker(root, label + "_OuterBankCollision", startPosition + new Vector3(0.74f, 0.4f, 7.35f), new Vector3(0.28f, 0.8f, 15.6f));
         }
 
         private static void CreateRealisticVillageDetails(Transform root)
@@ -610,6 +791,27 @@ namespace DeepStake.World
             CreateVillageBuilding(root, "NorthSmallHome", new Vector3(0.3f, 0f, 8.15f), new Vector3(1.85f, 1.15f, 1.35f), new Color(0.41f, 0.39f, 0.33f), new Color(0.28f, 0.29f, 0.26f), false);
             CreateVillageBuilding(root, "WestWorkshop", new Vector3(-9.25f, 0f, -1.05f), new Vector3(2.1f, 1.15f, 1.45f), new Color(0.35f, 0.33f, 0.3f), new Color(0.25f, 0.26f, 0.25f), false);
             CreateVillageBuilding(root, "RiverPumpHouse", new Vector3(9.3f, 0f, 1.75f), new Vector3(1.55f, 1.05f, 1.2f), new Color(0.34f, 0.37f, 0.35f), new Color(0.25f, 0.29f, 0.29f), false);
+            CreateVillageBuilding(root, "ArchiveAnnex", new Vector3(6.05f, 0f, 4.65f), new Vector3(2.05f, 1.25f, 1.45f), new Color(0.36f, 0.39f, 0.38f), new Color(0.24f, 0.28f, 0.29f), true);
+            CreateVillageBuilding(root, "SouthStorehouse", new Vector3(-2.9f, 0f, -8.45f), new Vector3(1.8f, 0.95f, 1.2f), new Color(0.39f, 0.34f, 0.27f), new Color(0.27f, 0.24f, 0.21f), false);
+            CreateVillageBuilding(root, "SouthGateHouse", new Vector3(4.35f, 0f, -8.9f), new Vector3(1.35f, 0.92f, 1.05f), new Color(0.38f, 0.36f, 0.31f), new Color(0.25f, 0.26f, 0.24f), false);
+            CreateVillageBuilding(root, "WestLonghouse", new Vector3(-11.85f, 0f, 2.25f), new Vector3(2.55f, 1.2f, 1.55f), new Color(0.37f, 0.34f, 0.29f), new Color(0.25f, 0.25f, 0.23f), false);
+            CreateVillageBuilding(root, "RiverWarehouse", new Vector3(12.15f, 0f, -2.35f), new Vector3(2.25f, 1.2f, 1.55f), new Color(0.34f, 0.36f, 0.33f), new Color(0.22f, 0.25f, 0.25f), false);
+
+            if (!UseDenseVillageClutter)
+            {
+                CreateFenceLine(root, "RiverSafetyFence", new Vector3(7.35f, 0f, -2.75f), new Vector3(7.35f, 0f, 4.75f), new Color(0.34f, 0.32f, 0.27f));
+                CreateVillageGate(root, "SouthRoadGate", new Vector3(0.7f, 0f, -10.75f), new Color(0.38f, 0.32f, 0.24f));
+                CreatePerimeterWall(root, "SouthOuterWallWest", new Vector3(-6.8f, 0f, -10.85f), new Vector3(-0.5f, 0f, -10.85f), new Color(0.32f, 0.32f, 0.31f));
+                CreatePerimeterWall(root, "SouthOuterWallEast", new Vector3(1.9f, 0f, -10.85f), new Vector3(7.0f, 0f, -10.85f), new Color(0.32f, 0.32f, 0.31f));
+                CreateRoadShoulder(root, "SouthRoadShoulderWest", new Vector3(-1.4f, 0f, -7.6f), new Vector3(0.32f, 0.04f, 5.4f), new Color(0.27f, 0.28f, 0.26f));
+                CreateRoadShoulder(root, "SouthRoadShoulderEast", new Vector3(2.75f, 0f, -7.6f), new Vector3(0.32f, 0.04f, 5.4f), new Color(0.27f, 0.28f, 0.26f));
+                CreateRoadShoulder(root, "WestVillageConnector", new Vector3(-8.4f, 0f, 1.25f), new Vector3(5.3f, 0.04f, 0.34f), new Color(0.31f, 0.3f, 0.26f));
+                CreateRoadShoulder(root, "EastRiverConnector", new Vector3(8.65f, 0f, -1.25f), new Vector3(5.8f, 0.04f, 0.34f), new Color(0.3f, 0.31f, 0.29f));
+                CreateRoadShoulder(root, "NorthAnnexConnector", new Vector3(5.65f, 0f, 3.25f), new Vector3(0.34f, 0.04f, 3.4f), new Color(0.31f, 0.31f, 0.28f));
+                CreateTreeGrove(root, "NorthFarTreeLine", new Vector3(-8.8f, 0f, 10.75f), 4, new Vector3(2.25f, 0f, 0.08f));
+                CreateTreeGrove(root, "SouthRoadTreeLine", new Vector3(-6.2f, 0f, -9.4f), 3, new Vector3(2.35f, 0f, -0.08f));
+                return;
+            }
 
             CreateFieldRows(root, "NorthExpandedFieldA", new Vector3(-7.2f, 0f, 6.6f), 8, new Color(0.38f, 0.4f, 0.27f));
             CreateFieldRows(root, "NorthExpandedFieldB", new Vector3(-6.25f, 0f, 6.4f), 8, new Color(0.39f, 0.38f, 0.26f));
@@ -620,6 +822,11 @@ namespace DeepStake.World
             CreateCrateStack(root, "WestWorkshopCratesB", new Vector3(-10.15f, 0f, -0.25f), new Color(0.33f, 0.3f, 0.26f));
             CreateBarrelCluster(root, "WestWorkshopBarrels", new Vector3(-8.4f, 0f, 0.45f), new Color(0.31f, 0.31f, 0.29f));
             CreateUtilityLine(root, "WestUtilityLine", new Vector3(-10.35f, 0f, -3.4f), new Vector3(-3.8f, 0f, -3.9f));
+            CreateCrateStack(root, "SouthStorehouseCrates", new Vector3(-1.7f, 0f, -7.35f), new Color(0.35f, 0.31f, 0.25f));
+            CreateBarrelCluster(root, "SouthGateWaterCans", new Vector3(4.9f, 0f, -7.8f), new Color(0.25f, 0.32f, 0.34f));
+            CreateCrateStack(root, "RiverWarehouseCrates", new Vector3(11.05f, 0f, -1.45f), new Color(0.31f, 0.33f, 0.29f));
+            CreatePorchDetails(root, "ArchiveAnnexPorch", new Vector3(6.05f, 0f, 3.72f), new Color(0.34f, 0.31f, 0.25f));
+            CreatePorchDetails(root, "SouthStorehousePorch", new Vector3(-2.9f, 0f, -8.88f), new Color(0.35f, 0.29f, 0.22f));
 
             CreateRiverEdge(root, "FarEastRiver", new Vector3(11.2f, 0f, -5.65f), new Color(0.22f, 0.39f, 0.48f));
             CreateFenceLine(root, "RiverSafetyFence", new Vector3(7.35f, 0f, -2.75f), new Vector3(7.35f, 0f, 4.75f), new Color(0.34f, 0.32f, 0.27f));
@@ -631,6 +838,9 @@ namespace DeepStake.World
             CreatePerimeterWall(root, "SouthOuterWallEast", new Vector3(1.9f, 0f, -10.85f), new Vector3(7.0f, 0f, -10.85f), new Color(0.32f, 0.32f, 0.31f));
             CreateRoadShoulder(root, "SouthRoadShoulderWest", new Vector3(-1.4f, 0f, -7.6f), new Vector3(0.32f, 0.04f, 5.4f), new Color(0.27f, 0.28f, 0.26f));
             CreateRoadShoulder(root, "SouthRoadShoulderEast", new Vector3(2.75f, 0f, -7.6f), new Vector3(0.32f, 0.04f, 5.4f), new Color(0.27f, 0.28f, 0.26f));
+            CreateRoadShoulder(root, "WestVillageConnector", new Vector3(-8.4f, 0f, 1.25f), new Vector3(5.3f, 0.04f, 0.34f), new Color(0.31f, 0.3f, 0.26f));
+            CreateRoadShoulder(root, "EastRiverConnector", new Vector3(8.65f, 0f, -1.25f), new Vector3(5.8f, 0.04f, 0.34f), new Color(0.3f, 0.31f, 0.29f));
+            CreateRoadShoulder(root, "NorthAnnexConnector", new Vector3(5.65f, 0f, 3.25f), new Vector3(0.34f, 0.04f, 3.4f), new Color(0.31f, 0.31f, 0.28f));
 
             CreateTreeGrove(root, "NorthFarTreeLine", new Vector3(-8.8f, 0f, 10.75f), 8, new Vector3(1.25f, 0f, 0.05f));
             CreateTreeGrove(root, "SouthRoadTreeLine", new Vector3(-6.2f, 0f, -9.4f), 6, new Vector3(1.35f, 0f, -0.05f));
@@ -642,17 +852,21 @@ namespace DeepStake.World
         {
             var lightObject = new GameObject("NaturalVillageSun");
             lightObject.transform.SetParent(root, false);
-            lightObject.transform.localRotation = Quaternion.Euler(46f, -34f, 0f);
+            lightObject.transform.localRotation = Quaternion.Euler(42f, -38f, 0f);
             var light = lightObject.AddComponent<Light>();
             light.type = LightType.Directional;
-            light.color = new Color(1f, 0.94f, 0.82f);
-            light.intensity = 1.05f;
+            light.color = new Color(1f, 0.93f, 0.84f);
+            light.intensity = 1.18f;
+            light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.7f;
+            light.shadowBias = 0.06f;
+            light.shadowNormalBias = 0.45f;
         }
 
         private static void CreateRoadShoulder(Transform root, string label, Vector3 basePosition, Vector3 scale, Color color)
         {
             var piece = CreateVisualPiece(root, PrimitiveType.Cube, label, basePosition + new Vector3(0f, 0.035f, 0f), scale, color);
-            piece.transform.localRotation = Quaternion.Euler(0f, label.GetHashCode() % 5 - 2f, 0f);
+            StabilizeGroundRenderer(piece);
         }
 
         private static void CreateTreeGrove(Transform root, string label, Vector3 startPosition, int count, Vector3 step)
@@ -660,8 +874,159 @@ namespace DeepStake.World
             for (var index = 0; index < count; index++)
             {
                 var position = startPosition + step * index + new Vector3(Mathf.Sin(index * 1.3f) * 0.18f, 0f, Mathf.Cos(index * 0.9f) * 0.12f);
-                CreateTreeMass(root, label + "_" + index, position, new Vector3(0.58f + index % 2 * 0.08f, 0.78f + index % 3 * 0.08f, 0.55f));
+                CreateRealTree(root, label + "_" + index, position, 0.88f + (index % 3) * 0.12f);
             }
+        }
+
+        private static void CreateFullMapNaturalFill(Transform root)
+        {
+            CreateTilePatch(root, "NorthRecoveryMeadow", new Vector3(-5.8f, -0.04f, 13.1f), 15, 5, 0.9f, new Color(0.3f, 0.38f, 0.25f));
+            CreateTilePatch(root, "SouthRecoveryMeadow", new Vector3(2.0f, -0.04f, -13.8f), 13, 5, 0.9f, new Color(0.28f, 0.35f, 0.26f));
+            CreateTilePatch(root, "WestRecoveryField", new Vector3(-14.1f, -0.04f, 1.6f), 5, 15, 0.9f, new Color(0.31f, 0.37f, 0.25f));
+            CreateTilePatch(root, "EastRiverBankField", new Vector3(13.4f, -0.04f, 1.8f), 5, 15, 0.9f, new Color(0.29f, 0.36f, 0.3f));
+            CreateRiverEdge(root, "ContinuousEastRiver", new Vector3(10.95f, 0f, -12.2f), new Color(0.2f, 0.37f, 0.47f));
+            CreateOuterVillageBlock(root, "WestVillageBlock", new Vector3(-15.1f, 0f, -1.4f), new Color(0.37f, 0.34f, 0.29f));
+            CreateOuterVillageBlock(root, "NorthVillageBlock", new Vector3(-2.2f, 0f, 13.3f), new Color(0.4f, 0.36f, 0.29f));
+            CreateOuterVillageBlock(root, "SouthVillageBlock", new Vector3(-5.2f, 0f, -13.4f), new Color(0.36f, 0.34f, 0.3f));
+            CreateOuterVillageBlock(root, "EastRiverVillageBlock", new Vector3(15.4f, 0f, 4.9f), new Color(0.34f, 0.37f, 0.34f));
+            CreateOuterVillageBlock(root, "FarNorthVillageBlock", new Vector3(8.6f, 0f, 13.8f), new Color(0.39f, 0.36f, 0.31f));
+            CreateOuterVillageBlock(root, "SouthEastVillageBlock", new Vector3(8.8f, 0f, -12.7f), new Color(0.35f, 0.36f, 0.31f));
+            CreateWaterTower(root, "SouthWaterTower", new Vector3(6.8f, 0f, -13.2f), new Color(0.36f, 0.39f, 0.37f));
+            CreateArchiveSignalTower(root, "ArchiveSignalTower", new Vector3(7.45f, 0f, 6.25f), new Color(0.34f, 0.36f, 0.36f));
+            CreateWindmill(root, "NorthFieldWindmill", new Vector3(-9.4f, 0f, 12.6f), new Color(0.45f, 0.42f, 0.34f));
+            CreateWindmill(root, "SouthFieldWindmill", new Vector3(0.8f, 0f, -14.15f), new Color(0.43f, 0.4f, 0.33f));
+            CreateWindmill(root, "EastFieldWindmill", new Vector3(14.9f, 0f, -8.7f), new Color(0.43f, 0.41f, 0.34f));
+            CreateTreeGrove(root, "NorthWestRealTreeLine", new Vector3(-13.6f, 0f, 10.8f), 9, new Vector3(1.15f, 0f, -0.18f));
+            CreateTreeGrove(root, "NorthEastRealTreeLine", new Vector3(2.6f, 0f, 11.2f), 8, new Vector3(1.18f, 0f, 0.04f));
+            CreateTreeGrove(root, "WestRealTreeLine", new Vector3(-14.0f, 0f, -8.6f), 12, new Vector3(0.05f, 0f, 1.45f));
+            CreateTreeGrove(root, "SouthRealTreeLine", new Vector3(-12.5f, 0f, -12.2f), 11, new Vector3(1.4f, 0f, 0.08f));
+            CreateTreeGrove(root, "RiverRealTreeLine", new Vector3(9.4f, 0f, -10.2f), 12, new Vector3(-0.05f, 0f, 1.55f));
+            CreateTreeGrove(root, "NorthShelterbeltTreeLine", new Vector3(-17.5f, 0f, 16.4f), 20, new Vector3(1.75f, 0f, 0.03f));
+            CreateTreeGrove(root, "WestShelterbeltTreeLine", new Vector3(-19.1f, 0f, -9.7f), 17, new Vector3(0.04f, 0f, 1.6f));
+
+            CreateTilePatch(root, "SouthFieldFillTile", new Vector3(-6.4f, 0.006f, -7.9f), 9, 6, 0.86f, new Color(0.34f, 0.38f, 0.29f));
+            CreateTilePatch(root, "NorthFieldFillTile", new Vector3(4.5f, 0.006f, 7.8f), 8, 6, 0.86f, new Color(0.32f, 0.38f, 0.29f));
+            CreateTilePatch(root, "FarNorthVillageMeadow", new Vector3(9.0f, 0.006f, 10.6f), 8, 5, 0.88f, new Color(0.33f, 0.38f, 0.29f));
+            CreateTilePatch(root, "SouthEastVillageMeadow", new Vector3(8.1f, 0.006f, -9.6f), 8, 5, 0.88f, new Color(0.32f, 0.37f, 0.29f));
+            CreateFieldRows(root, "SouthOuterFieldRowsA", new Vector3(-9.5f, 0f, -8.8f), 8, new Color(0.36f, 0.39f, 0.25f));
+            CreateFieldRows(root, "SouthOuterFieldRowsB", new Vector3(-7.8f, 0f, -8.65f), 8, new Color(0.37f, 0.37f, 0.24f));
+            CreateFieldRows(root, "NorthOuterFieldRowsA", new Vector3(3.0f, 0f, 6.7f), 9, new Color(0.36f, 0.4f, 0.26f));
+            CreateFieldRows(root, "NorthOuterFieldRowsB", new Vector3(4.6f, 0f, 6.85f), 9, new Color(0.38f, 0.39f, 0.25f));
+            CreateFieldRows(root, "EastOuterFieldRowsA", new Vector3(12.5f, 0f, -7.8f), 8, new Color(0.35f, 0.39f, 0.27f));
+
+            CreateGrassBorder(root, "OuterGrassWestA", new Vector3(-13.3f, 0f, -6.2f), 18, new Vector3(0.0f, 0f, 0.72f), new Color(0.26f, 0.36f, 0.23f));
+            CreateGrassBorder(root, "OuterGrassNorthA", new Vector3(-11.6f, 0f, 10.1f), 22, new Vector3(0.82f, 0f, -0.02f), new Color(0.27f, 0.37f, 0.24f));
+            CreateGrassBorder(root, "OuterGrassSouthA", new Vector3(-11.9f, 0f, -11.1f), 20, new Vector3(0.82f, 0f, 0.03f), new Color(0.27f, 0.35f, 0.23f));
+            CreateGrassBorder(root, "RiverGrassFillA", new Vector3(8.6f, 0f, -10.2f), 22, new Vector3(0.02f, 0f, 0.72f), new Color(0.25f, 0.36f, 0.25f));
+            CreateRoadShoulder(root, "FarNorthVillageConnector", new Vector3(4.6f, 0f, 13.0f), new Vector3(8.4f, 0.04f, 0.3f), new Color(0.29f, 0.28f, 0.24f));
+            CreateRoadShoulder(root, "SouthEastVillageConnector", new Vector3(6.8f, 0f, -12.6f), new Vector3(6.5f, 0.04f, 0.3f), new Color(0.29f, 0.28f, 0.24f));
+        }
+
+        private static void CreateOuterVillageBlock(Transform root, string label, Vector3 origin, Color wallColor)
+        {
+            var seed = Mathf.Abs(label.GetHashCode());
+            var lateral = ((seed % 7) - 3) * 0.18f;
+            var depth = (((seed / 7) % 7) - 3) * 0.16f;
+            CreateTilePatch(root, label + "_Ground", origin + new Vector3(lateral, -0.035f, depth), 9, 8, 0.9f, new Color(0.36f, 0.35f, 0.3f));
+            CreateRoadShoulder(root, label + "_BentLaneA", origin + new Vector3(-1.2f, 0f, -0.55f), new Vector3(5.8f, 0.04f, 0.34f), new Color(0.28f, 0.28f, 0.25f));
+            CreateRoadShoulder(root, label + "_BentLaneB", origin + new Vector3(1.35f, 0f, 0.42f), new Vector3(3.6f, 0.04f, 0.28f), new Color(0.3f, 0.29f, 0.25f));
+            CreateRoadShoulder(root, label + "_FootCut", origin + new Vector3(-0.8f, 0f, 0.95f), new Vector3(0.28f, 0.04f, 3.9f), new Color(0.29f, 0.28f, 0.24f));
+
+            CreateVillageBuilding(root, label + "_HomeA", origin + new Vector3(-2.75f + lateral, 0f, 1.95f), new Vector3(1.85f, 1.12f, 1.32f), wallColor, new Color(0.25f, 0.25f, 0.23f), false);
+            CreateVillageBuilding(root, label + "_HomeB", origin + new Vector3(2.0f, 0f, 1.28f + depth), new Vector3(2.1f, 1.18f, 1.42f), wallColor * 0.95f, new Color(0.24f, 0.26f, 0.24f), false);
+            CreateVillageBuilding(root, label + "_ShedA", origin + new Vector3(-2.05f, 0f, -2.28f), new Vector3(1.65f, 1.02f, 1.18f), wallColor * 0.88f, new Color(0.23f, 0.23f, 0.21f), false);
+            CreateVillageBuilding(root, label + "_StoreA", origin + new Vector3(2.85f + lateral * 0.5f, 0f, -1.95f + depth), new Vector3(2.2f, 1.2f, 1.48f), wallColor * 1.04f, new Color(0.26f, 0.24f, 0.21f), false);
+
+            CreateFenceLine(root, label + "_BrokenFenceNorthA", origin + new Vector3(-3.7f, 0f, 3.08f), origin + new Vector3(-0.6f, 0f, 3.0f), new Color(0.36f, 0.31f, 0.23f));
+            CreateFenceLine(root, label + "_BrokenFenceNorthB", origin + new Vector3(0.7f, 0f, 2.92f), origin + new Vector3(3.55f, 0f, 3.12f), new Color(0.36f, 0.31f, 0.23f));
+            CreateFenceLine(root, label + "_SideFence", origin + new Vector3(-3.65f, 0f, -2.7f), origin + new Vector3(-3.35f, 0f, 2.2f), new Color(0.34f, 0.3f, 0.23f));
+            CreateCrateStack(root, label + "_CratesA", origin + new Vector3(-0.95f, 0f, -1.55f), new Color(0.34f, 0.3f, 0.24f));
+            CreateBarrelCluster(root, label + "_BarrelsA", origin + new Vector3(0.95f, 0f, 1.15f), new Color(0.27f, 0.31f, 0.31f));
+            CreateGroundDebris(root, label + "_DoorScrapA", origin + new Vector3(-1.15f, 0f, 0.4f), new Color(0.28f, 0.25f, 0.2f));
+            CreateStakeBundle(root, label + "_RepairStakes", origin + new Vector3(1.45f, 0f, -0.9f), new Color(0.36f, 0.29f, 0.2f));
+            CreateGrassBorder(root, label + "_GrassWest", origin + new Vector3(-3.85f, 0f, -2.65f), 7, new Vector3(0.08f, 0f, 0.76f), new Color(0.27f, 0.36f, 0.23f));
+            CreateGrassBorder(root, label + "_GrassEast", origin + new Vector3(3.85f, 0f, -2.45f), 7, new Vector3(-0.06f, 0f, 0.72f), new Color(0.27f, 0.36f, 0.24f));
+        }
+
+        private static void CreateDistantMountainRange(Transform root, string label, Vector3 startPosition, int count, Vector3 step)
+        {
+            for (var index = 0; index < count; index++)
+            {
+                var position = startPosition + step * index;
+                var height = 1.8f + (index % 4) * 0.48f;
+                var width = 2.4f + (index % 3) * 0.55f;
+                CreateMountainPeak(root, label + "_Peak_" + index, position, width, height, new Color(0.24f, 0.3f, 0.28f) * (0.9f + index % 2 * 0.08f));
+            }
+        }
+
+        private static void CreateMountainPeak(Transform root, string label, Vector3 basePosition, float width, float height, Color color)
+        {
+            var body = CreateVisualPiece(root, PrimitiveType.Cube, label + "_Body", basePosition + new Vector3(0f, height * 0.46f, 0f), new Vector3(width, height, width * 0.42f), color);
+            body.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            var shoulder = CreateVisualPiece(root, PrimitiveType.Cube, label + "_Shoulder", basePosition + new Vector3(width * 0.22f, height * 0.28f, 0.1f), new Vector3(width * 0.72f, height * 0.58f, width * 0.36f), color * 0.82f);
+            shoulder.transform.localRotation = Quaternion.Euler(0f, 0f, 34f);
+            var snow = CreateVisualPiece(root, PrimitiveType.Cube, label + "_PaleRidge", basePosition + new Vector3(0.02f, height * 0.94f, -0.02f), new Vector3(width * 0.34f, height * 0.16f, width * 0.18f), new Color(0.58f, 0.64f, 0.58f));
+            snow.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+        }
+
+        private static void CreateWaterTower(Transform root, string label, Vector3 basePosition, Color color)
+        {
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_LegA", basePosition + new Vector3(-0.32f, 1.0f, -0.32f), new Vector3(0.045f, 1.0f, 0.045f), color * 0.75f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_LegB", basePosition + new Vector3(0.32f, 1.0f, -0.32f), new Vector3(0.045f, 1.0f, 0.045f), color * 0.75f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_LegC", basePosition + new Vector3(-0.32f, 1.0f, 0.32f), new Vector3(0.045f, 1.0f, 0.045f), color * 0.75f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_LegD", basePosition + new Vector3(0.32f, 1.0f, 0.32f), new Vector3(0.045f, 1.0f, 0.045f), color * 0.75f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_Tank", basePosition + new Vector3(0f, 2.25f, 0f), new Vector3(0.72f, 0.42f, 0.72f), color);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_Cap", basePosition + new Vector3(0f, 2.74f, 0f), new Vector3(0.76f, 0.1f, 0.76f), color * 0.82f);
+            CreateCollisionBlocker(root, label + "_Collision", basePosition + new Vector3(0f, 1.1f, 0f), new Vector3(0.9f, 2.2f, 0.9f));
+        }
+
+        private static void CreateArchiveSignalTower(Transform root, string label, Vector3 basePosition, Color color)
+        {
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_Mast", basePosition + new Vector3(0f, 1.85f, 0f), new Vector3(0.055f, 1.85f, 0.055f), color);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_CrossA", basePosition + new Vector3(0f, 2.45f, 0f), new Vector3(1.1f, 0.045f, 0.045f), color * 0.9f);
+            CreateVisualPiece(root, PrimitiveType.Cube, label + "_CrossB", basePosition + new Vector3(0f, 2.9f, 0f), new Vector3(0.82f, 0.04f, 0.04f), color * 0.88f);
+            CreateVisualPiece(root, PrimitiveType.Sphere, label + "_Beacon", basePosition + new Vector3(0f, 3.82f, 0f), new Vector3(0.16f, 0.16f, 0.16f), new Color(0.76f, 0.68f, 0.36f));
+            CreateCollisionBlocker(root, label + "_Collision", basePosition + new Vector3(0f, 1.2f, 0f), new Vector3(0.42f, 2.4f, 0.42f));
+        }
+
+        private static void CreateRealTree(Transform root, string label, Vector3 basePosition, float scale)
+        {
+            var seed = Mathf.Abs(label.GetHashCode());
+            var lean = ((seed % 11) - 5) * 0.45f;
+            var trunkColor = new Color(0.31f, 0.22f, 0.14f);
+            var barkDark = new Color(0.22f, 0.16f, 0.1f);
+            var trunk = CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_Trunk", basePosition + new Vector3(0f, 0.74f * scale, 0f), new Vector3(0.13f * scale, 0.74f * scale, 0.13f * scale), trunkColor);
+            trunk.transform.localRotation = Quaternion.Euler(lean, (seed % 37) - 18f, -lean * 0.7f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_RootA", basePosition + new Vector3(-0.16f * scale, 0.08f, 0.04f), new Vector3(0.035f * scale, 0.22f * scale, 0.035f * scale), barkDark).transform.localRotation = Quaternion.Euler(0f, 18f, 76f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_RootB", basePosition + new Vector3(0.16f * scale, 0.08f, -0.03f), new Vector3(0.032f * scale, 0.2f * scale, 0.032f * scale), barkDark).transform.localRotation = Quaternion.Euler(0f, -22f, -70f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_RootC", basePosition + new Vector3(0.02f, 0.07f, 0.17f * scale), new Vector3(0.028f * scale, 0.16f * scale, 0.028f * scale), barkDark * 0.95f).transform.localRotation = Quaternion.Euler(74f, 0f, 5f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_BranchA", basePosition + new Vector3(-0.26f * scale, 1.32f * scale, 0.04f), new Vector3(0.04f * scale, 0.38f * scale, 0.04f * scale), trunkColor * 0.88f).transform.localRotation = Quaternion.Euler(2f, -24f, 58f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_BranchB", basePosition + new Vector3(0.27f * scale, 1.22f * scale, -0.05f), new Vector3(0.04f * scale, 0.34f * scale, 0.04f * scale), trunkColor * 0.86f).transform.localRotation = Quaternion.Euler(-2f, 32f, -54f);
+            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_BranchC", basePosition + new Vector3(0.02f, 1.54f * scale, -0.28f * scale), new Vector3(0.033f * scale, 0.32f * scale, 0.033f * scale), trunkColor * 0.82f).transform.localRotation = Quaternion.Euler(56f, 4f, 0f);
+
+            var leafBase = new Color(0.2f, 0.34f, 0.18f);
+            CreateLeafCluster(root, label + "_FrontLeaves", basePosition + new Vector3(0f, 1.68f * scale, 0.08f * scale), scale, leafBase, 0f);
+            CreateLeafCluster(root, label + "_LeftLeaves", basePosition + new Vector3(-0.38f * scale, 1.52f * scale, 0.02f), scale * 0.86f, leafBase * 0.92f, -28f);
+            CreateLeafCluster(root, label + "_RightLeaves", basePosition + new Vector3(0.4f * scale, 1.5f * scale, -0.04f), scale * 0.84f, leafBase * 1.05f, 31f);
+            CreateLeafCluster(root, label + "_TopLeaves", basePosition + new Vector3(0.05f * scale, 1.98f * scale, -0.02f), scale * 0.75f, leafBase * 1.12f, 12f);
+            CreateLeafCluster(root, label + "_BackLeaves", basePosition + new Vector3(0.08f * scale, 1.58f * scale, -0.35f * scale), scale * 0.74f, leafBase * 0.84f, 48f);
+            CreateCollisionBlocker(root, label + "_Collision", basePosition + new Vector3(0f, 0.55f * scale, 0f), new Vector3(0.42f * scale, 1.1f * scale, 0.42f * scale));
+        }
+
+        private static void CreateLeafCluster(Transform root, string label, Vector3 center, float scale, Color color, float yawOffset)
+        {
+            CreateLeafCard(root, label + "_LeafA", center + new Vector3(-0.08f * scale, 0.08f * scale, 0f), new Vector3(0.52f, 0.035f, 0.22f) * scale, color, yawOffset + 8f, 0f, 14f);
+            CreateLeafCard(root, label + "_LeafB", center + new Vector3(0.12f * scale, -0.02f * scale, 0.04f * scale), new Vector3(0.46f, 0.032f, 0.2f) * scale, color * 0.92f, yawOffset - 18f, 0f, -18f);
+            CreateLeafCard(root, label + "_LeafC", center + new Vector3(0.02f, 0.18f * scale, -0.06f * scale), new Vector3(0.42f, 0.03f, 0.18f) * scale, color * 1.08f, yawOffset + 34f, 4f, 28f);
+            CreateLeafCard(root, label + "_LeafD", center + new Vector3(-0.2f * scale, -0.1f * scale, 0.02f), new Vector3(0.36f, 0.028f, 0.16f) * scale, color * 0.82f, yawOffset - 42f, -2f, 36f);
+            CreateLeafCard(root, label + "_LeafE", center + new Vector3(0.23f * scale, 0.09f * scale, -0.05f * scale), new Vector3(0.34f, 0.026f, 0.15f) * scale, color * 1.02f, yawOffset + 62f, 2f, -32f);
+            CreateLeafCard(root, label + "_LeafF", center + new Vector3(-0.02f, -0.18f * scale, 0.05f * scale), new Vector3(0.44f, 0.03f, 0.17f) * scale, color * 0.88f, yawOffset - 4f, -4f, 6f);
+        }
+
+        private static void CreateLeafCard(Transform root, string label, Vector3 position, Vector3 scale, Color color, float yaw, float pitch, float roll)
+        {
+            var leaf = CreateVisualPiece(root, PrimitiveType.Cube, label, position, scale, color);
+            leaf.transform.localRotation = Quaternion.Euler(pitch, yaw, roll);
         }
 
         private static void CreateUtilityLine(Transform root, string label, Vector3 from, Vector3 to)
@@ -893,10 +1258,8 @@ namespace DeepStake.World
 
         private static void CreateTreeMass(Transform root, string label, Vector3 basePosition, Vector3 canopyScale)
         {
-            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_Trunk", basePosition + new Vector3(0f, 0.55f, 0f), new Vector3(0.12f, 0.55f, 0.12f), new Color(0.33f, 0.27f, 0.21f));
-            CreateVisualPiece(root, PrimitiveType.Sphere, label + "_CanopyA", basePosition + new Vector3(0f, 1.55f, 0f), canopyScale, new Color(0.35f, 0.4f, 0.32f));
-            CreateVisualPiece(root, PrimitiveType.Sphere, label + "_CanopyB", basePosition + new Vector3(-0.35f, 1.3f, 0.1f), canopyScale * 0.68f, new Color(0.32f, 0.37f, 0.29f));
-            CreateVisualPiece(root, PrimitiveType.Sphere, label + "_CanopyC", basePosition + new Vector3(0.34f, 1.22f, -0.12f), canopyScale * 0.62f, new Color(0.36f, 0.41f, 0.33f));
+            var averageScale = Mathf.Max(0.75f, (canopyScale.x + canopyScale.y + canopyScale.z) / 3f * 0.58f);
+            CreateRealTree(root, label, basePosition, averageScale);
         }
 
         private static void CreateBackdropMass(Transform root, string label, Vector3 basePosition, Vector3 scale, Color color)
@@ -1089,32 +1452,83 @@ namespace DeepStake.World
 
         private static GameObject CreateVisualPiece(Transform parent, PrimitiveType primitiveType, string name, Vector3 localPosition, Vector3 localScale, Material material)
         {
-            var piece = GameObject.CreatePrimitive(primitiveType);
+            var piece = new GameObject(name);
+            var meshFilter = piece.AddComponent<MeshFilter>();
+            var meshRenderer = piece.AddComponent<MeshRenderer>();
+            meshFilter.sharedMesh = GetPrimitiveMesh(primitiveType);
             piece.name = name;
             piece.transform.SetParent(parent, false);
             piece.transform.localPosition = localPosition;
             piece.transform.localScale = localScale;
 
-            var renderer = piece.GetComponent<Renderer>();
+            var renderer = meshRenderer;
             if (renderer != null && material != null)
             {
                 renderer.sharedMaterial = material;
-            }
-
-            var collider = piece.GetComponent<Collider>();
-            if (collider != null)
-            {
-                if (Application.isPlaying)
+                if (IsGroundLikeName(name))
                 {
-                    Object.Destroy(collider);
-                }
-                else
-                {
-                    Object.DestroyImmediate(collider);
+                    renderer.shadowCastingMode = ShadowCastingMode.Off;
+                    renderer.receiveShadows = false;
                 }
             }
 
             return piece;
+        }
+
+        private static Mesh GetPrimitiveMesh(PrimitiveType primitiveType)
+        {
+            var meshName = primitiveType switch
+            {
+                PrimitiveType.Sphere => "Sphere.fbx",
+                PrimitiveType.Capsule => "Capsule.fbx",
+                PrimitiveType.Cylinder => "Cylinder.fbx",
+                PrimitiveType.Cube => "Cube.fbx",
+                PrimitiveType.Plane => "Plane.fbx",
+                PrimitiveType.Quad => "Quad.fbx",
+                _ => "Cube.fbx"
+            };
+
+            var mesh = Resources.GetBuiltinResource<Mesh>(meshName);
+            if (mesh != null)
+            {
+                return mesh;
+            }
+
+            Debug.LogWarning("[DeepStakeDev] Missing builtin primitive mesh for " + primitiveType + ". Falling back to cube.");
+            return Resources.GetBuiltinResource<Mesh>("Cube.fbx");
+        }
+
+        private static void StabilizeGroundRenderer(GameObject piece)
+        {
+            if (piece == null)
+            {
+                return;
+            }
+
+            piece.transform.localRotation = Quaternion.identity;
+            var renderer = piece.GetComponent<Renderer>();
+            if (renderer == null)
+            {
+                return;
+            }
+
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+        }
+
+        private static bool IsGroundLikeName(string name)
+        {
+            var lower = name.ToLowerInvariant();
+            return lower.Contains("ground")
+                   || lower.Contains("tile")
+                   || lower.Contains("road")
+                   || lower.Contains("lane")
+                   || lower.Contains("path")
+                   || lower.Contains("field")
+                   || lower.Contains("yard")
+                   || lower.Contains("court")
+                   || lower.Contains("meadow")
+                   || lower.Contains("shoulder");
         }
 
         private static GameObject CreateVisualPiece(Transform parent, PrimitiveType primitiveType, string name, Vector3 localPosition, Vector3 localScale, Color color)
@@ -1124,33 +1538,27 @@ namespace DeepStake.World
 
         private static Material CreateAutoMaterial(string name, Color fallbackColor)
         {
-            var material = PickMaterial(null, string.Empty, fallbackColor);
-            var texture = GetEnvironmentTexture(name);
-            if (texture == null)
-            {
-                return material;
-            }
+            return GetOrCreatePaletteMaterial(ResolvePaletteMaterialSpec(name, fallbackColor));
+        }
 
-            if (material.HasProperty("_BaseMap"))
-            {
-                material.SetTexture("_BaseMap", texture);
-            }
-            if (material.HasProperty("_MainTex"))
-            {
-                material.SetTexture("_MainTex", texture);
-            }
-
-            var tiling = GetEnvironmentTiling(name);
-            if (material.HasProperty("_BaseMap"))
-            {
-                material.SetTextureScale("_BaseMap", tiling);
-            }
-            if (material.HasProperty("_MainTex"))
-            {
-                material.SetTextureScale("_MainTex", tiling);
-            }
-
-            return material;
+        private static bool ShouldUseFlatGroundMaterial(string name)
+        {
+            var lower = name.ToLowerInvariant();
+            return lower.Contains("stablepatch")
+                   || lower.Contains("terrainground")
+                   || lower.Contains("terrainbase")
+                   || lower.Contains("packedearth")
+                   || lower.Contains("continuous")
+                   || lower.Contains("villagepackedearthbase")
+                   || lower.Contains("outerfieldterrainbase")
+                   || lower.Contains("connector")
+                   || lower.Contains("shoulder")
+                   || lower.Contains("meadow")
+                   || lower.Contains("fieldfill")
+                   || lower.Contains("recoveryfield")
+                   || lower.Contains("roof")
+                   || lower.Contains("eave")
+                   || lower.Contains("gable");
         }
 
         private static Texture2D GetEnvironmentTexture(string name)
@@ -1170,6 +1578,63 @@ namespace DeepStake.World
             if (key.Contains("field") || key.Contains("farm") || key.Contains("patch") || key.Contains("mud") || key.Contains("grass") || key.Contains("stone") || key.Contains("site"))
             {
                 return cachedTileTextures.Length > 0 ? cachedTileTextures[0] : null;
+            }
+
+            return null;
+        }
+
+        private static Texture2D GetPaletteTexture(PaletteTextureKind textureKind)
+        {
+            EnsureEnvironmentTexturesLoaded();
+
+            return textureKind switch
+            {
+                PaletteTextureKind.DrySoil => FindEnvironmentTexture(cachedTileTextures, "DS_Village_dirt_tile"),
+                PaletteTextureKind.DirtPath => FindEnvironmentTexture(cachedTileTextures, "DS_Village_road_tile"),
+                PaletteTextureKind.RecoveringGrass => FindEnvironmentTexture(cachedTileTextures, "DS_Village_field_rows"),
+                PaletteTextureKind.GravelStorage => FindEnvironmentTexture(cachedTileTextures, "DS_Village_stone_tile"),
+                PaletteTextureKind.CrackedPressure => FindEnvironmentTexture(cachedTileTextures, "crack", "pressure", "damage", "ChatGPT") ?? FindEnvironmentTexture(cachedTileTextures, "DS_Village_stone_tile"),
+                PaletteTextureKind.WornWood => FindEnvironmentTexture(cachedWallTextures, "DS_Village_wood_wall"),
+                PaletteTextureKind.MutedMetal => FindEnvironmentTexture(cachedWallTextures, "DS_Village_archive_wall") ?? FindEnvironmentTexture(cachedWallTextures, "metal"),
+                PaletteTextureKind.RoofDark => FindEnvironmentTexture(cachedWallTextures, "DS_Village_roof_dark"),
+                PaletteTextureKind.RoofWarm => FindEnvironmentTexture(cachedWallTextures, "DS_Village_roof_warm"),
+                PaletteTextureKind.DoorWood => FindEnvironmentTexture(cachedWallTextures, "DS_Village_door_wood"),
+                PaletteTextureKind.WindowMuted => FindEnvironmentTexture(cachedWallTextures, "DS_Village_window_muted"),
+                _ => null
+            };
+        }
+
+        private static Texture2D FindEnvironmentTexture(Texture2D[] textures, params string[] preferredTokens)
+        {
+            if (textures == null || textures.Length == 0)
+            {
+                return null;
+            }
+
+            for (var index = 0; index < textures.Length; index++)
+            {
+                var texture = textures[index];
+                if (texture == null)
+                {
+                    continue;
+                }
+
+                var textureName = texture.name.ToLowerInvariant();
+                var matched = true;
+                for (var tokenIndex = 0; tokenIndex < preferredTokens.Length; tokenIndex++)
+                {
+                    var token = preferredTokens[tokenIndex].ToLowerInvariant();
+                    if (!textureName.Contains(token))
+                    {
+                        matched = false;
+                        break;
+                    }
+                }
+
+                if (matched)
+                {
+                    return texture;
+                }
             }
 
             return null;
@@ -1196,6 +1661,171 @@ namespace DeepStake.World
             return new Vector2(3f, 3f);
         }
 
+        private static PaletteMaterialSpec ResolvePaletteMaterialSpec(string name, Color fallbackColor)
+        {
+            var key = name == null ? string.Empty : name.ToLowerInvariant();
+
+            if (key.Contains("beacon") || key.Contains("lamp"))
+            {
+                return new PaletteMaterialSpec(BeaconRecoveryGlowMaterialName, PaletteTextureKind.None, new Color(0.86f, 0.74f, 0.42f), Vector2.one, true);
+            }
+
+            if (key.Contains("crate") || key.Contains("supply") || key.Contains("barrel") || key.Contains("spool"))
+            {
+                return new PaletteMaterialSpec(PropSupplyCrateMaterialName, PaletteTextureKind.WornWood, new Color(0.58f, 0.49f, 0.36f), new Vector2(1.6f, 1.6f));
+            }
+
+            if (key.Contains("roof"))
+            {
+                var roofKind = key.Contains("clinic") || key.Contains("archive") ? PaletteTextureKind.RoofDark : PaletteTextureKind.RoofWarm;
+                var roofName = roofKind == PaletteTextureKind.RoofDark ? BuildingRoofDarkMaterialName : BuildingRoofWarmMaterialName;
+                var roofTint = roofKind == PaletteTextureKind.RoofDark
+                    ? new Color(0.49f, 0.5f, 0.48f)
+                    : new Color(0.58f, 0.54f, 0.47f);
+                return new PaletteMaterialSpec(roofName, roofKind, roofTint, new Vector2(1.65f, 1.2f));
+            }
+
+            if (key.Contains("door"))
+            {
+                return new PaletteMaterialSpec("DS_Building_DoorWood", PaletteTextureKind.DoorWood, new Color(0.5f, 0.42f, 0.31f), new Vector2(1.05f, 1.55f));
+            }
+
+            if (key.Contains("window"))
+            {
+                return new PaletteMaterialSpec("DS_Building_WindowMuted", PaletteTextureKind.WindowMuted, new Color(0.56f, 0.63f, 0.67f), new Vector2(1f, 1f));
+            }
+
+            if (key.Contains("wall") || key.Contains("building") || key.Contains("shack") || key.Contains("store") || key.Contains("house"))
+            {
+                var wallKind = key.Contains("archive") || key.Contains("clinic") ? PaletteTextureKind.MutedMetal : PaletteTextureKind.WornWood;
+                var wallName = wallKind == PaletteTextureKind.MutedMetal ? BuildingMutedMetalMaterialName : BuildingWornWoodMaterialName;
+                var wallTint = wallKind == PaletteTextureKind.MutedMetal
+                    ? new Color(0.48f, 0.52f, 0.52f)
+                    : new Color(0.47f, 0.4f, 0.32f);
+                return new PaletteMaterialSpec(wallName, wallKind, wallTint, new Vector2(1.6f, 1.6f));
+            }
+
+            if (key.Contains("path") || key.Contains("road") || key.Contains("lane") || key.Contains("walk") || key.Contains("step") || key.Contains("porch") || key.Contains("deck"))
+            {
+                var cleanRoute = key.Contains("connector") || key.Contains("base") || key.Contains("terrain");
+                return new PaletteMaterialSpec(
+                    GroundDirtPathMaterialName,
+                    PaletteTextureKind.DirtPath,
+                    new Color(0.63f, 0.58f, 0.48f),
+                    new Vector2(1.7f, 1.7f),
+                    cleanRoute);
+            }
+
+            if (key.Contains("storage") || key.Contains("archiveyard") || key.Contains("court") || key.Contains("stone") || key.Contains("service") || key.Contains("mat"))
+            {
+                return new PaletteMaterialSpec(GroundGravelStorageMaterialName, PaletteTextureKind.GravelStorage, new Color(0.62f, 0.62f, 0.6f), new Vector2(1.9f, 1.9f));
+            }
+
+            if (key.Contains("pressure") || key.Contains("crack") || key.Contains("damaged"))
+            {
+                return new PaletteMaterialSpec(GroundCrackedPressureMaterialName, PaletteTextureKind.CrackedPressure, new Color(0.4f, 0.4f, 0.41f), new Vector2(2.1f, 2.1f));
+            }
+
+            if (key.Contains("tree") || key.Contains("leaf") || key.Contains("grassborder"))
+            {
+                return new PaletteMaterialSpec(FoliageCanopyMaterialName, PaletteTextureKind.None, new Color(0.28f, 0.37f, 0.24f), Vector2.one, true);
+            }
+
+            if (key.Contains("field") || key.Contains("grass") || key.Contains("hedge") || key.Contains("meadow"))
+            {
+                var keepBroadAreasSimple = key.Contains("terrainbase") || key.Contains("fieldfill") || key.Contains("meadow");
+                return new PaletteMaterialSpec(
+                    GroundRecoveringGrassMaterialName,
+                    PaletteTextureKind.RecoveringGrass,
+                    new Color(0.51f, 0.57f, 0.44f),
+                    new Vector2(2.15f, 2.15f),
+                    keepBroadAreasSimple);
+            }
+
+            if (key.Contains("terrain") || key.Contains("soil") || key.Contains("dirt") || key.Contains("mud") || key.Contains("plot") || key.Contains("farm"))
+            {
+                var keepBroadAreasSimple = key.Contains("terrainbase") || key.Contains("packedearth") || key.Contains("sitebase") || key.Contains("continuous");
+                return new PaletteMaterialSpec(
+                    GroundDrySoilMaterialName,
+                    PaletteTextureKind.DrySoil,
+                    new Color(0.61f, 0.54f, 0.43f),
+                    new Vector2(1.95f, 1.95f),
+                    keepBroadAreasSimple);
+            }
+
+            return new PaletteMaterialSpec("DS_Generic_Muted", PaletteTextureKind.None, fallbackColor, Vector2.one, ShouldUseFlatGroundMaterial(name));
+        }
+
+        private static Material GetOrCreatePaletteMaterial(PaletteMaterialSpec spec)
+        {
+            if (paletteMaterials.TryGetValue(spec.MaterialName, out var existing) && existing != null)
+            {
+                return existing;
+            }
+
+            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+            {
+                shader = Shader.Find("Standard");
+            }
+
+            var material = new Material(shader)
+            {
+                name = spec.MaterialName,
+                hideFlags = HideFlags.DontSave
+            };
+
+            if (material.HasProperty("_BaseColor"))
+            {
+                material.SetColor("_BaseColor", spec.ColorTint);
+            }
+            if (material.HasProperty("_Color"))
+            {
+                material.color = spec.ColorTint;
+            }
+
+            if (!spec.PreferFlatShading)
+            {
+                var texture = GetPaletteTexture(spec.TextureKind);
+                if (texture != null)
+                {
+                    if (material.HasProperty("_BaseMap"))
+                    {
+                        material.SetTexture("_BaseMap", texture);
+                        material.SetTextureScale("_BaseMap", spec.Tiling);
+                    }
+                    if (material.HasProperty("_MainTex"))
+                    {
+                        material.SetTexture("_MainTex", texture);
+                        material.SetTextureScale("_MainTex", spec.Tiling);
+                    }
+                }
+            }
+
+            if (material.HasProperty("_Smoothness"))
+            {
+                var smoothness = 0.04f;
+                if (spec.MaterialName == BeaconRecoveryGlowMaterialName)
+                {
+                    smoothness = 0.22f;
+                }
+                else if (spec.MaterialName == BuildingMutedMetalMaterialName || spec.MaterialName == BuildingRoofDarkMaterialName || spec.MaterialName == BuildingRoofWarmMaterialName)
+                {
+                    smoothness = 0.11f;
+                }
+
+                material.SetFloat("_Smoothness", smoothness);
+            }
+
+            if (material.HasProperty("_OcclusionStrength"))
+            {
+                material.SetFloat("_OcclusionStrength", spec.MaterialName == BeaconRecoveryGlowMaterialName ? 0.2f : 0.72f);
+            }
+
+            paletteMaterials[spec.MaterialName] = material;
+            return material;
+        }
+
         private static void EnsureEnvironmentTexturesLoaded()
         {
             if (environmentTexturesLoaded)
@@ -1210,6 +1840,11 @@ namespace DeepStake.World
 
         private static Material PickMaterial(Material baseMaterial, string accent, Color fallbackColor)
         {
+            if (baseMaterial == null)
+            {
+                return GetOrCreatePaletteMaterial(ResolvePaletteMaterialSpec("palette_" + accent, fallbackColor));
+            }
+
             var accentColor = fallbackColor;
             switch (accent)
             {
@@ -1227,6 +1862,7 @@ namespace DeepStake.World
             if (baseMaterial != null)
             {
                 var clone = new Material(baseMaterial);
+                clone.name = "DS_RuntimeAccent_" + accent;
                 if (clone.HasProperty("_BaseColor"))
                 {
                     clone.SetColor("_BaseColor", accentColor);

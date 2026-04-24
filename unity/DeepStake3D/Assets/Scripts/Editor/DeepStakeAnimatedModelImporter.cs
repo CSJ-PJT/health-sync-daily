@@ -23,6 +23,12 @@ namespace DeepStake.Editor
 
         static DeepStakeAnimatedModelImporter()
         {
+            if (Application.isBatchMode)
+            {
+                Debug.Log("[DeepStakeBuild] Batch mode detected. Skipping animated model auto-ensure.");
+                return;
+            }
+
             EditorApplication.delayCall += () => EnsureAllAnimatedModels();
         }
 
@@ -333,6 +339,11 @@ namespace DeepStake.Editor
     {
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
+            if (Application.isBatchMode)
+            {
+                return;
+            }
+
             var shouldProcess = importedAssets.Any(DeepStakeAnimatedModelImporter.IsAnimatedModelPath)
                                 || movedAssets.Any(DeepStakeAnimatedModelImporter.IsAnimatedModelPath);
 

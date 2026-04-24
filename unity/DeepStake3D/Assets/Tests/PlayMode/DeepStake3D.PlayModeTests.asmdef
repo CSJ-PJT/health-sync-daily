@@ -1,0 +1,12 @@
+{
+  "name": "DeepStake3D.PlayModeTests",
+  "references": [
+    "DeepStake3D.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

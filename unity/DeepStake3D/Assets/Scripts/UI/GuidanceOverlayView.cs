@@ -80,17 +80,17 @@ namespace DeepStake.UI
             }
 
             var mobile = Application.isMobilePlatform;
-            var zoneChip = CreatePanel("ZoneChip", mobile ? new Vector2(300f, 52f) : new Vector2(380f, 46f), new Vector2(18f, -18f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Color(0.12f, 0.18f, 0.14f, 0.88f));
-            zoneChipText = CreateText(zoneChip.transform, "ZoneChipText", mobile ? 20 : 22, TextAnchor.MiddleLeft);
+            var zoneChip = CreatePanel("ZoneChip", mobile ? new Vector2(250f, 44f) : new Vector2(380f, 46f), new Vector2(14f, -14f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Color(0.12f, 0.18f, 0.14f, mobile ? 0.76f : 0.88f));
+            zoneChipText = CreateText(zoneChip.transform, "ZoneChipText", mobile ? 16 : 22, TextAnchor.MiddleLeft);
 
-            var missionBar = CreatePanel("MissionBar", mobile ? new Vector2(760f, 74f) : new Vector2(860f, 60f), new Vector2(0f, -18f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Color(0.04f, 0.08f, 0.12f, 0.9f));
-            missionBarText = CreateText(missionBar.transform, "MissionBarText", mobile ? 24 : 24, TextAnchor.MiddleCenter);
+            var missionBar = CreatePanel("MissionBar", mobile ? new Vector2(600f, 54f) : new Vector2(860f, 60f), new Vector2(0f, -14f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Color(0.04f, 0.08f, 0.12f, mobile ? 0.78f : 0.9f));
+            missionBarText = CreateText(missionBar.transform, "MissionBarText", mobile ? 18 : 24, TextAnchor.MiddleCenter);
 
-            var pressureChip = CreatePanel("PressureChip", mobile ? new Vector2(410f, 68f) : new Vector2(620f, 64f), new Vector2(-18f, -18f), new Vector2(1f, 1f), new Vector2(1f, 1f), new Color(0.16f, 0.11f, 0.08f, 0.9f));
-            pressureChipText = CreateText(pressureChip.transform, "PressureChipText", mobile ? 16 : 18, TextAnchor.MiddleLeft);
+            var pressureChip = CreatePanel("PressureChip", mobile ? new Vector2(330f, 54f) : new Vector2(620f, 64f), new Vector2(-16f, -14f), new Vector2(1f, 1f), new Vector2(1f, 1f), new Color(0.16f, 0.11f, 0.08f, mobile ? 0.78f : 0.9f));
+            pressureChipText = CreateText(pressureChip.transform, "PressureChipText", mobile ? 13 : 18, TextAnchor.MiddleLeft);
 
-            var actionCard = CreatePanel("ActionCard", mobile ? new Vector2(760f, 74f) : new Vector2(920f, 102f), mobile ? new Vector2(0f, 148f) : new Vector2(0f, 112f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Color(0.04f, 0.08f, 0.12f, 0.88f));
-            actionCardText = CreateText(actionCard.transform, "ActionCardText", mobile ? 22 : 21, TextAnchor.MiddleCenter);
+            var actionCard = CreatePanel("ActionCard", mobile ? new Vector2(420f, 42f) : new Vector2(920f, 102f), mobile ? new Vector2(0f, 42f) : new Vector2(0f, 112f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Color(0.04f, 0.08f, 0.12f, mobile ? 0.62f : 0.88f));
+            actionCardText = CreateText(actionCard.transform, "ActionCardText", mobile ? 14 : 21, TextAnchor.MiddleCenter);
 
             toastRoot = CreatePanel("ToastPanel", mobile ? new Vector2(500f, 80f) : new Vector2(620f, 72f), new Vector2(-30f, -28f), new Vector2(1f, 1f), new Vector2(1f, 1f), new Color(0.12f, 0.18f, 0.22f, 0.92f)).gameObject;
             toastText = CreateText(toastRoot.transform, "ToastText", mobile ? 20 : 22, TextAnchor.MiddleCenter);
@@ -155,7 +155,7 @@ namespace DeepStake.UI
                 return;
             }
 
-            var screenPoint = mainCamera.WorldToScreenPoint(target.position + Vector3.up * 1.8f);
+            var screenPoint = mainCamera.WorldToScreenPoint(target.position + Vector3.up * (Application.isMobilePlatform ? 1.38f : 1.8f));
             if (screenPoint.z <= 0f)
             {
                 marker.gameObject.SetActive(false);
@@ -171,11 +171,17 @@ namespace DeepStake.UI
         {
             var nearby = DeepStakeGameState.Instance.NearbyTargetLabel;
             var controls = Application.isMobilePlatform
-                ? "Touch  Move | Inspect | Talk"
-                : "Keys  E Inspect  Q Talk  B Place  F5 Save  F9 Load  J Journal";
+                ? "Touch  Move | Run | Inspect | Talk"
+                : "Keys  WASD Move  Shift Run  E Inspect  Q Talk  B Place  F5 Save  F9 Load";
             if (Application.isMobilePlatform)
             {
-                return nearby + "  |  " + ShortPrompt(DeepStakeGameState.Instance.InteractionPrompt);
+                var prompt = ShortPrompt(DeepStakeGameState.Instance.InteractionPrompt);
+                if (!string.IsNullOrWhiteSpace(prompt) && !prompt.StartsWith("Move", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return prompt;
+                }
+
+                return nearby == "None" ? controls : nearby;
             }
 
             return "Nearby  " + nearby + "\n" +
@@ -292,16 +298,20 @@ namespace DeepStake.UI
         {
             var markerObject = new GameObject(name);
             markerObject.transform.SetParent(targetCanvas.transform, false);
+            var rect = markerObject.AddComponent<RectTransform>();
+            rect.sizeDelta = Application.isMobilePlatform ? new Vector2(96f, 32f) : new Vector2(96f, 28f);
             var text = markerObject.AddComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = Application.isMobilePlatform ? 38 : 18;
+            text.fontSize = Application.isMobilePlatform ? 20 : 18;
             text.alignment = TextAnchor.MiddleCenter;
             text.color = Application.isMobilePlatform
                 ? new Color(1f, 0.95f, 0.72f, 1f)
                 : new Color(1f, 0.92f, 0.62f, 1f);
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
             var outline = markerObject.AddComponent<Outline>();
             outline.effectColor = new Color(0f, 0f, 0f, 0.92f);
-            outline.effectDistance = Application.isMobilePlatform ? new Vector2(4f, -4f) : new Vector2(1f, -1f);
+            outline.effectDistance = Application.isMobilePlatform ? new Vector2(1.4f, -1.4f) : new Vector2(1f, -1f);
             text.text = string.Empty;
             markerObject.SetActive(false);
             return text;
