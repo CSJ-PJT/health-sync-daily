@@ -34,10 +34,10 @@ namespace DeepStake.CameraRig
                 cameraComponent.fieldOfView = Mathf.Clamp(cameraComponent.fieldOfView, 54f, 62f);
             }
 
-            RenderSettings.ambientLight = new Color(0.57f, 0.58f, 0.56f);
+            RenderSettings.ambientLight = new Color(0.53f, 0.54f, 0.51f);
             RenderSettings.fog = true;
-            RenderSettings.fogColor = new Color(0.67f, 0.71f, 0.73f);
-            RenderSettings.fogDensity = 0.0045f;
+            RenderSettings.fogColor = new Color(0.68f, 0.71f, 0.72f);
+            RenderSettings.fogDensity = 0.0034f;
         }
 
         public void Configure(Transform nextTarget, Vector3 nextOffset)

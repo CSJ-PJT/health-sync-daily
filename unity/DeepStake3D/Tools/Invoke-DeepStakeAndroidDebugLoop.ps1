@@ -10,6 +10,7 @@ $ErrorActionPreference = "Stop"
 $projectPath = Split-Path -Parent $PSScriptRoot
 $buildRoot = Join-Path $projectPath "Builds\\Android"
 $artifactsRoot = Join-Path $buildRoot "Verification"
+$picturesScreenshotRoot = Join-Path $projectPath "Pictures\\Screenshot"
 $apkPath = Join-Path $buildRoot "DeepStake-debug.apk"
 $unityLogPath = Join-Path $artifactsRoot "unity-cli-build.log"
 $packageName = "com.roboheart.deepstake"
@@ -17,10 +18,12 @@ $activityName = "com.unity3d.player.UnityPlayerGameActivity"
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $tag = "android-debug-$timestamp"
 $screenshotPath = Join-Path $artifactsRoot "device-$timestamp.png"
+$picturesScreenshotPath = Join-Path $picturesScreenshotRoot "device-$timestamp.png"
 $logPath = Join-Path $artifactsRoot "logcat-$timestamp.txt"
 $logExcerptPath = Join-Path $artifactsRoot "logcat-$timestamp-deepstake.txt"
 
 New-Item -ItemType Directory -Force -Path $artifactsRoot | Out-Null
+New-Item -ItemType Directory -Force -Path $picturesScreenshotRoot | Out-Null
 
 function Resolve-AdbPath {
     $command = Get-Command adb -ErrorAction SilentlyContinue
@@ -251,6 +254,10 @@ if ($capturedDisplayPaths.Count -gt 0) {
     }
 }
 
+if (Test-Path $screenshotPath) {
+    Copy-Item -Path $screenshotPath -Destination $picturesScreenshotPath -Force
+}
+
 Write-Host "Capturing logcat..."
 & $script:ResolvedAdbPath -s $script:ResolvedDeviceSerial logcat -d -v time "Unity:D" "*:S" | Out-File -FilePath $logPath -Encoding utf8
 if ($LASTEXITCODE -ne 0) {
@@ -270,5 +277,6 @@ Write-Host "Android debug loop complete."
 Write-Host "APK: $apkPath"
 Write-Host "Unity build log: $unityLogPath"
 Write-Host "Screenshot: $screenshotPath"
+Write-Host "Pictures screenshot: $picturesScreenshotPath"
 Write-Host "Logcat: $logPath"
 Write-Host "Log excerpt: $logExcerptPath"

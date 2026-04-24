@@ -19,15 +19,19 @@ namespace DeepStake.World
         private const string LegacyCuteProxyRootName = "__CutePlayerProxy";
         private const string GroundDrySoilMaterialName = "DS_Ground_DrySoil";
         private const string GroundDirtPathMaterialName = "DS_Ground_DirtPath";
+        private const string GroundMixedDirtGrassMaterialName = "DS_Ground_MixedDirtGrass";
         private const string GroundRecoveringGrassMaterialName = "DS_Ground_RecoveringGrass";
         private const string GroundGravelStorageMaterialName = "DS_Ground_GravelStorage";
+        private const string GroundWornConcreteMaterialName = "DS_Ground_WornConcrete";
         private const string GroundCrackedPressureMaterialName = "DS_Ground_CrackedPressure";
+        private const string BuildingWallPlasterMaterialName = "DS_Building_WallPlaster";
         private const string BuildingWornWoodMaterialName = "DS_Building_WornWood";
         private const string BuildingMutedMetalMaterialName = "DS_Building_MutedMetal";
         private const string BuildingRoofDarkMaterialName = "DS_Building_RoofDark";
         private const string BuildingRoofWarmMaterialName = "DS_Building_RoofWarm";
         private const string FoliageCanopyMaterialName = "DS_Foliage_Canopy";
         private const string PropSupplyCrateMaterialName = "DS_Prop_SupplyCrate";
+        private const string PropAgedMetalSignMaterialName = "DS_Prop_AgedMetalSign";
         private const string BeaconRecoveryGlowMaterialName = "DS_Beacon_RecoveryGlow";
 
         private enum PaletteTextureKind
@@ -35,9 +39,12 @@ namespace DeepStake.World
             None,
             DrySoil,
             DirtPath,
+            MixedDirtGrass,
             RecoveringGrass,
             GravelStorage,
+            WornConcrete,
             CrackedPressure,
+            WallPlaster,
             WornWood,
             MutedMetal,
             RoofDark,
@@ -1591,9 +1598,12 @@ namespace DeepStake.World
             {
                 PaletteTextureKind.DrySoil => FindEnvironmentTexture(cachedTileTextures, "DS_Village_dirt_tile"),
                 PaletteTextureKind.DirtPath => FindEnvironmentTexture(cachedTileTextures, "DS_Village_road_tile"),
+                PaletteTextureKind.MixedDirtGrass => FindEnvironmentTexture(cachedTileTextures, "DS_Village_field_rows") ?? FindEnvironmentTexture(cachedTileTextures, "DS_Village_dirt_tile"),
                 PaletteTextureKind.RecoveringGrass => FindEnvironmentTexture(cachedTileTextures, "DS_Village_field_rows"),
                 PaletteTextureKind.GravelStorage => FindEnvironmentTexture(cachedTileTextures, "DS_Village_stone_tile"),
+                PaletteTextureKind.WornConcrete => FindEnvironmentTexture(cachedTileTextures, "DS_Village_stone_tile"),
                 PaletteTextureKind.CrackedPressure => FindEnvironmentTexture(cachedTileTextures, "crack", "pressure", "damage", "ChatGPT") ?? FindEnvironmentTexture(cachedTileTextures, "DS_Village_stone_tile"),
+                PaletteTextureKind.WallPlaster => FindEnvironmentTexture(cachedWallTextures, "DS_Village_recovery_wall") ?? FindEnvironmentTexture(cachedWallTextures, "plaster"),
                 PaletteTextureKind.WornWood => FindEnvironmentTexture(cachedWallTextures, "DS_Village_wood_wall"),
                 PaletteTextureKind.MutedMetal => FindEnvironmentTexture(cachedWallTextures, "DS_Village_archive_wall") ?? FindEnvironmentTexture(cachedWallTextures, "metal"),
                 PaletteTextureKind.RoofDark => FindEnvironmentTexture(cachedWallTextures, "DS_Village_roof_dark"),
@@ -1670,6 +1680,11 @@ namespace DeepStake.World
                 return new PaletteMaterialSpec(BeaconRecoveryGlowMaterialName, PaletteTextureKind.None, new Color(0.86f, 0.74f, 0.42f), Vector2.one, true);
             }
 
+            if (key.Contains("sign") || key.Contains("noticeboard") || key.Contains("markerpanel"))
+            {
+                return new PaletteMaterialSpec(PropAgedMetalSignMaterialName, PaletteTextureKind.MutedMetal, new Color(0.54f, 0.52f, 0.47f), new Vector2(1.1f, 1.1f));
+            }
+
             if (key.Contains("crate") || key.Contains("supply") || key.Contains("barrel") || key.Contains("spool"))
             {
                 return new PaletteMaterialSpec(PropSupplyCrateMaterialName, PaletteTextureKind.WornWood, new Color(0.58f, 0.49f, 0.36f), new Vector2(1.6f, 1.6f));
@@ -1697,17 +1712,40 @@ namespace DeepStake.World
 
             if (key.Contains("wall") || key.Contains("building") || key.Contains("shack") || key.Contains("store") || key.Contains("house"))
             {
-                var wallKind = key.Contains("archive") || key.Contains("clinic") ? PaletteTextureKind.MutedMetal : PaletteTextureKind.WornWood;
-                var wallName = wallKind == PaletteTextureKind.MutedMetal ? BuildingMutedMetalMaterialName : BuildingWornWoodMaterialName;
-                var wallTint = wallKind == PaletteTextureKind.MutedMetal
-                    ? new Color(0.48f, 0.52f, 0.52f)
-                    : new Color(0.47f, 0.4f, 0.32f);
+                var wallKind = key.Contains("archive") || key.Contains("clinic")
+                    ? PaletteTextureKind.WallPlaster
+                    : key.Contains("warehouse") || key.Contains("workshop") || key.Contains("pump")
+                        ? PaletteTextureKind.MutedMetal
+                        : PaletteTextureKind.WornWood;
+                var wallName = wallKind switch
+                {
+                    PaletteTextureKind.WallPlaster => BuildingWallPlasterMaterialName,
+                    PaletteTextureKind.MutedMetal => BuildingMutedMetalMaterialName,
+                    _ => BuildingWornWoodMaterialName
+                };
+                var wallTint = wallKind switch
+                {
+                    PaletteTextureKind.WallPlaster => new Color(0.56f, 0.54f, 0.5f),
+                    PaletteTextureKind.MutedMetal => new Color(0.48f, 0.52f, 0.52f),
+                    _ => new Color(0.47f, 0.4f, 0.32f)
+                };
                 return new PaletteMaterialSpec(wallName, wallKind, wallTint, new Vector2(1.6f, 1.6f));
+            }
+
+            if (key.Contains("foundation") || key.Contains("floor") || key.Contains("pad"))
+            {
+                return new PaletteMaterialSpec(GroundWornConcreteMaterialName, PaletteTextureKind.WornConcrete, new Color(0.56f, 0.54f, 0.5f), new Vector2(1.55f, 1.55f));
             }
 
             if (key.Contains("path") || key.Contains("road") || key.Contains("lane") || key.Contains("walk") || key.Contains("step") || key.Contains("porch") || key.Contains("deck"))
             {
                 var cleanRoute = key.Contains("connector") || key.Contains("base") || key.Contains("terrain");
+                var usesWoodPlatform = key.Contains("porch") || key.Contains("deck") || key.Contains("post") || key.Contains("rail") || key.Contains("stair");
+                if (usesWoodPlatform)
+                {
+                    return new PaletteMaterialSpec(BuildingWornWoodMaterialName, PaletteTextureKind.WornWood, new Color(0.46f, 0.39f, 0.31f), new Vector2(1.4f, 1.4f));
+                }
+
                 return new PaletteMaterialSpec(
                     GroundDirtPathMaterialName,
                     PaletteTextureKind.DirtPath,
@@ -1721,6 +1759,11 @@ namespace DeepStake.World
                 return new PaletteMaterialSpec(GroundGravelStorageMaterialName, PaletteTextureKind.GravelStorage, new Color(0.62f, 0.62f, 0.6f), new Vector2(1.9f, 1.9f));
             }
 
+            if (key.Contains("fieldrow") || key.Contains("recoveryfield") || key.Contains("farmapron"))
+            {
+                return new PaletteMaterialSpec(GroundMixedDirtGrassMaterialName, PaletteTextureKind.MixedDirtGrass, new Color(0.5f, 0.52f, 0.4f), new Vector2(1.85f, 1.85f));
+            }
+
             if (key.Contains("pressure") || key.Contains("crack") || key.Contains("damaged"))
             {
                 return new PaletteMaterialSpec(GroundCrackedPressureMaterialName, PaletteTextureKind.CrackedPressure, new Color(0.4f, 0.4f, 0.41f), new Vector2(2.1f, 2.1f));
@@ -1729,6 +1772,11 @@ namespace DeepStake.World
             if (key.Contains("tree") || key.Contains("leaf") || key.Contains("grassborder"))
             {
                 return new PaletteMaterialSpec(FoliageCanopyMaterialName, PaletteTextureKind.None, new Color(0.28f, 0.37f, 0.24f), Vector2.one, true);
+            }
+
+            if (key.Contains("fence") || key.Contains("gate") || key.Contains("stake") || key.Contains("post") || key.Contains("bench") || key.Contains("shelf"))
+            {
+                return new PaletteMaterialSpec(BuildingWornWoodMaterialName, PaletteTextureKind.WornWood, new Color(0.45f, 0.38f, 0.29f), new Vector2(1.45f, 1.45f));
             }
 
             if (key.Contains("field") || key.Contains("grass") || key.Contains("hedge") || key.Contains("meadow"))
@@ -1809,7 +1857,7 @@ namespace DeepStake.World
                 {
                     smoothness = 0.22f;
                 }
-                else if (spec.MaterialName == BuildingMutedMetalMaterialName || spec.MaterialName == BuildingRoofDarkMaterialName || spec.MaterialName == BuildingRoofWarmMaterialName)
+                else if (spec.MaterialName == BuildingMutedMetalMaterialName || spec.MaterialName == BuildingRoofDarkMaterialName || spec.MaterialName == BuildingRoofWarmMaterialName || spec.MaterialName == PropAgedMetalSignMaterialName)
                 {
                     smoothness = 0.11f;
                 }
