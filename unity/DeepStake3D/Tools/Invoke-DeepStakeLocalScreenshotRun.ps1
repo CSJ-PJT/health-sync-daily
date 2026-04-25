@@ -5,7 +5,7 @@ param(
     [Alias("LaunchTimeoutSeconds")]
     [int]$TimeoutSeconds = 0,
     [switch]$FailIfUnityProcessesRunning = $true,
-    [ValidateSet("EditorRender", "EditorPlay", "WindowsPlayer")]
+    [ValidateSet("PreflightOnly", "EditorRender", "EditorPlay", "WindowsPlayer")]
     [string]$Mode = "EditorRender"
 )
 
@@ -19,6 +19,7 @@ $statusPath = Join-Path $verificationRoot "local-windows-screenshot-status.txt"
 $defaultEditorLogPath = Join-Path $verificationRoot "local-windows-build.log"
 $defaultRuntimeLogPath = Join-Path $verificationRoot "local-windows-runtime.log"
 $exePath = Join-Path $windowsBuildRoot "DeepStake-local-dev.exe"
+$worldScenePath = Join-Path $projectPath "Assets\Scenes\WorldPrototype3D.unity"
 $statusNotes = New-Object System.Collections.Generic.List[string]
 
 New-Item -ItemType Directory -Force -Path $windowsBuildRoot | Out-Null
@@ -91,6 +92,17 @@ function Write-Status {
     $lines | Out-File -FilePath $statusPath -Encoding utf8
 }
 
+function Add-StatusDetail {
+    param(
+        [string]$Key,
+        [string]$Value
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($Key) -and -not [string]::IsNullOrWhiteSpace($Value)) {
+        Add-StatusNote "$Key=$Value"
+    }
+}
+
 function Get-AvailableOutputPath {
     param(
         [string]$PreferredPath,
@@ -112,6 +124,53 @@ function Get-AvailableOutputPath {
     $fallbackPath = Join-Path $directory ("{0}-{1}{2}" -f $name, $timestamp, $extension)
     Add-StatusNote "$Label locked; using fallback path: $fallbackPath"
     return $fallbackPath
+}
+
+function Test-FileLocked {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) {
+        return $false
+    }
+
+    try {
+        $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+        $stream.Close()
+        return $false
+    }
+    catch {
+        return $true
+    }
+}
+
+function Test-DirectoryWritable {
+    param([string]$Path)
+
+    try {
+        if (-not (Test-Path $Path)) {
+            New-Item -ItemType Directory -Force -Path $Path | Out-Null
+        }
+
+        $probePath = Join-Path $Path ("codex-write-probe-{0}.tmp" -f ([guid]::NewGuid().ToString("N")))
+        Set-Content -LiteralPath $probePath -Value "probe" -Encoding utf8
+        Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
+        return $true
+    }
+    catch {
+        Add-StatusNote "writable_check_failed=$Path :: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+function Get-BlockingUnityProcessSummary {
+    $fatalNames = @("Unity", "Unity Hub", "UnityPackageManager", "UnityShaderCompiler")
+    $fatalProcesses = @(Get-UnityProcessesByName -Names $fatalNames)
+    $licensingProcesses = @(Get-UnityProcessesByName -Names @("Unity.Licensing.Client"))
+
+    return [pscustomobject]@{
+        FatalProcesses = $fatalProcesses
+        LicensingProcesses = $licensingProcesses
+    }
 }
 
 function Get-ScreenshotPath {
@@ -154,9 +213,9 @@ function Get-UnityProcessesByName {
 function Test-BlockingUnityProcesses {
     param([string]$CaptureMode)
 
-    $fatalNames = @("Unity", "Unity Hub", "UnityPackageManager", "UnityShaderCompiler")
-    $fatalProcesses = @(Get-UnityProcessesByName -Names $fatalNames)
-    $licensingProcesses = @(Get-UnityProcessesByName -Names @("Unity.Licensing.Client"))
+    $summary = Get-BlockingUnityProcessSummary
+    $fatalProcesses = $summary.FatalProcesses
+    $licensingProcesses = $summary.LicensingProcesses
 
     if ($fatalProcesses.Count -gt 0) {
         $processSummary = ($fatalProcesses |
@@ -175,6 +234,140 @@ function Test-BlockingUnityProcesses {
     }
 }
 
+function Get-LogFailureCategory {
+    param([string]$LogPath)
+
+    if (-not (Test-Path $LogPath)) {
+        return [pscustomobject]@{
+            Category = "missing_log"
+            SuggestedAction = "Inspect why Unity did not write a log file."
+            Evidence = @("Log file was not created.")
+        }
+    }
+
+    $lines = Get-Content -LiteralPath $LogPath -ErrorAction SilentlyContinue
+    $evidence = New-Object System.Collections.Generic.List[string]
+
+    if ($lines | Select-String -SimpleMatch "unable to open database file") {
+        $evidence.Add("unable to open database file")
+        return [pscustomobject]@{
+            Category = "database_lock"
+            SuggestedAction = "Close Unity, Unity Hub, UnityPackageManager, and UnityShaderCompiler, then rerun PreflightOnly."
+            Evidence = $evidence
+        }
+    }
+
+    if ($lines | Select-String -SimpleMatch "attempt to write a readonly database") {
+        $evidence.Add("attempt to write a readonly database")
+        return [pscustomobject]@{
+            Category = "readonly_database"
+            SuggestedAction = "Clear Unity background processes and verify the project folder is writable before rerunning."
+            Evidence = $evidence
+        }
+    }
+
+    if ($lines | Select-String -SimpleMatch "Failed to acquire global mutex Unity-LicenseClient") {
+        $evidence.Add(($lines | Select-String -SimpleMatch "Failed to acquire global mutex Unity-LicenseClient" | Select-Object -First 1).Line.Trim())
+        return [pscustomobject]@{
+            Category = "licensing_mutex"
+            SuggestedAction = "Stop Unity.Licensing.Client and Unity Hub before rerunning."
+            Evidence = $evidence
+        }
+    }
+
+    if (($lines | Select-String -SimpleMatch "Could not establish a connection with the Unity Package Manager local server process.") -or
+        ($lines | Select-String -SimpleMatch "Could not connect to IPC stream")) {
+        $ipcLine = $lines | Select-String -SimpleMatch "Could not connect to IPC stream" | Select-Object -First 1
+        $upmLine = $lines | Select-String -SimpleMatch "Could not establish a connection with the Unity Package Manager local server process." | Select-Object -First 1
+        if ($ipcLine) { $evidence.Add($ipcLine.Line.Trim()) }
+        if ($upmLine) { $evidence.Add($upmLine.Line.Trim()) }
+        return [pscustomobject]@{
+            Category = "upm_ipc_failure"
+            SuggestedAction = "Close UnityPackageManager and Unity Hub, then rerun PreflightOnly and EditorRender."
+            Evidence = $evidence
+        }
+    }
+
+    return [pscustomobject]@{
+        Category = "unknown_unity_failure"
+        SuggestedAction = "Inspect the Unity log file directly before retrying."
+        Evidence = @()
+    }
+}
+
+function Invoke-Preflight {
+    param(
+        [string]$CaptureMode,
+        [string]$ResolvedUnityPath,
+        [string]$EditorLogPath,
+        [string]$RuntimeLogPath,
+        [string]$RequestedScreenshotPath
+    )
+
+    $issues = New-Object System.Collections.Generic.List[string]
+
+    if (-not (Test-Path $projectPath)) {
+        $issues.Add("missing_project_path")
+        Add-StatusDetail "missing_project_path" $projectPath
+    }
+
+    if (-not (Test-Path $ResolvedUnityPath)) {
+        $issues.Add("missing_unity_executable")
+        Add-StatusDetail "missing_unity_executable" $ResolvedUnityPath
+    }
+
+    if (($CaptureMode -eq "EditorRender") -or ($CaptureMode -eq "EditorPlay")) {
+        if (-not (Test-Path $worldScenePath)) {
+            $issues.Add("missing_scene_path")
+            Add-StatusDetail "missing_scene_path" $worldScenePath
+        }
+    }
+
+    foreach ($dirPath in @($verificationRoot, $picturesRoot, (Split-Path -Parent $RequestedScreenshotPath))) {
+        if (-not (Test-DirectoryWritable -Path $dirPath)) {
+            $issues.Add("unwritable_directory")
+            Add-StatusDetail "unwritable_directory" $dirPath
+        }
+    }
+
+    foreach ($pair in @(
+        @{ Label = "build_log"; Path = $defaultEditorLogPath },
+        @{ Label = "runtime_log"; Path = $defaultRuntimeLogPath }
+    )) {
+        if (Test-FileLocked -Path $pair.Path) {
+            Add-StatusDetail ("locked_" + $pair.Label) $pair.Path
+        }
+    }
+
+    if ($FailIfUnityProcessesRunning) {
+        $summary = Get-BlockingUnityProcessSummary
+        if ($summary.FatalProcesses.Count -gt 0) {
+            $processSummary = ($summary.FatalProcesses |
+                Sort-Object ProcessName, Id |
+                ForEach-Object { "{0} (PID {1})" -f $_.ProcessName, $_.Id }) -join ", "
+            $issues.Add("blocking_unity_processes")
+            Add-StatusDetail "blocking_unity_processes" $processSummary
+        }
+
+        if ($summary.LicensingProcesses.Count -gt 0) {
+            $licensingSummary = ($summary.LicensingProcesses |
+                Sort-Object ProcessName, Id |
+                ForEach-Object { "{0} (PID {1})" -f $_.ProcessName, $_.Id }) -join ", "
+            Add-StatusDetail "licensing_processes" $licensingSummary
+            $issues.Add("blocking_licensing_process")
+            Add-StatusNote "Unity.Licensing.Client detected. EditorRender is blocked until the licensing client is closed because it can trigger Unity-LicenseClient mutex failures."
+        }
+    }
+
+    if ($issues.Count -gt 0) {
+        Write-Status -State "blocked" -Message ("Preflight failed: " + (($issues | Select-Object -Unique) -join ", "))
+        return $false
+    }
+
+    Write-Status -State "starting" -Message "Preflight passed."
+    return $true
+}
+
 function Start-UnityCliWithTimeout {
     param(
         [string]$FilePath,
@@ -185,7 +378,8 @@ function Start-UnityCliWithTimeout {
         [string]$FailureMessage,
         [string]$TimeoutState,
         [int]$TimeoutSecondsValue,
-        [string]$SuccessOutputPath = ""
+        [string]$SuccessOutputPath = "",
+        [string]$FailureLogPath = ""
     )
 
     Write-Status -State $StartState -Message $StartMessage
@@ -218,6 +412,15 @@ function Start-UnityCliWithTimeout {
             return
         }
 
+        if (-not [string]::IsNullOrWhiteSpace($FailureLogPath) -and (Test-Path $FailureLogPath)) {
+            $category = Get-LogFailureCategory -LogPath $FailureLogPath
+            Add-StatusDetail "root_cause_category" $category.Category
+            Add-StatusDetail "suggested_user_action" $category.SuggestedAction
+            foreach ($line in $category.Evidence) {
+                Add-StatusDetail "failure_line" $line
+            }
+        }
+
         Write-Status -State $FailureState -Message $FailureMessage
         throw $FailureMessage
     }
@@ -243,6 +446,18 @@ Write-Host "Screenshot: $screenshotPath"
 Write-Host "Build log: $editorLogPath"
 Write-Host "Runtime log: $runtimeLogPath"
 Write-Host "Status file: $statusPath"
+
+if (-not (Invoke-Preflight -CaptureMode $Mode -ResolvedUnityPath $resolvedUnityPath -EditorLogPath $editorLogPath -RuntimeLogPath $runtimeLogPath -RequestedScreenshotPath $screenshotPath)) {
+    throw "Preflight failed. See $statusPath"
+}
+
+if ($Mode -eq "PreflightOnly") {
+    Write-Status -State "success" -Message "PreflightOnly completed successfully."
+    Write-Host ""
+    Write-Host "DeepStake local screenshot preflight completed."
+    Write-Host "Status: $statusPath"
+    exit 0
+}
 
 if ($FailIfUnityProcessesRunning) {
     Test-BlockingUnityProcesses -CaptureMode $Mode
@@ -273,7 +488,8 @@ if ($Mode -eq "EditorRender") {
         -FailureMessage "Unity editor render screenshot capture failed. See $editorLogPath" `
         -TimeoutState "editor_render_timeout" `
         -TimeoutSecondsValue $effectiveTimeoutSeconds `
-        -SuccessOutputPath $screenshotPath
+        -SuccessOutputPath $screenshotPath `
+        -FailureLogPath $editorLogPath
 
     if (-not (Test-Path $screenshotPath)) {
         Write-Status -State "editor_render_failed" -Message "Editor render completed without producing screenshot."
@@ -306,7 +522,8 @@ elseif ($Mode -eq "EditorPlay") {
         -FailureMessage "Unity editor Play Mode screenshot capture failed. See $editorLogPath" `
         -TimeoutState "screenshot_timeout" `
         -TimeoutSecondsValue $effectiveTimeoutSeconds `
-        -SuccessOutputPath $screenshotPath
+        -SuccessOutputPath $screenshotPath `
+        -FailureLogPath $editorLogPath
 
     if (-not (Test-Path $screenshotPath)) {
         Write-Status -State "editor_play_failed" -Message "Editor Play screenshot capture completed without producing screenshot."
@@ -333,7 +550,8 @@ else {
             -FailureState "build_failed" `
             -FailureMessage "Unity Windows development build failed. See $editorLogPath" `
             -TimeoutState "screenshot_timeout" `
-            -TimeoutSecondsValue $effectiveTimeoutSeconds
+            -TimeoutSecondsValue $effectiveTimeoutSeconds `
+            -FailureLogPath $editorLogPath
     }
     else {
         Write-Status -State "build_skipped" -Message "Skipped build and will use existing executable."
