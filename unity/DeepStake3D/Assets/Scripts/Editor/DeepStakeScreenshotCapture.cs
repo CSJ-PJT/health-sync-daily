@@ -114,8 +114,6 @@ namespace DeepStake.EditorTools
                 GetObjectReference<Material>(serializedController, "placementMaterial"),
                 GetObjectReference<Material>(serializedController, "roadMaterial"),
                 GetObjectReference<Material>(serializedController, "storageMaterial"));
-            WorldPrototypeVisualPass.RefreshFirstScreenGroundArt(zoneRoot, definition);
-
             var playerTransform = GetObjectReference<Transform>(serializedController, "playerTransform");
             if (playerTransform != null)
             {
