@@ -10,6 +10,7 @@ using DeepStake.Quests;
 using DeepStake.Save;
 using DeepStake.Settlement;
 using DeepStake.UI;
+using DeepStake.Rendering;
 using System.Collections;
 using System.IO;
 using UnityEngine;
@@ -232,6 +233,16 @@ namespace DeepStake.World
                 DeepStakeGameState.Instance.UpdatePrompt(
                     "Read the notice board, speak with Archivist Sena, inspect the supply crates, then anchor the beacon.");
             }
+
+            DeepStakePbrEnvironmentPipeline.ApplyToWorld(
+                zoneRoot,
+                interactableTransform,
+                secondaryInteractableTransform,
+                tertiaryInteractableTransform,
+                placementMarkerTransform,
+                secondaryPlacementMarkerTransform,
+                placementPreviewRoot,
+                secondaryPlacementPreviewRoot);
 
             Debug.Log("[DeepStakeDev] WorldPrototype3D ready. zone=" + definition.zoneId + " player=" + (playerTransform != null));
             TryScheduleLocalScreenshotCapture();

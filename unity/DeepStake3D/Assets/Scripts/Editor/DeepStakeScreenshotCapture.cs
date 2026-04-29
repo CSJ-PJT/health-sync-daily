@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using DeepStake.Boot;
 using DeepStake.CameraRig;
+using DeepStake.Rendering;
 using DeepStake.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -141,6 +142,15 @@ namespace DeepStake.EditorTools
             ApplyPlacementVisual(serializedController, "secondaryPlacementMarkerTransform", definition, 1, "supply-relay");
             ApplyPlacementVisual(serializedController, "placementPreviewRoot", definition, 0, "recovery-beacon");
             ApplyPlacementVisual(serializedController, "secondaryPlacementPreviewRoot", definition, 1, "supply-relay");
+            DeepStakePbrEnvironmentPipeline.ApplyToWorld(
+                zoneRoot,
+                GetObjectReference<Transform>(serializedController, "interactableTransform"),
+                GetObjectReference<Transform>(serializedController, "secondaryInteractableTransform"),
+                GetObjectReference<Transform>(serializedController, "tertiaryInteractableTransform"),
+                GetObjectReference<Transform>(serializedController, "placementMarkerTransform"),
+                GetObjectReference<Transform>(serializedController, "secondaryPlacementMarkerTransform"),
+                GetObjectReference<Transform>(serializedController, "placementPreviewRoot"),
+                GetObjectReference<Transform>(serializedController, "secondaryPlacementPreviewRoot"));
 
             var quarterViewCameraRig = GetObjectReference<QuarterViewCameraRig>(serializedController, "quarterViewCameraRig");
             if (quarterViewCameraRig != null && playerTransform != null)
@@ -219,11 +229,7 @@ namespace DeepStake.EditorTools
                 captureCamera.backgroundColor = new Color(0.66f, 0.71f, 0.72f);
                 captureCamera.fieldOfView = Mathf.Clamp(captureCamera.fieldOfView, 49f, 56f);
             }
-
-            RenderSettings.ambientLight = new Color(0.48f, 0.47f, 0.44f);
-            RenderSettings.fog = true;
-            RenderSettings.fogColor = new Color(0.68f, 0.7f, 0.69f);
-            RenderSettings.fogDensity = 0.0022f;
+            DeepStakePbrEnvironmentPipeline.ApplyLightingProfile();
             return captureCamera;
         }
 

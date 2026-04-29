@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
+using DeepStake.Rendering;
 using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 namespace DeepStake.CameraRig
@@ -34,10 +35,7 @@ namespace DeepStake.CameraRig
                 cameraComponent.fieldOfView = Mathf.Clamp(cameraComponent.fieldOfView, 49f, 56f);
             }
 
-            RenderSettings.ambientLight = new Color(0.48f, 0.47f, 0.44f);
-            RenderSettings.fog = true;
-            RenderSettings.fogColor = new Color(0.68f, 0.7f, 0.69f);
-            RenderSettings.fogDensity = 0.0022f;
+            DeepStakePbrEnvironmentPipeline.ApplyLightingProfile();
         }
 
         public void Configure(Transform nextTarget, Vector3 nextOffset)
