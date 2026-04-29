@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using DeepStake.World;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 
 namespace DeepStake.Rendering
 {
@@ -13,12 +12,11 @@ namespace DeepStake.Rendering
         private const string SceneMappingResourcePath = "PBR/deepstake_pbr_scene_mapping";
         private const string LightingProfileResourcePath = "PBR/deepstake_pbr_lighting_profile";
         private const string GeneratedVisualRootName = "__GeneratedZoneVisuals";
-        private const string LightingVolumeName = "__DeepStakePbrLightingVolume";
-
         private static DeepStakePbrMaterialLibrary cachedLibrary;
         private static DeepStakePbrSceneMapping cachedSceneMapping;
         private static DeepStakePbrLightingProfile cachedLightingProfile;
         private static readonly Dictionary<string, Material> RuntimeMaterialCache = new Dictionary<string, Material>(StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> RoughnessWarnings = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public static void ApplyToWorld(
             Transform zoneRoot,
@@ -79,8 +77,6 @@ namespace DeepStake.Rendering
                 light.shadowBias = 0.08f;
                 light.shadowNormalBias = 0.4f;
             }
-
-            EnsureLightingVolume(profile);
         }
 
         private static void ApplyMappingsToHierarchy(Transform root)
@@ -209,11 +205,16 @@ namespace DeepStake.Rendering
                 hideFlags = HideFlags.DontSave
             };
 
-            var tint = ToColor(slot.colorTint, ParseHtmlColor(slot.placeholderColorHex, new Color(0.5f, 0.5f, 0.5f)));
-            SetColor(material, "_BaseColor", tint);
-            SetColor(material, "_Color", tint);
-
             var baseTexture = LoadTexture(slot.textures.baseColor);
+            var tint = ToColor(slot.colorTint, Color.white);
+            var placeholderColor = ParseHtmlColor(slot.placeholderColorHex, new Color(0.5f, 0.5f, 0.5f));
+            var effectiveBaseColor = baseTexture != null
+                ? MultiplyColors(Color.white, tint)
+                : MultiplyColors(placeholderColor, tint);
+
+            SetColor(material, "_BaseColor", effectiveBaseColor);
+            SetColor(material, "_Color", effectiveBaseColor);
+
             if (baseTexture != null)
             {
                 SetTexture(material, "_BaseMap", baseTexture, slot.uvTiling);
@@ -243,6 +244,9 @@ namespace DeepStake.Rendering
             }
             SetFloat(material, "_Metallic", Mathf.Clamp01(slot.metallicMultiplier));
 
+            // This scaffold does not repack standalone roughness maps into a URP mask map at runtime.
+            // Until final import packs roughness into a shader-compatible texture, use the multiplier fallback.
+            WarnAboutStandaloneRoughness(slot);
             var smoothness = 1f - Mathf.Clamp(slot.roughnessMultiplier * 0.75f, 0.05f, 0.95f);
             SetFloat(material, "_Smoothness", smoothness);
 
@@ -296,6 +300,24 @@ namespace DeepStake.Rendering
             }
         }
 
+        private static void WarnAboutStandaloneRoughness(DeepStakePbrMaterialSlot slot)
+        {
+            if (slot == null || string.IsNullOrWhiteSpace(slot.textures.roughness))
+            {
+                return;
+            }
+
+            if (!RoughnessWarnings.Add(slot.slotKey))
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                "[DeepStakePbr] Standalone roughness map is declared for slot '" + slot.slotKey +
+                "' but the current runtime scaffold does not repack roughness into a URP mask map. " +
+                "Using roughnessMultiplier fallback until final imported textures provide a shader-compatible packing.");
+        }
+
         private static DeepStakePbrMaterialLibrary LoadMaterialLibrary()
         {
             if (cachedLibrary != null)
@@ -338,62 +360,6 @@ namespace DeepStake.Rendering
             return cachedLightingProfile;
         }
 
-        private static void EnsureLightingVolume(DeepStakePbrLightingProfile profile)
-        {
-            var volumeObject = GameObject.Find(LightingVolumeName);
-            if (volumeObject == null)
-            {
-                volumeObject = new GameObject(LightingVolumeName);
-                volumeObject.hideFlags = HideFlags.DontSave;
-            }
-
-            var volume = volumeObject.GetComponent<Volume>();
-            if (volume == null)
-            {
-                volume = volumeObject.AddComponent<Volume>();
-            }
-
-            volume.isGlobal = true;
-            volume.priority = 100f;
-            volume.weight = 1f;
-            volume.sharedProfile = BuildRuntimeVolumeProfile(profile);
-        }
-
-        private static VolumeProfile BuildRuntimeVolumeProfile(DeepStakePbrLightingProfile profile)
-        {
-            var volumeProfile = ScriptableObject.CreateInstance<VolumeProfile>();
-            volumeProfile.hideFlags = HideFlags.DontSave;
-            volumeProfile.name = "DeepStakePbrRuntimeProfile";
-
-            var colorAdjustments = volumeProfile.Add<ColorAdjustments>(true);
-            colorAdjustments.postExposure.overrideState = true;
-            colorAdjustments.postExposure.value = profile.postExposure;
-            colorAdjustments.contrast.overrideState = true;
-            colorAdjustments.contrast.value = profile.contrast;
-            colorAdjustments.saturation.overrideState = true;
-            colorAdjustments.saturation.value = profile.saturation;
-            colorAdjustments.colorFilter.overrideState = true;
-            colorAdjustments.colorFilter.value = Color.white;
-
-            var whiteBalance = volumeProfile.Add<WhiteBalance>(true);
-            whiteBalance.temperature.overrideState = true;
-            whiteBalance.temperature.value = profile.temperature;
-
-            var bloom = volumeProfile.Add<Bloom>(true);
-            bloom.intensity.overrideState = true;
-            bloom.intensity.value = profile.bloomIntensity;
-            bloom.threshold.overrideState = true;
-            bloom.threshold.value = 1.2f;
-
-            var vignette = volumeProfile.Add<Vignette>(true);
-            vignette.intensity.overrideState = true;
-            vignette.intensity.value = profile.vignetteIntensity;
-            vignette.smoothness.overrideState = true;
-            vignette.smoothness.value = 0.35f;
-
-            return volumeProfile;
-        }
-
         private static Color ToColor(DeepStakePbrColorValue value, Color fallback)
         {
             if (value == null)
@@ -412,6 +378,11 @@ namespace DeepStake.Rendering
             }
 
             return fallback;
+        }
+
+        private static Color MultiplyColors(Color a, Color b)
+        {
+            return new Color(a.r * b.r, a.g * b.g, a.b * b.b, a.a * b.a);
         }
     }
 }

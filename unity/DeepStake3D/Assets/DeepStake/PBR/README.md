@@ -21,3 +21,6 @@ Important:
 - raw or curated source textures can be staged here during review
 - runtime-loadable texture copies used by the current PBR pipeline must live under:
   - `Assets/Resources/PBR/Textures/Environment/`
+- the current scaffold uses `placeholderColorHex * colorTint` when BaseColor is missing
+- standalone roughness textures are declared in the slot library, but runtime currently uses `roughnessMultiplier` until final assets are packed into shader-compatible mask/smoothness inputs
+- multi-material renderers currently receive one resolved slot across all submaterials in the scaffold path; treat that as a known limitation until final authored meshes/materials are in place
