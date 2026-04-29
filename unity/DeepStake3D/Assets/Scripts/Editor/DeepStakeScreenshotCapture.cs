@@ -384,7 +384,7 @@ namespace DeepStake.EditorTools
 
         private static string GetCommandLineValue(string prefix)
         {
-            var args = Environment.GetCommandLineArgs();
+            var args = System.Environment.GetCommandLineArgs();
             for (var index = 0; index < args.Length; index++)
             {
                 var value = args[index];
