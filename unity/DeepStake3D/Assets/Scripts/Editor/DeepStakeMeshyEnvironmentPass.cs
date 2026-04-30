@@ -106,6 +106,22 @@ namespace DeepStake.EditorTools
             }
         }
 
+        public static void DeclutterWorldPrototypeCli()
+        {
+            try
+            {
+                var report = DeclutterWorldPrototypeScene();
+                File.WriteAllText("TestResults/meshy-declutter-report.txt", report);
+                Debug.Log("[DeepStakeMeshy] Declutter pass succeeded.\n" + report);
+                EditorApplication.Exit(0);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[DeepStakeMeshy] Declutter pass failed: " + exception);
+                EditorApplication.Exit(1);
+            }
+        }
+
         private static DeepStakeMeshyModelRegistry LoadRegistry()
         {
             var json = File.ReadAllText(RegistryPath);
@@ -135,6 +151,148 @@ namespace DeepStake.EditorTools
             var json = JsonUtility.ToJson(registry, true);
             File.WriteAllText(RegistryPath, json);
             AssetDatabase.ImportAsset(RegistryPath);
+        }
+
+        private static string DeclutterWorldPrototypeScene()
+        {
+            EditorSceneManager.OpenScene(WorldScenePath, OpenSceneMode.Single);
+
+            var removed = new List<string>();
+            var disabled = new List<string>();
+            var adjusted = new List<string>();
+            var preserved = new List<string>();
+            var skipped = new List<string>();
+
+            SuppressGeneratedPropVisual("FarmSign3D", disabled, preserved, skipped);
+            SuppressGeneratedPropVisual("PlacementMarker3D", disabled, preserved, skipped);
+
+            var dressingRoot = GameObject.Find(DressingRootName);
+            if (dressingRoot != null)
+            {
+                RemoveEmptyDressingGroup(dressingRoot.transform, "prop_wood_fence", removed);
+                RemoveEmptyDressingGroup(dressingRoot.transform, "tree_dry_small", removed);
+                RemoveEmptyDressingGroup(dressingRoot.transform, "prop_rusty_barrel", removed);
+                RemoveEmptyDressingGroup(dressingRoot.transform, "prop_supply_crate", removed);
+                FitNoticeBoardVisual(dressingRoot.transform.Find("prop_notice_board"), adjusted, skipped);
+            }
+            else
+            {
+                skipped.Add("MeshyVisualDressing not found");
+            }
+
+            EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+            EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+
+            var builder = new StringBuilder();
+            builder.AppendLine("removed=" + string.Join(", ", removed));
+            builder.AppendLine("disabled=" + string.Join(", ", disabled));
+            builder.AppendLine("adjusted=" + string.Join(", ", adjusted));
+            builder.AppendLine("preserved=" + string.Join(", ", preserved));
+            builder.AppendLine("skipped=" + string.Join(", ", skipped));
+            return builder.ToString();
+        }
+
+        private static void SuppressGeneratedPropVisual(
+            string anchorName,
+            ICollection<string> disabled,
+            ICollection<string> preserved,
+            ICollection<string> skipped)
+        {
+            var anchor = GameObject.Find(anchorName);
+            if (anchor == null)
+            {
+                skipped.Add(anchorName + " not found");
+                return;
+            }
+
+            foreach (var renderer in anchor.GetComponents<Renderer>())
+            {
+                if (renderer != null && renderer.enabled)
+                {
+                    renderer.enabled = false;
+                    disabled.Add(anchorName + " root renderer");
+                }
+            }
+
+            var propRoot = anchor.transform.Find("__PropVisual");
+            if (propRoot == null)
+            {
+                propRoot = new GameObject("__PropVisual").transform;
+                propRoot.SetParent(anchor.transform, false);
+                disabled.Add(anchorName + " generated prop placeholder");
+            }
+
+            for (var index = propRoot.childCount - 1; index >= 0; index--)
+            {
+                var child = propRoot.GetChild(index);
+                if (!string.Equals(child.name, "__PropVisualVersion_51", StringComparison.Ordinal))
+                {
+                    UnityEngine.Object.DestroyImmediate(child.gameObject);
+                    disabled.Add(anchorName + "/" + child.name);
+                }
+            }
+
+            if (propRoot.Find("__PropVisualVersion_51") == null)
+            {
+                var marker = new GameObject("__PropVisualVersion_51");
+                marker.transform.SetParent(propRoot, false);
+            }
+
+            preserved.Add(anchorName + " scripts/colliders/transform");
+        }
+
+        private static void RemoveEmptyDressingGroup(Transform dressingRoot, string groupName, ICollection<string> removed)
+        {
+            var group = dressingRoot.Find(groupName);
+            if (group == null || group.childCount > 0)
+            {
+                return;
+            }
+
+            UnityEngine.Object.DestroyImmediate(group.gameObject);
+            removed.Add(DressingRootName + "/" + groupName);
+        }
+
+        private static void FitNoticeBoardVisual(
+            Transform noticeGroup,
+            ICollection<string> adjusted,
+            ICollection<string> skipped)
+        {
+            if (noticeGroup == null || noticeGroup.childCount == 0)
+            {
+                skipped.Add("prop_notice_board missing or empty");
+                return;
+            }
+
+            if (!TryGetRendererBounds(noticeGroup.gameObject, out var beforeBounds))
+            {
+                skipped.Add("prop_notice_board has no render bounds");
+                return;
+            }
+
+            var maxHeight = 1.35f;
+            var maxWidth = 1.15f;
+            var scaleByHeight = maxHeight / Mathf.Max(0.001f, beforeBounds.size.y);
+            var scaleByWidth = maxWidth / Mathf.Max(0.001f, beforeBounds.size.x);
+            var scaleMultiplier = Mathf.Min(1f, scaleByHeight, scaleByWidth);
+            if (scaleMultiplier >= 0.995f)
+            {
+                adjusted.Add("prop_notice_board already within target bounds");
+                return;
+            }
+
+            var bottomBefore = beforeBounds.min.y;
+            foreach (Transform child in noticeGroup)
+            {
+                child.localScale *= scaleMultiplier;
+            }
+
+            if (TryGetRendererBounds(noticeGroup.gameObject, out var afterBounds))
+            {
+                noticeGroup.position += Vector3.up * (bottomBefore - afterBounds.min.y);
+            }
+
+            adjusted.Add("prop_notice_board scaled by " + scaleMultiplier.ToString("0.###"));
         }
 
         private static void EnsurePrefabAssets(DeepStakeMeshyModelRegistry registry)
