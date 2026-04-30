@@ -53,6 +53,25 @@ namespace DeepStake.EditorTools
             }
         }
 
+        public static void AdjustFirstPlacementCli()
+        {
+            try
+            {
+                var registry = LoadRegistry();
+                var placement = LoadPlacementMapping();
+                EnsurePrefabAssets(registry);
+                ApplyAdjustedFirstPlacement(registry, placement);
+                SaveRegistry(registry);
+                Debug.Log("[DeepStakeMeshy] Adjusted first placement pass succeeded.");
+                EditorApplication.Exit(0);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[DeepStakeMeshy] Adjusted first placement pass failed: " + exception);
+                EditorApplication.Exit(1);
+            }
+        }
+
         public static void ValidateAppliedSceneCli()
         {
             try
@@ -66,6 +85,23 @@ namespace DeepStake.EditorTools
             catch (Exception exception)
             {
                 Debug.LogError("[DeepStakeMeshy] Scene validation failed: " + exception);
+                EditorApplication.Exit(1);
+            }
+        }
+
+        public static void CreatePendingPrefabsCli()
+        {
+            try
+            {
+                var registry = LoadRegistry();
+                EnsurePrefabAssets(registry);
+                SaveRegistry(registry);
+                Debug.Log("[DeepStakeMeshy] Prefab-only pass succeeded.");
+                EditorApplication.Exit(0);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[DeepStakeMeshy] Prefab-only pass failed: " + exception);
                 EditorApplication.Exit(1);
             }
         }
@@ -231,6 +267,73 @@ namespace DeepStake.EditorTools
             EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
         }
 
+        private static void ApplyAdjustedFirstPlacement(
+            DeepStakeMeshyModelRegistry registry,
+            DeepStakeMeshyPlacementMapping placementMapping)
+        {
+            EditorSceneManager.OpenScene(WorldScenePath, OpenSceneMode.Single);
+            var controller = UnityEngine.Object.FindFirstObjectByType<WorldPrototype3DController>();
+            if (controller == null)
+            {
+                throw new InvalidOperationException("WorldPrototype3DController not found.");
+            }
+
+            var serializedController = new SerializedObject(controller);
+            var zoneRoot = GetObjectReference<Transform>(serializedController, "zoneRoot");
+            var playerTransform = GetObjectReference<Transform>(serializedController, "playerTransform");
+            var worldPrototypeJson = GetObjectReference<TextAsset>(serializedController, "worldPrototypeJson");
+            var definition = WorldPrototype3DDefinition.FromJson(worldPrototypeJson);
+
+            if (zoneRoot == null)
+            {
+                throw new InvalidOperationException("zoneRoot is not assigned.");
+            }
+
+            WorldPrototypeVisualPass.RebuildZoneVisuals(
+                zoneRoot,
+                definition,
+                GetObjectReference<Material>(serializedController, "fieldMaterial"),
+                GetObjectReference<Material>(serializedController, "archiveMaterial"),
+                GetObjectReference<Material>(serializedController, "placementMaterial"),
+                GetObjectReference<Material>(serializedController, "roadMaterial"),
+                GetObjectReference<Material>(serializedController, "storageMaterial"));
+
+            var dressingRoot = GameObject.Find(DressingRootName);
+            if (dressingRoot == null)
+            {
+                dressingRoot = new GameObject(DressingRootName);
+            }
+
+            ClearChildren(dressingRoot.transform);
+
+            var prefabLookup = registry.entries
+                .Where(entry => string.Equals(entry.status, "prefab_ready", StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(entry.status, "applied", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(entry => entry.assetId, entry => AssetDatabase.LoadAssetAtPath<GameObject>(entry.prefabPath));
+
+            var appliedAssetIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            PlaceAdjustedDoors(zoneRoot, dressingRoot.transform, prefabLookup, appliedAssetIds, "door_wood_old");
+            PlaceAdjustedWindows(zoneRoot, dressingRoot.transform, prefabLookup, appliedAssetIds, "window_dark_frame");
+            PlaceAdjustedNoticeBoard(controller, dressingRoot.transform, prefabLookup, appliedAssetIds, "prop_notice_board");
+            PlaceAdjustedLampPost(zoneRoot, dressingRoot.transform, prefabLookup, appliedAssetIds, "prop_lamp_post");
+            PlaceAdjustedFenceSegments(zoneRoot, dressingRoot.transform, prefabLookup, appliedAssetIds, "prop_wood_fence");
+            PlaceAdjustedBarrels(zoneRoot, dressingRoot.transform, prefabLookup, appliedAssetIds, "prop_rusty_barrel");
+            PlaceAdjustedSupplyCrate(controller, dressingRoot.transform, prefabLookup, appliedAssetIds, "prop_supply_crate");
+            PlaceAdjustedDryTrees(zoneRoot, playerTransform, dressingRoot.transform, prefabLookup, appliedAssetIds, "tree_dry_small");
+
+            foreach (var entry in registry.entries)
+            {
+                if (appliedAssetIds.Contains(entry.assetId))
+                {
+                    entry.status = "applied";
+                }
+            }
+
+            ClearChildren(zoneRoot);
+            EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+        }
+
         private static string ValidateAppliedScene(DeepStakeMeshyModelRegistry registry)
         {
             EditorSceneManager.OpenScene(WorldScenePath, OpenSceneMode.Single);
@@ -316,6 +419,38 @@ namespace DeepStake.EditorTools
             }
         }
 
+        private static void PlaceAdjustedDoors(
+            Transform zoneRoot,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ISet<string> appliedAssetIds,
+            string assetId)
+        {
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null)
+            {
+                return;
+            }
+
+            var targets = new[]
+            {
+                FindChildByName(zoneRoot, "ArchiveBuilding_DoorwayShadow"),
+                FindChildByName(zoneRoot, "ClinicCottage_DoorwayShadow")
+            }.Where(target => target != null);
+
+            var group = EnsureGroup(dressingRoot, assetId);
+            foreach (var target in targets)
+            {
+                var instance = PlaceFittedPrefab(group, prefab, target, 180f, new Vector3(0f, -0.42f, -0.04f), FitAxis.WidthAndHeight, 1.18f);
+                if (instance == null)
+                {
+                    continue;
+                }
+
+                NudgeLocalScale(instance.transform, new Vector3(1.18f, 1.05f, 1.22f));
+                appliedAssetIds.Add(assetId);
+            }
+        }
+
         private static void PlaceWindowPrefabs(
             Transform zoneRoot,
             Transform dressingRoot,
@@ -349,6 +484,45 @@ namespace DeepStake.EditorTools
             }
         }
 
+        private static void PlaceAdjustedWindows(
+            Transform zoneRoot,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ISet<string> appliedAssetIds,
+            string assetId)
+        {
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null)
+            {
+                return;
+            }
+
+            var targetNames = new[]
+            {
+                "ArchiveBuilding_WindowL_Glass",
+                "ArchiveBuilding_WindowR_Glass",
+                "ClinicCottage_WindowL_Glass"
+            };
+
+            var group = EnsureGroup(dressingRoot, assetId);
+            foreach (var name in targetNames)
+            {
+                var target = FindChildByName(zoneRoot, name);
+                if (target == null)
+                {
+                    continue;
+                }
+
+                var instance = PlaceFittedPrefab(group, prefab, target, 180f, new Vector3(0f, 0.02f, -0.035f), FitAxis.WidthAndHeight, 1.18f);
+                if (instance == null)
+                {
+                    continue;
+                }
+
+                NudgeLocalScale(instance.transform, new Vector3(1.16f, 1.12f, 1.12f));
+                appliedAssetIds.Add(assetId);
+            }
+        }
+
         private static void PlaceNoticeBoard(
             WorldPrototype3DController controller,
             Transform dressingRoot,
@@ -364,6 +538,30 @@ namespace DeepStake.EditorTools
             var anchor = controller.PrimaryInteractable.transform;
             var group = EnsureGroup(dressingRoot, assetId);
             PlaceFittedPrefab(group, prefab, anchor, -90f, new Vector3(0f, -0.72f, 0f), FitAxis.HeightOnly, 1.35f);
+            appliedAssetIds.Add(assetId);
+        }
+
+        private static void PlaceAdjustedNoticeBoard(
+            WorldPrototype3DController controller,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ISet<string> appliedAssetIds,
+            string assetId)
+        {
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null || controller.PrimaryInteractable == null)
+            {
+                return;
+            }
+
+            var anchor = controller.PrimaryInteractable.transform;
+            var group = EnsureGroup(dressingRoot, assetId);
+            var instance = PlaceFittedPrefab(group, prefab, anchor, -90f, new Vector3(-0.08f, -0.78f, -0.02f), FitAxis.HeightOnly, 1.62f);
+            if (instance == null)
+            {
+                return;
+            }
+
+            NudgeLocalScale(instance.transform, new Vector3(1.08f, 1.12f, 1.08f));
             appliedAssetIds.Add(assetId);
         }
 
@@ -411,6 +609,51 @@ namespace DeepStake.EditorTools
             }
         }
 
+        private static void PlaceAdjustedFenceSegments(
+            Transform zoneRoot,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ISet<string> appliedAssetIds,
+            string assetId)
+        {
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null)
+            {
+                return;
+            }
+
+            var segments = new[]
+            {
+                ("ArchiveYardFence_Post_1", "ArchiveYardFence_Post_2"),
+                ("FieldLowFence_Post_1", "FieldLowFence_Post_2")
+            };
+
+            var group = EnsureGroup(dressingRoot, assetId);
+            foreach (var pair in segments)
+            {
+                var from = FindChildByName(zoneRoot, pair.Item1);
+                var to = FindChildByName(zoneRoot, pair.Item2);
+                if (from == null || to == null)
+                {
+                    continue;
+                }
+
+                var midpoint = (from.position + to.position) * 0.5f;
+                var direction = (to.position - from.position).normalized;
+                var rotation = Quaternion.LookRotation(direction, Vector3.up);
+                var instance = PrefabUtility.InstantiatePrefab(prefab, group) as GameObject;
+                if (instance == null)
+                {
+                    continue;
+                }
+
+                instance.transform.position = midpoint + new Vector3(0f, -0.1f, 0f);
+                instance.transform.rotation = rotation;
+                FitInstanceToTargetDistance(instance, Vector3.Distance(from.position, to.position), 0.95f);
+                NudgeLocalScale(instance.transform, new Vector3(1.02f, 1.05f, 1.02f));
+                appliedAssetIds.Add(assetId);
+            }
+        }
+
         private static void PlaceBarrels(
             Transform zoneRoot,
             Transform dressingRoot,
@@ -443,6 +686,35 @@ namespace DeepStake.EditorTools
             }
         }
 
+        private static void PlaceAdjustedBarrels(
+            Transform zoneRoot,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ISet<string> appliedAssetIds,
+            string assetId)
+        {
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null)
+            {
+                return;
+            }
+
+            var target = FindChildByName(zoneRoot, "WestWorkshopBarrels_A");
+            if (target == null)
+            {
+                return;
+            }
+
+            var group = EnsureGroup(dressingRoot, assetId);
+            var instance = PlaceFittedPrefab(group, prefab, target, 0f, new Vector3(-0.12f, -0.18f, 0.04f), FitAxis.HeightOnly, 1.08f);
+            if (instance == null)
+            {
+                return;
+            }
+
+            NudgeLocalScale(instance.transform, new Vector3(0.98f, 1.02f, 0.98f));
+            appliedAssetIds.Add(assetId);
+        }
+
         private static void PlaceLampPost(
             Transform zoneRoot,
             Transform dressingRoot,
@@ -466,6 +738,35 @@ namespace DeepStake.EditorTools
             appliedAssetIds.Add(assetId);
         }
 
+        private static void PlaceAdjustedLampPost(
+            Transform zoneRoot,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ISet<string> appliedAssetIds,
+            string assetId)
+        {
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null)
+            {
+                return;
+            }
+
+            var target = FindChildByName(zoneRoot, "ArchiveGuideClean_Post");
+            if (target == null)
+            {
+                return;
+            }
+
+            var group = EnsureGroup(dressingRoot, assetId);
+            var instance = PlaceFittedPrefab(group, prefab, target, 0f, new Vector3(0f, -0.28f, -0.04f), FitAxis.HeightOnly, 1.62f);
+            if (instance == null)
+            {
+                return;
+            }
+
+            NudgeLocalScale(instance.transform, new Vector3(1.08f, 1.12f, 1.08f));
+            appliedAssetIds.Add(assetId);
+        }
+
         private static void PlaceSupplyCrate(
             WorldPrototype3DController controller,
             Transform dressingRoot,
@@ -481,6 +782,30 @@ namespace DeepStake.EditorTools
             var anchor = controller.SecondaryInteractable.transform;
             var group = EnsureGroup(dressingRoot, assetId);
             PlaceFittedPrefab(group, prefab, anchor, 0f, new Vector3(0.18f, -0.58f, 0.12f), FitAxis.HeightOnly, 0.95f);
+            appliedAssetIds.Add(assetId);
+        }
+
+        private static void PlaceAdjustedSupplyCrate(
+            WorldPrototype3DController controller,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ISet<string> appliedAssetIds,
+            string assetId)
+        {
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null || controller.SecondaryInteractable == null)
+            {
+                return;
+            }
+
+            var anchor = controller.SecondaryInteractable.transform;
+            var group = EnsureGroup(dressingRoot, assetId);
+            var instance = PlaceFittedPrefab(group, prefab, anchor, 18f, new Vector3(0.24f, -0.58f, 0.18f), FitAxis.HeightOnly, 0.98f);
+            if (instance == null)
+            {
+                return;
+            }
+
+            NudgeLocalScale(instance.transform, new Vector3(0.96f, 1.0f, 0.96f));
             appliedAssetIds.Add(assetId);
         }
 
@@ -519,7 +844,42 @@ namespace DeepStake.EditorTools
             }
         }
 
-        private static void PlaceFittedPrefab(
+        private static void PlaceAdjustedDryTrees(
+            Transform zoneRoot,
+            Transform playerTransform,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ISet<string> appliedAssetIds,
+            string assetId)
+        {
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null)
+            {
+                return;
+            }
+
+            var posts = new[]
+            {
+                FindChildByName(zoneRoot, "NorthFence_Post_0"),
+                FindChildByName(zoneRoot, "NorthFence_Post_5")
+            }.Where(target => target != null);
+
+            var group = EnsureGroup(dressingRoot, assetId);
+            foreach (var post in posts)
+            {
+                var instance = PrefabUtility.InstantiatePrefab(prefab, group) as GameObject;
+                if (instance == null)
+                {
+                    continue;
+                }
+
+                instance.transform.position = post.position + new Vector3(0f, -0.42f, 0.98f);
+                instance.transform.rotation = Quaternion.LookRotation((post.position - playerTransform.position).normalized, Vector3.up);
+                FitInstanceByHeight(instance, 2.15f);
+                appliedAssetIds.Add(assetId);
+            }
+        }
+
+        private static GameObject PlaceFittedPrefab(
             Transform parent,
             GameObject prefab,
             Transform target,
@@ -531,7 +891,7 @@ namespace DeepStake.EditorTools
             var instance = PrefabUtility.InstantiatePrefab(prefab, parent) as GameObject;
             if (instance == null)
             {
-                return;
+                return null;
             }
 
             instance.transform.position = target.position + positionOffset;
@@ -546,6 +906,8 @@ namespace DeepStake.EditorTools
                     FitInstanceByHeight(instance, Mathf.Max(0.1f, target.lossyScale.y * heightMultiplier));
                     break;
             }
+
+            return instance;
         }
 
         private static void FitInstanceToTargetSize(GameObject instance, Transform target, bool useWidth, float heightMultiplier)
@@ -585,6 +947,16 @@ namespace DeepStake.EditorTools
             var heightScale = heightMultiplier / Mathf.Max(0.001f, bounds.size.y);
             var uniform = Mathf.Min(lengthScale, heightScale);
             instance.transform.localScale = Vector3.one * uniform;
+        }
+
+        private static void NudgeLocalScale(Transform instance, Vector3 multiplier)
+        {
+            if (instance == null)
+            {
+                return;
+            }
+
+            instance.localScale = Vector3.Scale(instance.localScale, multiplier);
         }
 
         private static bool TryGetRendererBounds(GameObject instance, out Bounds bounds)
