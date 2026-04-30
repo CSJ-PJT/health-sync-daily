@@ -483,25 +483,9 @@ namespace DeepStake.World
             CreateGrassBorder(root, "EastGrass", new Vector3(6.2f, 0f, -3.6f), 7, new Vector3(0.0f, 0f, 0.92f), new Color(0.32f, 0.39f, 0.28f));
             CreateGrassBorder(root, "WestGrass", new Vector3(-6.75f, 0f, -3.1f), 7, new Vector3(0.0f, 0f, 0.88f), new Color(0.3f, 0.37f, 0.26f));
             CreateRiverEdge(root, "EastRiver", new Vector3(8.05f, 0f, -4.5f), new Color(0.24f, 0.42f, 0.49f));
-            CreateWindmill(root, "RecoveryWindmill", new Vector3(-5.45f, 0f, 3.95f), new Color(0.47f, 0.43f, 0.34f));
             CreateMarketAwning(root, "SupplyAwning", new Vector3(-1.45f, 0f, -5.15f), new Color(0.25f, 0.32f, 0.34f));
             CreateMarketAwning(root, "ArchiveAwning", new Vector3(3.95f, 0f, 1.1f), new Color(0.3f, 0.33f, 0.34f));
 
-            CreateSmallPropCluster(root, "WorkerBenchClean", new Vector3(-4.65f, 0f, -1.65f), new Color(0.4f, 0.34f, 0.26f));
-            CreateSmallPropCluster(root, "VillageCenterBench", new Vector3(-0.75f, 0f, 1.65f), new Color(0.39f, 0.34f, 0.28f));
-            CreateCrateStack(root, "SupplyCratesClean", new Vector3(-1.05f, 0f, -3.65f), new Color(0.39f, 0.32f, 0.24f));
-            CreateCrateStack(root, "BeaconCratesClean", new Vector3(1.65f, 0f, -2.65f), new Color(0.4f, 0.35f, 0.27f));
-            CreateArchiveShelf(root, "ArchiveShelfClean", new Vector3(4.05f, 0f, 1.75f), new Color(0.36f, 0.33f, 0.28f));
-            CreatePathPost(root, "BeaconGuideClean", new Vector3(0.7f, 0f, -1.65f), new Color(0.62f, 0.55f, 0.35f));
-            CreatePathPost(root, "ArchiveGuideClean", new Vector3(3.15f, 0f, 0.95f), new Color(0.54f, 0.5f, 0.37f));
-            CreatePathPost(root, "WorkerGuideClean", new Vector3(-3.55f, 0f, -0.95f), new Color(0.54f, 0.48f, 0.33f));
-            CreatePathPost(root, "NoticeGuideNear", new Vector3(-3.18f, 0f, 1.52f), new Color(0.52f, 0.46f, 0.31f));
-            CreatePathPost(root, "NoticeGuideFar", new Vector3(-4.55f, 0f, 2.72f), new Color(0.5f, 0.45f, 0.3f));
-            CreateGroundDebris(root, "NoticeRouteDebrisA", new Vector3(-3.02f, 0f, 1.22f), new Color(0.37f, 0.33f, 0.29f));
-            CreateGroundDebris(root, "NoticeRouteDebrisB", new Vector3(-3.78f, 0f, 1.98f), new Color(0.38f, 0.34f, 0.29f));
-            CreateGroundDebris(root, "NoticeRearDebris", new Vector3(-4.92f, 0f, 3.3f), new Color(0.39f, 0.36f, 0.31f));
-            CreateGroundDebris(root, "PlayerStartDebrisA", new Vector3(-2.22f, 0f, 0.86f), new Color(0.39f, 0.35f, 0.3f));
-            CreateGroundDebris(root, "PlayerStartDebrisB", new Vector3(-2.86f, 0f, 1.46f), new Color(0.39f, 0.35f, 0.3f));
             CreateGroundContactPatch(root, "NoticeBoardContact", new Vector3(-4.42f, 0f, 2.22f), new Vector3(2.8f, 0.018f, 1.8f), new Color(0.18f, 0.15f, 0.12f), 0.96f);
             CreateGroundContactPatch(root, "PlayerStartContact", new Vector3(-2.48f, 0f, 1.16f), new Vector3(3.2f, 0.018f, 1.7f), new Color(0.17f, 0.14f, 0.11f), 0.96f);
             CreateGroundContactPatch(root, "PlayerStartHaloContact", new Vector3(-2.3f, 0f, 1.02f), new Vector3(1.95f, 0.015f, 1.05f), new Color(0.11f, 0.09f, 0.08f), 0.96f);
@@ -1062,12 +1046,6 @@ namespace DeepStake.World
 
         private static void CreateWaterTower(Transform root, string label, Vector3 basePosition, Color color)
         {
-            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_LegA", basePosition + new Vector3(-0.32f, 1.0f, -0.32f), new Vector3(0.045f, 1.0f, 0.045f), color * 0.75f);
-            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_LegB", basePosition + new Vector3(0.32f, 1.0f, -0.32f), new Vector3(0.045f, 1.0f, 0.045f), color * 0.75f);
-            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_LegC", basePosition + new Vector3(-0.32f, 1.0f, 0.32f), new Vector3(0.045f, 1.0f, 0.045f), color * 0.75f);
-            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_LegD", basePosition + new Vector3(0.32f, 1.0f, 0.32f), new Vector3(0.045f, 1.0f, 0.045f), color * 0.75f);
-            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_Tank", basePosition + new Vector3(0f, 2.25f, 0f), new Vector3(0.72f, 0.42f, 0.72f), color);
-            CreateVisualPiece(root, PrimitiveType.Cylinder, label + "_Cap", basePosition + new Vector3(0f, 2.74f, 0f), new Vector3(0.76f, 0.1f, 0.76f), color * 0.82f);
             CreateCollisionBlocker(root, label + "_Collision", basePosition + new Vector3(0f, 1.1f, 0f), new Vector3(0.9f, 2.2f, 0.9f));
         }
 
@@ -1273,50 +1251,27 @@ namespace DeepStake.World
 
         private static void CreateSignProp(Transform root)
         {
-            CreateVisualPiece(root, PrimitiveType.Cylinder, "BasePad", new Vector3(0f, -0.19f, 0.02f), new Vector3(0.66f, 0.028f, 0.54f), new Color(0.34f, 0.3f, 0.24f));
-            CreateVisualPiece(root, PrimitiveType.Cube, "FootBoard", new Vector3(0f, -0.15f, 0.06f), new Vector3(0.74f, 0.045f, 0.28f), new Color(0.41f, 0.35f, 0.24f));
-            CreateVisualPiece(root, PrimitiveType.Cube, "FootBoardLeft", new Vector3(-0.24f, -0.11f, -0.02f), new Vector3(0.16f, 0.12f, 0.16f), new Color(0.28f, 0.23f, 0.17f));
-            CreateVisualPiece(root, PrimitiveType.Cube, "FootBoardRight", new Vector3(0.24f, -0.11f, -0.02f), new Vector3(0.16f, 0.12f, 0.16f), new Color(0.28f, 0.23f, 0.17f));
-            CreateVisualPiece(root, PrimitiveType.Cylinder, "GroundShadow", new Vector3(0f, -0.205f, 0.03f), new Vector3(0.76f, 0.012f, 0.6f), new Color(0.14f, 0.12f, 0.1f, 0.84f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "Board", new Vector3(0f, 0.42f, 0f), new Vector3(0.54f, 0.28f, 0.09f), new Color(0.5f, 0.47f, 0.4f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "Backing", new Vector3(0f, 0.4f, -0.06f), new Vector3(0.56f, 0.3f, 0.04f), new Color(0.26f, 0.22f, 0.18f));
-            CreateVisualPiece(root, PrimitiveType.Cylinder, "PostLeft", new Vector3(-0.3f, -0.05f, 0f), new Vector3(0.05f, 0.56f, 0.05f), new Color(0.31f, 0.26f, 0.19f));
-            CreateVisualPiece(root, PrimitiveType.Cylinder, "PostRight", new Vector3(0.3f, -0.05f, 0f), new Vector3(0.05f, 0.56f, 0.05f), new Color(0.31f, 0.26f, 0.19f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "Header", new Vector3(0f, 0.68f, 0.02f), new Vector3(0.42f, 0.04f, 0.05f), new Color(0.4f, 0.35f, 0.22f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "NoticeStrip", new Vector3(0f, 0.38f, 0.07f), new Vector3(0.33f, 0.03f, 0.02f), new Color(0.67f, 0.63f, 0.55f));
-            CreateVisualPiece(root, PrimitiveType.Cube, "TrimTop", new Vector3(0f, 0.74f, 0.015f), new Vector3(0.48f, 0.05f, 0.06f), new Color(0.33f, 0.27f, 0.18f));
-            CreateVisualPiece(root, PrimitiveType.Cube, "TrimBottom", new Vector3(0f, 0.12f, 0.015f), new Vector3(0.5f, 0.05f, 0.06f), new Color(0.31f, 0.25f, 0.18f));
+            // Meshy notice-board dressing owns the visual; keep the interaction root clean.
         }
 
         private static void CreateSupplyProp(Transform root)
         {
-            CreateVisualPiece(root, PrimitiveType.Capsule, "CrateBase", new Vector3(0f, 0.2f, 0f), new Vector3(0.56f, 0.18f, 0.46f), new Color(0.43f, 0.35f, 0.24f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "CrateTop", new Vector3(0.18f, 0.54f, 0.08f), new Vector3(0.32f, 0.14f, 0.24f), new Color(0.5f, 0.39f, 0.25f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "Tarp", new Vector3(-0.08f, 0.82f, -0.04f), new Vector3(0.58f, 0.03f, 0.42f), new Color(0.22f, 0.29f, 0.32f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "StrapA", new Vector3(-0.2f, 0.54f, 0.26f), new Vector3(0.03f, 0.14f, 0.02f), new Color(0.28f, 0.24f, 0.18f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "StrapB", new Vector3(0.12f, 0.54f, -0.2f), new Vector3(0.03f, 0.14f, 0.02f), new Color(0.28f, 0.24f, 0.18f));
+            // Curated Meshy supply props replace primitive crates.
         }
 
         private static void CreateObserverProp(Transform root)
         {
-            CreateVisualPiece(root, PrimitiveType.Capsule, "CaseBody", new Vector3(0f, 0.28f, 0f), new Vector3(0.42f, 0.2f, 0.3f), new Color(0.31f, 0.36f, 0.39f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "CaseLid", new Vector3(0f, 0.58f, -0.04f), new Vector3(0.44f, 0.05f, 0.32f), new Color(0.42f, 0.45f, 0.48f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "FileBundle", new Vector3(0f, 0.66f, 0.04f), new Vector3(0.22f, 0.04f, 0.12f), new Color(0.63f, 0.58f, 0.46f));
-            CreateVisualPiece(root, PrimitiveType.Capsule, "Latch", new Vector3(0f, 0.46f, 0.29f), new Vector3(0.04f, 0.04f, 0.02f), new Color(0.54f, 0.5f, 0.42f));
+            // Keep the interaction point but remove capsule placeholder clutter.
         }
 
         private static void CreateBeaconPreview(Transform root)
         {
-            CreateVisualPiece(root, PrimitiveType.Cylinder, "Base", new Vector3(0f, 0.28f, 0f), new Vector3(0.3f, 0.28f, 0.3f), new Color(0.36f, 0.38f, 0.44f));
-            CreateVisualPiece(root, PrimitiveType.Cylinder, "Tower", new Vector3(0f, 0.92f, 0f), new Vector3(0.08f, 0.64f, 0.08f), new Color(0.54f, 0.58f, 0.66f));
-            CreateVisualPiece(root, PrimitiveType.Sphere, "Lamp", new Vector3(0f, 1.58f, 0f), new Vector3(0.24f, 0.24f, 0.24f), new Color(0.88f, 0.78f, 0.44f));
+            // Preserve placement logic on the root; remove the tall gray primitive preview.
         }
 
         private static void CreateRelayPreview(Transform root)
         {
-            CreateVisualPiece(root, PrimitiveType.Cylinder, "Base", new Vector3(0f, 0.18f, 0f), new Vector3(0.32f, 0.18f, 0.32f), new Color(0.34f, 0.38f, 0.44f));
-            CreateVisualPiece(root, PrimitiveType.Cube, "RelayBox", new Vector3(0f, 0.54f, 0f), new Vector3(0.42f, 0.34f, 0.28f), new Color(0.48f, 0.52f, 0.58f));
-            CreateVisualPiece(root, PrimitiveType.Cylinder, "Antenna", new Vector3(0f, 1.02f, 0f), new Vector3(0.05f, 0.42f, 0.05f), new Color(0.64f, 0.58f, 0.4f));
+            // Keep relay anchors clean until a curated model is approved.
         }
 
         private static void CreateArchiveOutpost(Transform root, WorldPrototype3DLandmark landmark, Material material)
