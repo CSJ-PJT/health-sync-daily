@@ -122,6 +122,25 @@ namespace DeepStake.EditorTools
             }
         }
 
+        public static void ApplyBuildingDetailPassCli()
+        {
+            try
+            {
+                var registry = LoadRegistry();
+                EnsurePrefabAssets(registry);
+                var report = ApplyBuildingDetailPass(registry);
+                SaveRegistry(registry);
+                File.WriteAllText("TestResults/meshy-building-detail-pass-report.txt", report);
+                Debug.Log("[DeepStakeMeshy] Building detail pass succeeded.\n" + report);
+                EditorApplication.Exit(0);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[DeepStakeMeshy] Building detail pass failed: " + exception);
+                EditorApplication.Exit(1);
+            }
+        }
+
         private static DeepStakeMeshyModelRegistry LoadRegistry()
         {
             var json = File.ReadAllText(RegistryPath);
@@ -190,6 +209,181 @@ namespace DeepStake.EditorTools
             builder.AppendLine("preserved=" + string.Join(", ", preserved));
             builder.AppendLine("skipped=" + string.Join(", ", skipped));
             return builder.ToString();
+        }
+
+        private static string ApplyBuildingDetailPass(DeepStakeMeshyModelRegistry registry)
+        {
+            EditorSceneManager.OpenScene(WorldScenePath, OpenSceneMode.Single);
+            var controller = UnityEngine.Object.FindFirstObjectByType<WorldPrototype3DController>();
+            if (controller == null)
+            {
+                throw new InvalidOperationException("WorldPrototype3DController not found.");
+            }
+
+            var serializedController = new SerializedObject(controller);
+            var zoneRoot = GetObjectReference<Transform>(serializedController, "zoneRoot");
+            var worldPrototypeJson = GetObjectReference<TextAsset>(serializedController, "worldPrototypeJson");
+            var definition = WorldPrototype3DDefinition.FromJson(worldPrototypeJson);
+            if (zoneRoot == null)
+            {
+                throw new InvalidOperationException("zoneRoot is not assigned.");
+            }
+
+            WorldPrototypeVisualPass.RebuildZoneVisuals(
+                zoneRoot,
+                definition,
+                GetObjectReference<Material>(serializedController, "fieldMaterial"),
+                GetObjectReference<Material>(serializedController, "archiveMaterial"),
+                GetObjectReference<Material>(serializedController, "placementMaterial"),
+                GetObjectReference<Material>(serializedController, "roadMaterial"),
+                GetObjectReference<Material>(serializedController, "storageMaterial"));
+
+            var dressingRoot = GameObject.Find(DressingRootName);
+            if (dressingRoot == null)
+            {
+                dressingRoot = new GameObject(DressingRootName);
+            }
+
+            var prefabLookup = registry.entries
+                .Where(entry => string.Equals(entry.status, "prefab_ready", StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(entry.status, "applied", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(entry => entry.assetId, entry => AssetDatabase.LoadAssetAtPath<GameObject>(entry.prefabPath));
+
+            var placed = new List<string>();
+            var skipped = new List<string>();
+            PlaceBuildingPorchModule(zoneRoot, dressingRoot.transform, prefabLookup, placed, skipped);
+            PlaceBuildingDoorFrameTrim(zoneRoot, dressingRoot.transform, prefabLookup, placed, skipped);
+            PlaceBuildingWindowAwning(zoneRoot, dressingRoot.transform, prefabLookup, placed, skipped);
+
+            foreach (var entry in registry.entries)
+            {
+                if (placed.Contains(entry.assetId))
+                {
+                    entry.status = "applied";
+                }
+            }
+
+            ClearChildren(zoneRoot);
+            EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+            EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+
+            var builder = new StringBuilder();
+            builder.AppendLine("placed=" + string.Join(", ", placed));
+            builder.AppendLine("skipped=" + string.Join(", ", skipped));
+            return builder.ToString();
+        }
+
+        private static void PlaceBuildingPorchModule(
+            Transform zoneRoot,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ICollection<string> placed,
+            ICollection<string> skipped)
+        {
+            const string assetId = "building_porch_module";
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null)
+            {
+                skipped.Add(assetId + " prefab missing");
+                return;
+            }
+
+            var target = FindChildByName(zoneRoot, "ArchiveBuilding_DoorwayShadow");
+            if (target == null)
+            {
+                skipped.Add(assetId + " target missing");
+                return;
+            }
+
+            var group = EnsureGroup(dressingRoot, assetId);
+            var instance = PlaceFittedPrefab(group, prefab, target, 180f, new Vector3(0f, -0.52f, 0.1f), FitAxis.WidthAndHeight, 0.72f);
+            if (instance == null)
+            {
+                skipped.Add(assetId + " instantiate failed");
+                return;
+            }
+
+            NudgeLocalScale(instance.transform, new Vector3(1.05f, 0.78f, 1.12f));
+            placed.Add(assetId);
+        }
+
+        private static void PlaceBuildingDoorFrameTrim(
+            Transform zoneRoot,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ICollection<string> placed,
+            ICollection<string> skipped)
+        {
+            const string assetId = "building_door_frame_trim";
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null)
+            {
+                skipped.Add(assetId + " prefab missing");
+                return;
+            }
+
+            var targets = new[]
+            {
+                FindChildByName(zoneRoot, "ArchiveBuilding_DoorwayShadow"),
+                FindChildByName(zoneRoot, "ClinicCottage_DoorwayShadow")
+            }.Where(target => target != null).Take(2).ToArray();
+            if (targets.Length == 0)
+            {
+                skipped.Add(assetId + " targets missing");
+                return;
+            }
+
+            var group = EnsureGroup(dressingRoot, assetId);
+            foreach (var target in targets)
+            {
+                var instance = PlaceFittedPrefab(group, prefab, target, 180f, new Vector3(0f, -0.08f, -0.035f), FitAxis.WidthAndHeight, 1.05f);
+                if (instance == null)
+                {
+                    continue;
+                }
+
+                NudgeLocalScale(instance.transform, new Vector3(1.02f, 1.0f, 1.02f));
+            }
+
+            placed.Add(assetId);
+        }
+
+        private static void PlaceBuildingWindowAwning(
+            Transform zoneRoot,
+            Transform dressingRoot,
+            IReadOnlyDictionary<string, GameObject> prefabLookup,
+            ICollection<string> placed,
+            ICollection<string> skipped)
+        {
+            const string assetId = "building_window_awning";
+            if (!prefabLookup.TryGetValue(assetId, out var prefab) || prefab == null)
+            {
+                skipped.Add(assetId + " prefab missing");
+                return;
+            }
+
+            var targets = new[]
+            {
+                FindChildByName(zoneRoot, "ArchiveBuilding_WindowL_Glass"),
+                FindChildByName(zoneRoot, "ClinicCottage_WindowR_Glass")
+            }.Where(target => target != null).Take(2).ToArray();
+            if (targets.Length == 0)
+            {
+                skipped.Add(assetId + " targets missing");
+                return;
+            }
+
+            var group = EnsureGroup(dressingRoot, assetId);
+            foreach (var target in targets)
+            {
+                var instance = PlaceFittedPrefab(group, prefab, target, 180f, new Vector3(0f, 0.36f, 0.08f), FitAxis.WidthAndHeight, 0.52f);
+                if (instance == null)
+                {
+                    continue;
+                }
+
+                NudgeLocalScale(instance.transform, new Vector3(1.08f, 0.68f, 1.08f));
+            }
+
+            placed.Add(assetId);
         }
 
         private static void SuppressGeneratedPropVisual(
