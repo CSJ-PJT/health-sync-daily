@@ -227,15 +227,9 @@ namespace DeepStake.Characters
         {
             currentAction = action;
             actionClock = 0f;
-            actionDuration = action == ArticulatedHumanoidAction.Place
-                ? 0.38f
-                : action == ArticulatedHumanoidAction.Attack
-                    ? 0.52f
-                    : action == ArticulatedHumanoidAction.Hit
-                        ? 0.34f
-                        : action == ArticulatedHumanoidAction.Death
-                            ? 1.35f
-                            : 0.28f;
+            actionDuration = ResolveActionDuration(action);
+            importedCurrentStateName = string.Empty;
+            ResetImportedActionPlayback();
             SetAttentionTarget(worldPosition, 1f);
         }
 
@@ -2308,9 +2302,47 @@ namespace DeepStake.Characters
             mixer.SetInputWeight(2, 0f);
         }
 
+        private void ResetImportedActionPlayback()
+        {
+            if (importedGraphValid && importedActionPlayable.IsValid())
+            {
+                importedActionPlayable.SetTime(0d);
+                importedActionPlayable.SetSpeed(1d);
+            }
+
+            if (importedAnimator != null && importedAnimator.layerCount > 0)
+            {
+                importedAnimator.speed = 1f;
+            }
+        }
+
+        private float ResolveActionDuration(ArticulatedHumanoidAction action)
+        {
+            var clip = SelectImportedActionClip(action);
+            if (clip != null)
+            {
+                return Mathf.Clamp(clip.length * 0.92f, 0.32f, action == ArticulatedHumanoidAction.Death ? 1.8f : 0.95f);
+            }
+
+            return action == ArticulatedHumanoidAction.Place
+                ? 0.58f
+                : action == ArticulatedHumanoidAction.Attack
+                    ? 0.68f
+                    : action == ArticulatedHumanoidAction.Hit
+                        ? 0.42f
+                        : action == ArticulatedHumanoidAction.Death
+                            ? 1.35f
+                            : 0.46f;
+        }
+
         private AnimationClip SelectImportedActionClip()
         {
-            switch (currentAction)
+            return SelectImportedActionClip(currentAction);
+        }
+
+        private AnimationClip SelectImportedActionClip(ArticulatedHumanoidAction action)
+        {
+            switch (action)
             {
                 case ArticulatedHumanoidAction.Talk:
                     return importedTalkClip;
