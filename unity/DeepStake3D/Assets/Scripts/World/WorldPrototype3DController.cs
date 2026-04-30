@@ -54,7 +54,14 @@ namespace DeepStake.World
         private string lastPrompt = string.Empty;
         private string lastInputDebug = string.Empty;
         private const float AwarenessRange = 4.5f;
+        private const string ScreenshotRequestRelativePath = "Library/DeepStakeAutomation/screenshot_request.json";
+        private const string ScreenshotStatusRelativePath = "Library/DeepStakeAutomation/screenshot_status.json";
         private PlayerMover3D playerMover;
+        private bool localScreenshotScheduled;
+        private bool localScreenshotCoroutineEntered;
+        private bool localScreenshotFallbackExecuted;
+        private float localScreenshotScheduleRealtime;
+        private ScreenshotAutomationRequest pendingScreenshotRequest;
 
         public Transform PlayerTransform => playerTransform;
         public Interactable3DStub PrimaryInteractable => primaryInteractable;
@@ -245,6 +252,7 @@ namespace DeepStake.World
                 secondaryPlacementPreviewRoot);
 
             Debug.Log("[DeepStakeDev] WorldPrototype3D ready. zone=" + definition.zoneId + " player=" + (playerTransform != null));
+            DebugLogScreenshotSchedulingState();
             TryScheduleLocalScreenshotCapture();
         }
 
@@ -363,6 +371,8 @@ namespace DeepStake.World
                 DeepStakeGameState.Instance.ToggleJournal();
                 SetInputDebug("Journal toggled from " + DeepStakeInputBridge.InputModeLabel + ".", GetNearbyLabel());
             }
+
+            TryRunLocalScreenshotFallback();
         }
 
         private void RefreshPrompt()
@@ -1300,25 +1310,179 @@ namespace DeepStake.World
 
         private void TryScheduleLocalScreenshotCapture()
         {
-            if (!DeepStakeDevLaunchOptions.CaptureLocalScreenshot)
+            Debug.Log("[DeepStakeDev] TryScheduleLocalScreenshotCapture entered.");
+            var request = TryReadScreenshotRequest();
+            pendingScreenshotRequest = request;
+            var shouldCapture = DeepStakeDevLaunchOptions.CaptureLocalScreenshot || request != null;
+            var uiCanvasCount = FindObjectsByType<Canvas>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length;
+            var selectedCamera = ResolveGameplayCamera();
+
+            Debug.Log(
+                "[DeepStakeDev] Screenshot scheduling method entered. localScreenshotScheduled=" + localScreenshotScheduled +
+                " captureLocalScreenshot=" + DeepStakeDevLaunchOptions.CaptureLocalScreenshot +
+                " cleanSceneCapture=" + DeepStakeDevLaunchOptions.CleanSceneCapture +
+                " requestedPath=" + DeepStakeDevLaunchOptions.ScreenshotDirectory +
+                " selectedCamera=" + (selectedCamera != null ? selectedCamera.name : "null") +
+                " automationRequestFound=" + (request != null) +
+                " uiCanvasCount=" + uiCanvasCount);
+
+            Debug.Log(
+                "[DeepStakeDev] Screenshot scheduling check. captureLocalScreenshot=" + DeepStakeDevLaunchOptions.CaptureLocalScreenshot +
+                " cleanSceneCapture=" + DeepStakeDevLaunchOptions.CleanSceneCapture +
+                " requestedPath=" + DeepStakeDevLaunchOptions.ScreenshotDirectory +
+                " automationRequestFound=" + (request != null) +
+                " uiCanvasCount=" + uiCanvasCount);
+
+            if (!shouldCapture)
             {
                 return;
             }
 
-            StartCoroutine(CaptureLocalScreenshotAfterFrameDelay());
+            if (localScreenshotScheduled)
+            {
+                Debug.LogWarning("[DeepStakeDev] Local screenshot was already scheduled. Skipping duplicate StartCoroutine.");
+                return;
+            }
+
+            localScreenshotScheduled = true;
+            localScreenshotCoroutineEntered = false;
+            localScreenshotFallbackExecuted = false;
+            localScreenshotScheduleRealtime = Time.realtimeSinceStartup;
+
+            Debug.Log("[DeepStakeDev] About to StartCoroutine for local screenshot capture.");
+            var coroutine = StartCoroutine(CaptureLocalScreenshotAfterFrameDelay(request));
+            Debug.Log("[DeepStakeDev] StartCoroutine returned. coroutineNull=" + (coroutine == null));
         }
 
-        private IEnumerator CaptureLocalScreenshotAfterFrameDelay()
+        private IEnumerator CaptureLocalScreenshotAfterFrameDelay(ScreenshotAutomationRequest request)
         {
-            yield return null;
-            yield return new WaitForEndOfFrame();
-            yield return new WaitForSeconds(0.4f);
+            localScreenshotCoroutineEntered = true;
+            Debug.Log("[DeepStakeDev] Capture coroutine entered.");
 
-            var screenshotPath = ResolveLocalScreenshotPath();
+            Debug.Log("[DeepStakeDev] Capture coroutine before first yield.");
+            yield return null;
+            Debug.Log("[DeepStakeDev] Capture coroutine after first yield, before WaitForEndOfFrame.");
+            yield return new WaitForEndOfFrame();
+            Debug.Log("[DeepStakeDev] Capture coroutine after WaitForEndOfFrame.");
+            yield return new WaitForSeconds(0.4f);
+            Debug.Log("[DeepStakeDev] Capture coroutine after WaitForSeconds.");
+
+            var screenshotPath = ResolveLocalScreenshotPath(request);
             if (string.IsNullOrWhiteSpace(screenshotPath))
             {
                 Debug.LogWarning("[DeepStakeDev] Local screenshot capture skipped because no valid output path was resolved.");
+                WriteScreenshotStatus("skipped", screenshotPath, false, false, "no_valid_output_path");
                 yield break;
+            }
+
+            var shouldQuitAfterScreenshot = false;
+            try
+            {
+                shouldQuitAfterScreenshot = ExecuteLocalScreenshotCapture(request, screenshotPath);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError("[DeepStakeDev] Capture coroutine failed: " + exception);
+                WriteScreenshotStatus("failed", request != null ? request.screenshotPath : DeepStakeDevLaunchOptions.ScreenshotDirectory, request != null ? request.cleanSceneCapture : DeepStakeDevLaunchOptions.CleanSceneCapture, request != null ? request.hideUi : DeepStakeDevLaunchOptions.CleanSceneCapture, exception.ToString());
+                yield break;
+            }
+
+            if (shouldQuitAfterScreenshot)
+            {
+                yield return new WaitForSeconds(1.1f);
+                Debug.Log("[DeepStakeDev] Quitting after screenshot capture.");
+                Application.Quit();
+            }
+        }
+
+        private bool ExecuteLocalScreenshotCapture(ScreenshotAutomationRequest request, string screenshotPath)
+        {
+            var screenshotDirectory = Path.GetDirectoryName(screenshotPath);
+            if (!string.IsNullOrWhiteSpace(screenshotDirectory))
+            {
+                Directory.CreateDirectory(screenshotDirectory);
+            }
+
+            var cleanSceneCapture = request != null ? request.cleanSceneCapture : DeepStakeDevLaunchOptions.CleanSceneCapture;
+            var hideUi = request != null ? request.hideUi : cleanSceneCapture;
+            Debug.Log("[DeepStakeDev] Capture coroutine before UI hide. cleanSceneCapture=" + cleanSceneCapture + " hideUi=" + hideUi);
+            var canvasStates = hideUi ? SetAllCanvasesEnabled(false) : null;
+            Debug.Log("[DeepStakeDev] Capture coroutine after UI hide. hiddenCanvasCount=" + (canvasStates != null ? canvasStates.Count : 0));
+
+            try
+            {
+                Debug.Log(
+                    "[DeepStakeDev] Local screenshot capture starting. path=" + screenshotPath +
+                    " cleanSceneCapture=" + cleanSceneCapture +
+                    " hideUi=" + hideUi +
+                    " uiCanvasCount=" + (canvasStates != null ? canvasStates.Count : FindObjectsByType<Canvas>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length));
+
+                if (cleanSceneCapture)
+                {
+                    Debug.Log("[DeepStakeDev] Capture coroutine before camera/render capture.");
+                    CaptureCameraToPng(screenshotPath);
+                    Debug.Log("[DeepStakeDev] Clean local screenshot capture saved: " + screenshotPath);
+                }
+                else
+                {
+                    ScreenCapture.CaptureScreenshot(screenshotPath, 1);
+                    Debug.Log("[DeepStakeDev] Local screenshot capture queued: " + screenshotPath);
+                }
+            }
+            finally
+            {
+                RestoreCanvasStates(canvasStates);
+                Debug.Log("[DeepStakeDev] Capture coroutine after UI restore.");
+            }
+
+            WriteScreenshotStatus("captured", screenshotPath, cleanSceneCapture, hideUi, "ok");
+            Debug.Log("[DeepStakeDev] Capture coroutine after status JSON write.");
+            DeleteScreenshotRequestFile();
+            return DeepStakeDevLaunchOptions.QuitAfterScreenshot;
+        }
+
+        private void TryRunLocalScreenshotFallback()
+        {
+            if (!localScreenshotScheduled || localScreenshotCoroutineEntered || localScreenshotFallbackExecuted)
+            {
+                return;
+            }
+
+            if (Time.realtimeSinceStartup - localScreenshotScheduleRealtime < 2f)
+            {
+                return;
+            }
+
+            localScreenshotFallbackExecuted = true;
+            Debug.Log("[DeepStakeDev] Coroutine entry log was not seen within 2 seconds. Running direct fallback capture.");
+
+            try
+            {
+                RunDirectLocalScreenshotFallback(pendingScreenshotRequest);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError("[DeepStakeDev] Direct screenshot fallback failed: " + exception);
+                WriteScreenshotStatus("failed", pendingScreenshotRequest != null ? pendingScreenshotRequest.screenshotPath : DeepStakeDevLaunchOptions.ScreenshotDirectory, pendingScreenshotRequest != null ? pendingScreenshotRequest.cleanSceneCapture : DeepStakeDevLaunchOptions.CleanSceneCapture, pendingScreenshotRequest != null ? pendingScreenshotRequest.hideUi : DeepStakeDevLaunchOptions.CleanSceneCapture, exception.ToString());
+            }
+        }
+
+        private void RunDirectLocalScreenshotFallback(ScreenshotAutomationRequest request)
+        {
+            var screenshotPath = ResolveLocalScreenshotPath(request);
+            var cleanSceneCapture = request != null ? request.cleanSceneCapture : DeepStakeDevLaunchOptions.CleanSceneCapture;
+            var hideUi = request != null ? request.hideUi : cleanSceneCapture;
+
+            Debug.Log(
+                "[DeepStakeDev] Direct fallback entered. path=" + screenshotPath +
+                " cleanSceneCapture=" + cleanSceneCapture +
+                " hideUi=" + hideUi +
+                " gameObjectActive=" + gameObject.activeInHierarchy +
+                " controllerEnabled=" + isActiveAndEnabled);
+
+            if (string.IsNullOrWhiteSpace(screenshotPath))
+            {
+                throw new System.InvalidOperationException("Direct fallback has no valid screenshot path.");
             }
 
             var screenshotDirectory = Path.GetDirectoryName(screenshotPath);
@@ -1327,20 +1491,30 @@ namespace DeepStake.World
                 Directory.CreateDirectory(screenshotDirectory);
             }
 
-            ScreenCapture.CaptureScreenshot(screenshotPath, 1);
-            Debug.Log("[DeepStakeDev] Local screenshot capture queued: " + screenshotPath);
-
-            if (DeepStakeDevLaunchOptions.QuitAfterScreenshot)
+            var canvasStates = hideUi ? SetAllCanvasesEnabled(false) : null;
+            Debug.Log("[DeepStakeDev] Direct fallback after UI hide. hiddenCanvasCount=" + (canvasStates != null ? canvasStates.Count : 0));
+            try
             {
-                yield return new WaitForSeconds(1.1f);
-                Debug.Log("[DeepStakeDev] Quitting after screenshot capture.");
-                Application.Quit();
+                Debug.Log("[DeepStakeDev] Direct fallback before camera/render capture.");
+                CaptureCameraToPng(screenshotPath);
+                Debug.Log("[DeepStakeDev] Direct fallback after PNG write.");
             }
+            finally
+            {
+                RestoreCanvasStates(canvasStates);
+                Debug.Log("[DeepStakeDev] Direct fallback after UI restore.");
+            }
+
+            WriteScreenshotStatus("captured", screenshotPath, cleanSceneCapture, hideUi, "fallback_ok");
+            Debug.Log("[DeepStakeDev] Direct fallback after status JSON write.");
+            DeleteScreenshotRequestFile();
         }
 
-        private string ResolveLocalScreenshotPath()
+        private string ResolveLocalScreenshotPath(ScreenshotAutomationRequest request)
         {
-            var outputRoot = DeepStakeDevLaunchOptions.ScreenshotDirectory;
+            var outputRoot = request != null && !string.IsNullOrWhiteSpace(request.screenshotPath)
+                ? request.screenshotPath
+                : DeepStakeDevLaunchOptions.ScreenshotDirectory;
             if (string.IsNullOrWhiteSpace(outputRoot))
             {
                 outputRoot = ResolveDefaultScreenshotDirectory();
@@ -1371,6 +1545,19 @@ namespace DeepStake.World
 
             verificationTag = SanitizeFileNameFragment(verificationTag);
             return Path.Combine(outputRoot, "local-" + verificationTag + "-" + timestamp + ".png");
+        }
+
+        private void DebugLogScreenshotSchedulingState()
+        {
+            var request = TryReadScreenshotRequest();
+            var uiCanvasCount = FindObjectsByType<Canvas>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length;
+            Debug.Log(
+                "[DeepStakeDev] Pre-screenshot state. captureLocalScreenshot=" + DeepStakeDevLaunchOptions.CaptureLocalScreenshot +
+                " cleanSceneCapture=" + DeepStakeDevLaunchOptions.CleanSceneCapture +
+                " requestedPath=" + DeepStakeDevLaunchOptions.ScreenshotDirectory +
+                " automationRequestFound=" + (request != null) +
+                " automationRequestPath=" + (request != null ? request.screenshotPath : string.Empty) +
+                " uiCanvasCount=" + uiCanvasCount);
         }
 
         private static string ResolveDefaultScreenshotDirectory()
@@ -1410,6 +1597,206 @@ namespace DeepStake.World
             }
 
             return sanitized.Replace(' ', '-');
+        }
+
+        private void CaptureCameraToPng(string outputPath)
+        {
+            var captureCamera = ResolveGameplayCamera();
+            if (captureCamera == null)
+            {
+                throw new System.InvalidOperationException("Gameplay camera not found for clean local screenshot capture.");
+            }
+
+            const int renderWidth = 1600;
+            const int renderHeight = 900;
+            var previousTargetTexture = captureCamera.targetTexture;
+            var previousActive = RenderTexture.active;
+            var renderTexture = new RenderTexture(renderWidth, renderHeight, 24, RenderTextureFormat.ARGB32);
+            var texture = new Texture2D(renderWidth, renderHeight, TextureFormat.RGB24, false);
+
+            try
+            {
+                captureCamera.targetTexture = renderTexture;
+                RenderTexture.active = renderTexture;
+                captureCamera.Render();
+                texture.ReadPixels(new Rect(0f, 0f, renderWidth, renderHeight), 0, 0, false);
+                texture.Apply(false, false);
+                File.WriteAllBytes(outputPath, texture.EncodeToPNG());
+            }
+            finally
+            {
+                captureCamera.targetTexture = previousTargetTexture;
+                RenderTexture.active = previousActive;
+                Destroy(renderTexture);
+                Destroy(texture);
+            }
+        }
+
+        private Camera ResolveGameplayCamera()
+        {
+            Camera captureCamera = null;
+            if (quarterViewCameraRig != null)
+            {
+                captureCamera = quarterViewCameraRig.GetComponent<Camera>();
+                if (captureCamera == null)
+                {
+                    captureCamera = quarterViewCameraRig.GetComponentInChildren<Camera>();
+                }
+            }
+
+            if (captureCamera == null)
+            {
+                captureCamera = Camera.main;
+            }
+
+            if (captureCamera == null)
+            {
+                captureCamera = FindFirstObjectByType<Camera>();
+            }
+
+            if (captureCamera == null)
+            {
+                return null;
+            }
+
+            captureCamera.enabled = true;
+            return captureCamera;
+        }
+
+        private ScreenshotAutomationRequest TryReadScreenshotRequest()
+        {
+            var requestPath = ResolveAutomationPath(ScreenshotRequestRelativePath);
+            if (!File.Exists(requestPath))
+            {
+                return null;
+            }
+
+            try
+            {
+                var json = File.ReadAllText(requestPath);
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    return null;
+                }
+
+                return JsonUtility.FromJson<ScreenshotAutomationRequest>(json);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogWarning("[DeepStakeDev] Failed to read screenshot request. " + exception.Message);
+                return null;
+            }
+        }
+
+        private void DeleteScreenshotRequestFile()
+        {
+            var requestPath = ResolveAutomationPath(ScreenshotRequestRelativePath);
+            if (File.Exists(requestPath))
+            {
+                File.Delete(requestPath);
+            }
+        }
+
+        private void WriteScreenshotStatus(string state, string screenshotPath, bool cleanSceneCapture, bool hideUi, string note)
+        {
+            try
+            {
+                var statusPath = ResolveAutomationPath(ScreenshotStatusRelativePath);
+                var statusDirectory = Path.GetDirectoryName(statusPath);
+                if (!string.IsNullOrWhiteSpace(statusDirectory))
+                {
+                    Directory.CreateDirectory(statusDirectory);
+                }
+
+                var status = new ScreenshotAutomationStatus
+                {
+                    state = state,
+                    screenshotPath = screenshotPath ?? string.Empty,
+                    cleanSceneCapture = cleanSceneCapture,
+                    hideUi = hideUi,
+                    note = note ?? string.Empty
+                };
+
+                File.WriteAllText(statusPath, JsonUtility.ToJson(status, true));
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogWarning("[DeepStakeDev] Failed to write screenshot status. " + exception.Message);
+            }
+        }
+
+        private static string ResolveAutomationPath(string relativePath)
+        {
+            return Path.GetFullPath(Path.Combine(ResolveProjectRootOrFallback(), relativePath));
+        }
+
+        private static System.Collections.Generic.List<CanvasState> SetAllCanvasesEnabled(bool enabled)
+        {
+            var canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var states = new System.Collections.Generic.List<CanvasState>(canvases.Length);
+            for (var index = 0; index < canvases.Length; index++)
+            {
+                var canvas = canvases[index];
+                if (canvas == null)
+                {
+                    continue;
+                }
+
+                states.Add(new CanvasState(canvas, canvas.enabled));
+                canvas.enabled = enabled;
+            }
+
+            return states;
+        }
+
+        private static void RestoreCanvasStates(System.Collections.Generic.List<CanvasState> states)
+        {
+            if (states == null)
+            {
+                return;
+            }
+
+            for (var index = 0; index < states.Count; index++)
+            {
+                var state = states[index];
+                if (state.Canvas != null)
+                {
+                    state.Canvas.enabled = state.Enabled;
+                }
+            }
+        }
+
+        [System.Serializable]
+        private sealed class ScreenshotAutomationRequest
+        {
+            public string requestId = string.Empty;
+            public string screenshotPath = string.Empty;
+            public string verificationTag = string.Empty;
+            public bool cleanSceneCapture;
+            public bool hideUi;
+        }
+
+        [System.Serializable]
+        private sealed class ScreenshotAutomationStatus
+        {
+            public string state = string.Empty;
+            public string screenshotPath = string.Empty;
+            public bool cleanSceneCapture;
+            public bool hideUi;
+            public string note = string.Empty;
+        }
+
+        private readonly struct CanvasState
+        {
+            public CanvasState(Canvas canvas, bool enabled)
+            {
+                Canvas = canvas;
+                Enabled = enabled;
+            }
+
+            public Canvas Canvas { get; }
+
+            public bool Enabled { get; }
         }
     }
 }

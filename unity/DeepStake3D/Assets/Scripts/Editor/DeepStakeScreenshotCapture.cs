@@ -8,45 +8,132 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 namespace DeepStake.EditorTools
 {
+    [InitializeOnLoad]
     public static class DeepStakeScreenshotCapture
     {
         private const string BootScenePath = "Assets/Scenes/Boot.unity";
         private const string WorldScenePath = "Assets/Scenes/WorldPrototype3D.unity";
+        private const string MeshyFirstAppliedScreenshotPath = "Pictures/Screenshot/local-meshy-first-applied-pass.png";
+        private const string MeshyFirstAppliedCleanScreenshotPath = "Pictures/Screenshot/local-meshy-first-applied-clean.png";
+        private const string ScreenshotRequestRelativePath = "Library/DeepStakeAutomation/screenshot_request.json";
         private const string ScreenshotDirArgPrefix = "-deepstakeScreenshotDir=";
         private const string ScreenshotTimeoutArgPrefix = "-deepstakeScreenshotTimeoutSeconds=";
         private const string VerificationTagArgPrefix = "-deepstakeVerificationTag=";
+        private const string StartupCaptureModeArgPrefix = "-deepstakeStartupCaptureMode=";
+        private const string StartupCaptureStateKey = "DeepStake.StartupCaptureState";
         private const int DefaultRenderWidth = 1600;
         private const int DefaultRenderHeight = 900;
 
         private static double editorPlayDeadline;
+        private static double editorPlayCaptureReadyTime;
         private static string editorPlayScreenshotPath = string.Empty;
         private static bool editorPlayCaptureSucceeded;
+        private static bool editorPlayCleanSceneCapture;
+        private static bool startupCaptureQueued;
+
+        static DeepStakeScreenshotCapture()
+        {
+            TryQueueStartupCapture();
+        }
+
+        [MenuItem("DeepStake/Validation/Capture Meshy First Applied Screenshot")]
+        public static void CaptureMeshyFirstAppliedScreenshotMenu()
+        {
+            try
+            {
+                var screenshotPath = NormalizeOutputPath(MeshyFirstAppliedScreenshotPath);
+                CaptureEditorRenderInternal(screenshotPath);
+                Debug.Log("[DeepStakeCapture] Meshy validation screenshot captured: " + screenshotPath);
+                EditorUtility.RevealInFinder(screenshotPath);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[DeepStakeCapture] Meshy validation screenshot capture failed: " + exception);
+                throw;
+            }
+        }
+
+        [MenuItem("DeepStake/Validation/Capture Meshy First Applied Clean Screenshot")]
+        public static void CaptureMeshyFirstAppliedCleanScreenshotMenu()
+        {
+            try
+            {
+                StartEditorPlayCaptureInternal(
+                    NormalizeOutputPath(MeshyFirstAppliedCleanScreenshotPath),
+                    "meshy-first-applied-clean",
+                    600,
+                    cleanSceneCapture: true);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[DeepStakeCapture] Meshy clean validation screenshot capture failed: " + exception);
+                throw;
+            }
+        }
+
+        private static void TryQueueStartupCapture()
+        {
+            if (startupCaptureQueued)
+            {
+                return;
+            }
+
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                return;
+            }
+
+            var startupCaptureMode = GetCommandLineValue(StartupCaptureModeArgPrefix);
+            if (!string.Equals(startupCaptureMode, "EditorRender", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(startupCaptureMode, "EditorPlay", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var startupCaptureState = SessionState.GetString(StartupCaptureStateKey, string.Empty);
+            if (string.Equals(startupCaptureState, "arming", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(startupCaptureState, "capturing", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            startupCaptureQueued = true;
+            SessionState.SetString(StartupCaptureStateKey, "arming");
+            EditorApplication.delayCall += () =>
+            {
+                try
+                {
+                    if (string.Equals(startupCaptureMode, "EditorPlay", StringComparison.OrdinalIgnoreCase))
+                    {
+                        StartStartupEditorPlayCapture();
+                        return;
+                    }
+
+                    var screenshotPath = RequireScreenshotPath();
+                    CaptureEditorRenderInternal(screenshotPath);
+                    Debug.Log("[DeepStakeCapture] Startup EditorRender capture succeeded: " + screenshotPath);
+                    SessionState.EraseString(StartupCaptureStateKey);
+                    EditorApplication.Exit(0);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError("[DeepStakeCapture] Startup capture failed: " + exception);
+                    SessionState.EraseString(StartupCaptureStateKey);
+                    EditorApplication.Exit(1);
+                }
+            };
+        }
 
         public static void CaptureEditorRenderCli()
         {
             try
             {
                 var screenshotPath = RequireScreenshotPath();
-                ValidateScenes();
-
-                EditorSceneManager.OpenScene(WorldScenePath, OpenSceneMode.Single);
-                var controller = UnityEngine.Object.FindFirstObjectByType<WorldPrototype3DController>();
-                if (controller == null)
-                {
-                    throw new InvalidOperationException("WorldPrototype3DController not found in WorldPrototype3D scene.");
-                }
-
-                PrepareFirstScreenVisualState(controller);
-                var captureCamera = ResolveCaptureCamera(controller);
-                if (captureCamera == null)
-                {
-                    throw new InvalidOperationException("Gameplay camera not found for editor render capture.");
-                }
-
-                RenderCameraToPng(captureCamera, screenshotPath, DefaultRenderWidth, DefaultRenderHeight);
+                CaptureEditorRenderInternal(screenshotPath);
                 Debug.Log("[DeepStakeCapture] EditorRender capture succeeded: " + screenshotPath);
                 EditorApplication.Exit(0);
             }
@@ -61,38 +148,86 @@ namespace DeepStake.EditorTools
         {
             try
             {
-                var screenshotPath = RequireScreenshotPath();
-                var verificationTag = GetCommandLineValue(VerificationTagArgPrefix);
-                var timeoutSeconds = GetCommandLineIntValue(ScreenshotTimeoutArgPrefix, 600);
-
-                ValidateScenes();
-                EditorSceneManager.OpenScene(BootScenePath, OpenSceneMode.Single);
-                DeepStakeDevLaunchOptions.SetEditorOverrides(
-                    autorun: true,
-                    forceMobileControls: true,
-                    tag: verificationTag,
-                    captureScreenshot: true,
-                    screenshotDirectoryOverride: screenshotPath,
-                    quitAfterScreenshotOverride: false);
-
-                editorPlayScreenshotPath = screenshotPath;
-                editorPlayCaptureSucceeded = false;
-                editorPlayDeadline = EditorApplication.timeSinceStartup + Mathf.Max(30, timeoutSeconds);
-
-                Debug.Log("[DeepStakeCapture] Starting EditorPlay capture. output=" + screenshotPath +
-                          " tag=" + verificationTag + " timeoutSeconds=" + timeoutSeconds);
-
-                EditorApplication.playModeStateChanged -= OnEditorPlayStateChanged;
-                EditorApplication.update -= PollEditorPlayCapture;
-                EditorApplication.playModeStateChanged += OnEditorPlayStateChanged;
-                EditorApplication.update += PollEditorPlayCapture;
-                EditorApplication.isPlaying = true;
+                StartEditorPlayCaptureInternal(
+                    RequireScreenshotPath(),
+                    GetCommandLineValue(VerificationTagArgPrefix),
+                    GetCommandLineIntValue(ScreenshotTimeoutArgPrefix, 600),
+                    cleanSceneCapture: false);
             }
             catch (Exception exception)
             {
                 Debug.LogError("[DeepStakeCapture] EditorPlay capture setup failed: " + exception);
                 CleanupEditorPlayCapture(1);
             }
+        }
+
+        public static void CaptureEditorPlayCleanCli()
+        {
+            try
+            {
+                StartEditorPlayCaptureInternal(
+                    RequireScreenshotPath(),
+                    GetCommandLineValue(VerificationTagArgPrefix),
+                    GetCommandLineIntValue(ScreenshotTimeoutArgPrefix, 600),
+                    cleanSceneCapture: true);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[DeepStakeCapture] EditorPlay capture setup failed: " + exception);
+                CleanupEditorPlayCapture(1);
+            }
+        }
+
+        private static void StartStartupEditorPlayCapture()
+        {
+            SessionState.SetString(StartupCaptureStateKey, "capturing");
+            EditorSceneManager.OpenScene(BootScenePath, OpenSceneMode.Single);
+            EditorApplication.delayCall += () =>
+            {
+                try
+                {
+                    StartEditorPlayCaptureInternal(
+                        RequireScreenshotPath(),
+                        GetCommandLineValue(VerificationTagArgPrefix),
+                        GetCommandLineIntValue(ScreenshotTimeoutArgPrefix, 600),
+                        cleanSceneCapture: true);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError("[DeepStakeCapture] Startup EditorPlay capture setup failed: " + exception);
+                    CleanupEditorPlayCapture(1);
+                }
+            };
+        }
+
+        private static void StartEditorPlayCaptureInternal(string screenshotPath, string verificationTag, int timeoutSeconds, bool cleanSceneCapture)
+        {
+            ValidateScenes();
+            WriteScreenshotRequest(screenshotPath, verificationTag, cleanSceneCapture, hideUi: cleanSceneCapture);
+            DeepStakeDevLaunchOptions.SetEditorOverrides(
+                autorun: true,
+                forceMobileControls: !cleanSceneCapture,
+                tag: verificationTag,
+                captureScreenshot: true,
+                cleanSceneCaptureOverride: cleanSceneCapture,
+                screenshotDirectoryOverride: screenshotPath,
+                quitAfterScreenshotOverride: false);
+
+            editorPlayScreenshotPath = screenshotPath;
+            editorPlayCaptureSucceeded = false;
+            editorPlayCleanSceneCapture = cleanSceneCapture;
+            editorPlayDeadline = EditorApplication.timeSinceStartup + Mathf.Max(30, timeoutSeconds);
+            editorPlayCaptureReadyTime = 0d;
+
+            Debug.Log("[DeepStakeCapture] Starting EditorPlay capture. output=" + screenshotPath +
+                      " tag=" + verificationTag + " timeoutSeconds=" + timeoutSeconds +
+                      " cleanSceneCapture=" + cleanSceneCapture);
+
+            EditorApplication.playModeStateChanged -= OnEditorPlayStateChanged;
+            EditorApplication.update -= PollEditorPlayCapture;
+            EditorApplication.playModeStateChanged += OnEditorPlayStateChanged;
+            EditorApplication.update += PollEditorPlayCapture;
+            EditorApplication.isPlaying = true;
         }
 
         private static void PrepareFirstScreenVisualState(WorldPrototype3DController controller)
@@ -228,9 +363,103 @@ namespace DeepStake.EditorTools
                 captureCamera.clearFlags = CameraClearFlags.SolidColor;
                 captureCamera.backgroundColor = new Color(0.66f, 0.71f, 0.72f);
                 captureCamera.fieldOfView = Mathf.Clamp(captureCamera.fieldOfView, 49f, 56f);
+                ForceCameraFrameToWorldBounds(captureCamera);
             }
             DeepStakePbrEnvironmentPipeline.ApplyLightingProfile();
             return captureCamera;
+        }
+
+        private static void ForceCameraFrameToWorldBounds(Camera captureCamera)
+        {
+            if (captureCamera == null)
+            {
+                return;
+            }
+
+            if (!TryGetSceneRenderBounds(out var combinedBounds))
+            {
+                Debug.LogWarning("[DeepStakeCapture] No scene render bounds were found for capture framing.");
+                return;
+            }
+
+            var planarDirection = new Vector3(1f, 0f, -1f).normalized;
+            var extentMagnitude = Mathf.Max(combinedBounds.extents.magnitude, 4.5f);
+            var planarDistance = Mathf.Max(7.5f, extentMagnitude * 1.85f);
+            var height = Mathf.Max(5.2f, extentMagnitude * 1.2f);
+            var lookTarget = combinedBounds.center + Vector3.up * Mathf.Clamp(combinedBounds.extents.y * 0.3f, 0.6f, 2.0f);
+            var capturePosition = lookTarget + planarDirection * planarDistance + Vector3.up * height;
+
+            captureCamera.transform.position = capturePosition;
+            captureCamera.transform.rotation = Quaternion.LookRotation((lookTarget - capturePosition).normalized, Vector3.up);
+            captureCamera.nearClipPlane = 0.1f;
+            captureCamera.farClipPlane = Mathf.Max(200f, planarDistance * 20f);
+            captureCamera.cullingMask = ~0;
+
+            Debug.Log(
+                "[DeepStakeCapture] Forced camera frame. position=" + capturePosition +
+                " lookTarget=" + lookTarget +
+                " boundsCenter=" + combinedBounds.center +
+                " boundsSize=" + combinedBounds.size);
+        }
+
+        private static bool TryGetSceneRenderBounds(out Bounds combinedBounds)
+        {
+            var renderers = UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var found = false;
+            combinedBounds = default;
+
+            for (var index = 0; index < renderers.Length; index++)
+            {
+                var renderer = renderers[index];
+                if (renderer == null || !renderer.enabled)
+                {
+                    continue;
+                }
+
+                var gameObject = renderer.gameObject;
+                if (!gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if ((renderer is ParticleSystemRenderer) || gameObject.GetComponent<Camera>() != null)
+                {
+                    continue;
+                }
+
+                if (!found)
+                {
+                    combinedBounds = renderer.bounds;
+                    found = true;
+                }
+                else
+                {
+                    combinedBounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            return found;
+        }
+
+        private static void CaptureEditorRenderInternal(string screenshotPath)
+        {
+            ValidateScenes();
+
+            EditorSceneManager.OpenScene(WorldScenePath, OpenSceneMode.Single);
+            var controller = UnityEngine.Object.FindFirstObjectByType<WorldPrototype3DController>();
+            if (controller == null)
+            {
+                throw new InvalidOperationException("WorldPrototype3DController not found in WorldPrototype3D scene.");
+            }
+
+            PrepareFirstScreenVisualState(controller);
+            var captureCamera = ResolveCaptureCamera(controller);
+            if (captureCamera == null)
+            {
+                throw new InvalidOperationException("Gameplay camera not found for editor render capture.");
+            }
+
+            RenderCameraToPng(captureCamera, screenshotPath, DefaultRenderWidth, DefaultRenderHeight);
         }
 
         private static void ApplyQuarterViewCameraFrame(Transform cameraTransform, Transform target, Vector3 requestedOffset)
@@ -305,6 +534,11 @@ namespace DeepStake.EditorTools
 
         private static void PollEditorPlayCapture()
         {
+            if (editorPlayCleanSceneCapture && TryCaptureCleanSceneWhilePlaying())
+            {
+                return;
+            }
+
             if (!string.IsNullOrWhiteSpace(editorPlayScreenshotPath) && File.Exists(editorPlayScreenshotPath))
             {
                 editorPlayCaptureSucceeded = true;
@@ -329,10 +563,54 @@ namespace DeepStake.EditorTools
             CleanupEditorPlayCapture(1);
         }
 
+        private static bool TryCaptureCleanSceneWhilePlaying()
+        {
+            if (!EditorApplication.isPlaying)
+            {
+                return false;
+            }
+
+            var activeScene = SceneManager.GetActiveScene();
+            if (!activeScene.IsValid() || !string.Equals(activeScene.path, WorldScenePath, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (editorPlayCaptureReadyTime <= 0d)
+            {
+                editorPlayCaptureReadyTime = EditorApplication.timeSinceStartup + 1.0d;
+                return false;
+            }
+
+            if (EditorApplication.timeSinceStartup < editorPlayCaptureReadyTime)
+            {
+                return false;
+            }
+
+            var controller = UnityEngine.Object.FindFirstObjectByType<WorldPrototype3DController>();
+            if (controller == null || !controller.isActiveAndEnabled)
+            {
+                return false;
+            }
+
+            var captureCamera = ResolveCaptureCamera(controller);
+            if (captureCamera == null)
+            {
+                return false;
+            }
+
+            RenderCameraToPng(captureCamera, editorPlayScreenshotPath, DefaultRenderWidth, DefaultRenderHeight);
+            editorPlayCaptureSucceeded = true;
+            Debug.Log("[DeepStakeCapture] Clean EditorPlay scene capture succeeded: " + editorPlayScreenshotPath);
+            EditorApplication.isPlaying = false;
+            return true;
+        }
+
         private static void CleanupEditorPlayCapture(int exitCode)
         {
             EditorApplication.playModeStateChanged -= OnEditorPlayStateChanged;
             EditorApplication.update -= PollEditorPlayCapture;
+            SessionState.EraseString(StartupCaptureStateKey);
 
             if (EditorApplication.isPlaying)
             {
@@ -341,8 +619,10 @@ namespace DeepStake.EditorTools
 
             DeepStakeDevLaunchOptions.ClearEditorOverrides();
             editorPlayDeadline = 0d;
+            editorPlayCaptureReadyTime = 0d;
             editorPlayScreenshotPath = string.Empty;
             editorPlayCaptureSucceeded = false;
+            editorPlayCleanSceneCapture = false;
             EditorApplication.Exit(exitCode);
         }
 
@@ -416,6 +696,38 @@ namespace DeepStake.EditorTools
             }
 
             return Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), outputPath));
+        }
+
+        private static void WriteScreenshotRequest(string screenshotPath, string verificationTag, bool cleanSceneCapture, bool hideUi)
+        {
+            var requestPath = NormalizeOutputPath(ScreenshotRequestRelativePath);
+            var requestDirectory = Path.GetDirectoryName(requestPath);
+            if (!string.IsNullOrWhiteSpace(requestDirectory))
+            {
+                Directory.CreateDirectory(requestDirectory);
+            }
+
+            var request = new ScreenshotAutomationRequest
+            {
+                requestId = Guid.NewGuid().ToString("N"),
+                screenshotPath = screenshotPath,
+                verificationTag = verificationTag ?? string.Empty,
+                cleanSceneCapture = cleanSceneCapture,
+                hideUi = hideUi
+            };
+
+            File.WriteAllText(requestPath, JsonUtility.ToJson(request, true));
+            Debug.Log("[DeepStakeCapture] Wrote screenshot request: " + requestPath);
+        }
+
+        [Serializable]
+        private sealed class ScreenshotAutomationRequest
+        {
+            public string requestId = string.Empty;
+            public string screenshotPath = string.Empty;
+            public string verificationTag = string.Empty;
+            public bool cleanSceneCapture;
+            public bool hideUi;
         }
     }
 }

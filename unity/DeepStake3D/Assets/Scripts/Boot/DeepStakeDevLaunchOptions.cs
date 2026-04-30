@@ -1,5 +1,8 @@
 using System;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace DeepStake.Boot
 {
@@ -8,6 +11,7 @@ namespace DeepStake.Boot
         private const string AutorunArg = "-deepstakeAutorunLocalPlay";
         private const string ForceMobileControlsArg = "-deepstakeForceMobileControlsInEditor";
         private const string CaptureScreenshotArg = "-deepstakeCaptureScreenshot";
+        private const string CleanSceneCaptureArg = "-deepstakeCleanSceneCapture";
         private const string QuitAfterScreenshotArg = "-deepstakeQuitAfterScreenshot";
         private const string TagArgPrefix = "-deepstakeVerificationTag=";
         private const string ScreenshotDirArgPrefix = "-deepstakeScreenshotDir=";
@@ -18,14 +22,24 @@ namespace DeepStake.Boot
         private static bool autorunLocalPlay;
         private static bool forceMobileControlsInEditor;
         private static bool captureLocalScreenshot;
+        private static bool cleanSceneCapture;
         private static bool quitAfterScreenshot;
         private static string verificationTag = string.Empty;
         private static string screenshotDirectory = string.Empty;
 
 #if UNITY_EDITOR
+        private const string EditorAutorunOverrideKey = "DeepStake.DevLaunch.Autorun";
+        private const string EditorForceMobileOverrideKey = "DeepStake.DevLaunch.ForceMobile";
+        private const string EditorCaptureScreenshotOverrideKey = "DeepStake.DevLaunch.CaptureScreenshot";
+        private const string EditorCleanSceneCaptureOverrideKey = "DeepStake.DevLaunch.CleanSceneCapture";
+        private const string EditorQuitAfterScreenshotOverrideKey = "DeepStake.DevLaunch.QuitAfterScreenshot";
+        private const string EditorVerificationTagOverrideKey = "DeepStake.DevLaunch.VerificationTag";
+        private const string EditorScreenshotDirectoryOverrideKey = "DeepStake.DevLaunch.ScreenshotDirectory";
+
         private static bool editorAutorunOverride;
         private static bool editorForceMobileControlsOverride;
         private static bool editorCaptureScreenshotOverride;
+        private static bool editorCleanSceneCaptureOverride;
         private static bool editorQuitAfterScreenshotOverride;
         private static string editorVerificationTagOverride = string.Empty;
         private static string editorScreenshotDirectoryOverride = string.Empty;
@@ -76,6 +90,15 @@ namespace DeepStake.Boot
             }
         }
 
+        public static bool CleanSceneCapture
+        {
+            get
+            {
+                EnsureInitialized();
+                return cleanSceneCapture;
+            }
+        }
+
         public static string ScreenshotDirectory
         {
             get
@@ -96,6 +119,7 @@ namespace DeepStake.Boot
             autorunLocalPlay = HasCommandLineFlag(AutorunArg);
             forceMobileControlsInEditor = HasCommandLineFlag(ForceMobileControlsArg);
             captureLocalScreenshot = HasCommandLineFlag(CaptureScreenshotArg);
+            cleanSceneCapture = HasCommandLineFlag(CleanSceneCaptureArg);
             quitAfterScreenshot = HasCommandLineFlag(QuitAfterScreenshotArg);
             verificationTag = GetCommandLineValue(TagArgPrefix);
             screenshotDirectory = GetCommandLineValue(ScreenshotDirArgPrefix);
@@ -105,6 +129,8 @@ namespace DeepStake.Boot
 #endif
 
 #if UNITY_EDITOR
+            LoadPersistedEditorOverrides();
+
             if (editorAutorunOverride)
             {
                 autorunLocalPlay = true;
@@ -118,6 +144,11 @@ namespace DeepStake.Boot
             if (editorCaptureScreenshotOverride)
             {
                 captureLocalScreenshot = true;
+            }
+
+            if (editorCleanSceneCaptureOverride)
+            {
+                cleanSceneCapture = true;
             }
 
             if (editorQuitAfterScreenshotOverride)
@@ -139,7 +170,7 @@ namespace DeepStake.Boot
             var allowDevMode = Debug.isDebugBuild;
 
 #if UNITY_EDITOR
-            allowDevMode |= editorAutorunOverride || editorForceMobileControlsOverride || editorCaptureScreenshotOverride || editorQuitAfterScreenshotOverride;
+            allowDevMode |= editorAutorunOverride || editorForceMobileControlsOverride || editorCaptureScreenshotOverride || editorCleanSceneCaptureOverride || editorQuitAfterScreenshotOverride;
 #endif
 
             if (!allowDevMode)
@@ -147,6 +178,7 @@ namespace DeepStake.Boot
                 autorunLocalPlay = false;
                 forceMobileControlsInEditor = false;
                 captureLocalScreenshot = false;
+                cleanSceneCapture = false;
                 quitAfterScreenshot = false;
                 verificationTag = string.Empty;
                 screenshotDirectory = string.Empty;
@@ -253,17 +285,20 @@ namespace DeepStake.Boot
             editorAutorunOverride = autorun;
             editorForceMobileControlsOverride = forceMobileControls;
             editorVerificationTagOverride = tag ?? string.Empty;
+            PersistEditorOverrides();
             initialized = false;
         }
 
-        public static void SetEditorOverrides(bool autorun, bool forceMobileControls, string tag, bool captureScreenshot, string screenshotDirectoryOverride, bool quitAfterScreenshotOverride)
+        public static void SetEditorOverrides(bool autorun, bool forceMobileControls, string tag, bool captureScreenshot, bool cleanSceneCaptureOverride, string screenshotDirectoryOverride, bool quitAfterScreenshotOverride)
         {
             editorAutorunOverride = autorun;
             editorForceMobileControlsOverride = forceMobileControls;
             editorCaptureScreenshotOverride = captureScreenshot;
+            editorCleanSceneCaptureOverride = cleanSceneCaptureOverride;
             editorQuitAfterScreenshotOverride = quitAfterScreenshotOverride;
             editorVerificationTagOverride = tag ?? string.Empty;
             editorScreenshotDirectoryOverride = screenshotDirectoryOverride ?? string.Empty;
+            PersistEditorOverrides();
             initialized = false;
         }
 
@@ -272,10 +307,45 @@ namespace DeepStake.Boot
             editorAutorunOverride = false;
             editorForceMobileControlsOverride = false;
             editorCaptureScreenshotOverride = false;
+            editorCleanSceneCaptureOverride = false;
             editorQuitAfterScreenshotOverride = false;
             editorVerificationTagOverride = string.Empty;
             editorScreenshotDirectoryOverride = string.Empty;
+            ClearPersistedEditorOverrides();
             initialized = false;
+        }
+
+        private static void LoadPersistedEditorOverrides()
+        {
+            editorAutorunOverride = SessionState.GetBool(EditorAutorunOverrideKey, editorAutorunOverride);
+            editorForceMobileControlsOverride = SessionState.GetBool(EditorForceMobileOverrideKey, editorForceMobileControlsOverride);
+            editorCaptureScreenshotOverride = SessionState.GetBool(EditorCaptureScreenshotOverrideKey, editorCaptureScreenshotOverride);
+            editorCleanSceneCaptureOverride = SessionState.GetBool(EditorCleanSceneCaptureOverrideKey, editorCleanSceneCaptureOverride);
+            editorQuitAfterScreenshotOverride = SessionState.GetBool(EditorQuitAfterScreenshotOverrideKey, editorQuitAfterScreenshotOverride);
+            editorVerificationTagOverride = SessionState.GetString(EditorVerificationTagOverrideKey, editorVerificationTagOverride ?? string.Empty);
+            editorScreenshotDirectoryOverride = SessionState.GetString(EditorScreenshotDirectoryOverrideKey, editorScreenshotDirectoryOverride ?? string.Empty);
+        }
+
+        private static void PersistEditorOverrides()
+        {
+            SessionState.SetBool(EditorAutorunOverrideKey, editorAutorunOverride);
+            SessionState.SetBool(EditorForceMobileOverrideKey, editorForceMobileControlsOverride);
+            SessionState.SetBool(EditorCaptureScreenshotOverrideKey, editorCaptureScreenshotOverride);
+            SessionState.SetBool(EditorCleanSceneCaptureOverrideKey, editorCleanSceneCaptureOverride);
+            SessionState.SetBool(EditorQuitAfterScreenshotOverrideKey, editorQuitAfterScreenshotOverride);
+            SessionState.SetString(EditorVerificationTagOverrideKey, editorVerificationTagOverride ?? string.Empty);
+            SessionState.SetString(EditorScreenshotDirectoryOverrideKey, editorScreenshotDirectoryOverride ?? string.Empty);
+        }
+
+        private static void ClearPersistedEditorOverrides()
+        {
+            SessionState.EraseBool(EditorAutorunOverrideKey);
+            SessionState.EraseBool(EditorForceMobileOverrideKey);
+            SessionState.EraseBool(EditorCaptureScreenshotOverrideKey);
+            SessionState.EraseBool(EditorCleanSceneCaptureOverrideKey);
+            SessionState.EraseBool(EditorQuitAfterScreenshotOverrideKey);
+            SessionState.EraseString(EditorVerificationTagOverrideKey);
+            SessionState.EraseString(EditorScreenshotDirectoryOverrideKey);
         }
 #endif
     }
