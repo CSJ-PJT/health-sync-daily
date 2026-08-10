@@ -24,6 +24,7 @@
     "test:deepstake-web": "npm run test:world -w @deepstake/web-prototype",
     "build:dev": "npm run build:health -- --mode development",
     "typecheck:health": "tsc -p apps/health-app/tsconfig.app.json --noEmit",
+    "typecheck:health-web": "tsc -p apps/health-web/tsconfig.json --noEmit",
     "typecheck:game": "tsc -p apps/fifth-dawn-game/tsconfig.app.json --noEmit",
     "typecheck:fifth-dawn": "npm run typecheck:game",
     "typecheck:deepstake-web": "npm run typecheck -w @deepstake/web-prototype",
@@ -45,7 +46,11 @@
     "mobile:game:adb:devices": "npm run android:adb:devices -w @health-sync/fifth-dawn-game",
     "mobile:game:gradle:stop": "npm run android:gradle:stop -w @health-sync/fifth-dawn-game",
     "mobile:game:open:android": "npm run cap:open:android -w @health-sync/fifth-dawn-game",
-    "test": "node scripts/run-service-tests.mjs"
+    "test": "node scripts/run-service-tests.mjs",
+    "test:health-web": "node scripts/health-web-tests.mjs",
+    "test:health-auth": "node scripts/health-auth-tests.mjs",
+    "test:health-contract": "node scripts/health-contract-tests.mjs",
+    "test:health-rls": "node scripts/health-rls-tests.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.4",
