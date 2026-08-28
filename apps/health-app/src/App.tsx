@@ -23,14 +23,28 @@ import AiCoach from "./pages/AiCoach";
 import Profile from "./pages/Profile";
 import SocialAuthCallback from "./pages/SocialAuthCallback";
 import NotFound from "./pages/NotFound";
+import { supabase } from "@/integrations/supabase/client";
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
   const [isSetupComplete, setIsSetupComplete] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    const setupComplete = localStorage.getItem("setup_completed");
-    setIsSetupComplete(setupComplete === "true");
+    let active = true;
+    const updateSetupState = (hasSession: boolean) => {
+      if (!active) return;
+      setIsSetupComplete(hasSession && localStorage.getItem("setup_completed") === "true");
+      setIsAuthReady(true);
+    };
+    void supabase.auth.getSession().then(({ data }) => updateSetupState(Boolean(data.session)));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      updateSetupState(Boolean(session));
+    });
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
   
   return (
@@ -43,7 +57,7 @@ const App = () => {
             <SwipeTabNavigator />
             <Routes>
               <Route path="/setup" element={<Setup />} />
-              <Route path="/" element={isSetupComplete ? <Index /> : <Navigate to="/setup" replace />} />
+              <Route path="/" element={!isAuthReady ? null : isSetupComplete ? <Index /> : <Navigate to="/setup" replace />} />
               <Route path="/history" element={<History />} />
               <Route path="/record/:id" element={<RecordDetail />} />
               <Route path="/comparison" element={<Comparison />} />
