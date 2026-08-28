@@ -27,15 +27,24 @@ $FatalNotifyStatePath = Join-Path $StateDir "discord-fatal-state.json"
 $CodexJs = Join-Path $env:APPDATA "npm\node_modules\@openai\codex\bin\codex.js"
 $CodexExe = Join-Path $env:APPDATA "npm\node_modules\@openai\codex\node_modules\@openai\codex-win32-x64\vendor\x86_64-pc-windows-msvc\codex\codex.exe"
 
+if (-not (Test-Path $CodexExe)) {
+    $DesktopCodex = Get-ChildItem (Join-Path $env:LOCALAPPDATA "OpenAI\Codex\bin\*\codex.exe") -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTimeUtc -Descending |
+        Select-Object -First 1
+    if ($null -ne $DesktopCodex) {
+        $CodexExe = $DesktopCodex.FullName
+    }
+}
+
 foreach ($Dir in @($InboxDir, $ProcessingDir, $OutboxDir, $ReviewDir, $StateDir, $LogDir)) {
     New-Item -ItemType Directory -Force -Path $Dir | Out-Null
 }
 
-if (-not (Test-Path $CodexJs)) {
-    throw "Codex JS entrypoint not found: $CodexJs"
-}
 if (-not (Test-Path $CodexExe)) {
     $CodexExe = ""
+}
+if ([string]::IsNullOrWhiteSpace($CodexExe) -and -not (Test-Path $CodexJs)) {
+    throw "Codex CLI entrypoint was not found."
 }
 
 $CodexTmp = Join-Path $CodexHome "tmp"
@@ -513,15 +522,20 @@ function Process-TaskFile {
 
 $ReviewerOut = Join-Path $LogDir "gpt.out.log"
 $ReviewerErr = Join-Path $LogDir "gpt.err.log"
-$Reviewer = Start-Process -FilePath "node" `
-    -ArgumentList @("src/gpt-session-bridge.mjs") `
-    -WorkingDirectory $Root `
-    -WindowStyle Hidden `
-    -RedirectStandardOutput $ReviewerOut `
-    -RedirectStandardError $ReviewerErr `
-    -PassThru
+$ReviewerScript = Join-Path $Root "src\gpt-session-bridge.mjs"
+$Reviewer = if (Test-Path -LiteralPath $ReviewerScript) {
+    Start-Process -FilePath "node" `
+        -ArgumentList @("src/gpt-session-bridge.mjs") `
+        -WorkingDirectory $Root `
+        -WindowStyle Hidden `
+        -RedirectStandardOutput $ReviewerOut `
+        -RedirectStandardError $ReviewerErr `
+        -PassThru
+} else {
+    $null
+}
 
-Write-Host "[modular-loop] reviewer pid=$($Reviewer.Id)"
+Write-Host "[modular-loop] reviewer=$(if ($Reviewer) { "pid=$($Reviewer.Id)" } else { "disabled (bridge script not installed)" })"
 Write-Host "[modular-loop] repo=$RepoPath"
 Write-Host "[modular-loop] max_auto_tasks=$MaxAutoTasks"
 Write-Host "[modular-loop] backlog=$MaxQueueBacklog"
